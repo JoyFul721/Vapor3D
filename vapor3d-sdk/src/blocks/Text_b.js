@@ -2,7 +2,7 @@ export const TextBlocks = [
     {
         opcode: "Text_Create",
         blockType: "command",
-        text: "Text.create([NAME], [TEXT], [FONT], [COLOR], [B_COLOR], [SIZE])",
+        text: "new Text([NAME], [TEXT], [FONT], [COLOR], [B_COLOR], [SIZE])",
         arguments: {
             NAME: { type: "string", defaultValue: "text1" },
             TEXT: { type: "string", defaultValue: "Hello!" },

@@ -3,6 +3,7 @@
 /vapor3d-sdk/node_modules
 /vapor3d-sdk/pbr v3.sb3
 /vapor3d-sdk/dist
+/example/pbr/pbr_ccw.sb3
 
 *.zip
 *.blend1

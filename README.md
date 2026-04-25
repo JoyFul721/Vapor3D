@@ -2,7 +2,7 @@
 
 高性能、可编程的 **多阶段渲染管线 (Multi-Stage Pipeline)** 框架。
 
-![Version](https://img.shields.io/badge/version-3.1.0-007a1f?style=flat&logo=github&labelColor=24292e)
+![Version](https://img.shields.io/badge/version-3.2.0-007a1f?style=flat&logo=github&labelColor=24292e)
 
 ---
 
@@ -17,7 +17,7 @@
 
 ## 渲染效果
 
-![UI](screenshots/ui.png)
+![Cover](screenshots/Cover.png)
 ![ExtLoad_Stencil](screenshots/ExtLoad_Stencil.png)
 ![BOXIBL1](screenshots/BOXIBL1.png)
 ![IBL1](screenshots/IBL2.png)

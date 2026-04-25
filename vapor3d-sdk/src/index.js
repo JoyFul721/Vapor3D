@@ -1,8 +1,8 @@
 import { EngineBlocks, EngineMenus } from './blocks/Engine_b.js';
 import { SceneBlocks } from './blocks/Scene_b.js';
-import { LoaderBlocks} from './blocks/Loader_b.js';
+import { LoaderBlocks } from './blocks/Loader_b.js';
 import { Math3DBlocks } from './blocks/Math3D_b.js';
-import { CubeCameraBlocks} from './blocks/CubeCamera_b.js';
+import { CubeCameraBlocks } from './blocks/CubeCamera_b.js';
 import { TextBlocks } from './blocks/Text_b.js';
 
 import { EngineHandlers } from './handlers/Engine_h.js';
@@ -17,12 +17,33 @@ import { TextHandlers } from './handlers/Text_h.js';
     if (!Scratch.extensions.unsandboxed) throw new Error("Vapor3D must run unsandboxed");
 
     const vm = Scratch.vm;
-    const runtime = Scratch.vm.runtime;
+    const runtime = vm.runtime || Scratch.runtime;
     const Cast = Scratch.Cast;
+
+    // For CCW
+    
+    if (vm && !vm.renderer && runtime.renderer) {
+        console.log("Vapor3D CCW Environment Detected. Applying Shims...");
+
+        vm.renderer = runtime.renderer;
+
+        if (!vm.renderer.canvas) {
+            Object.defineProperty(vm.renderer, 'canvas', {
+                get: function () {
+                    return this._gl?.canvas || runtime._gl?.canvas || document.querySelector('canvas');
+                },
+                enumerable: true,
+                configurable: true
+            });
+        }
+    } else {
+        console.log("Vapor3D Standard TurboWarp Environment Detected.");
+    }
+
+    // 对于 ccw：从vm.runtime.renderer._gl.canvas  提前到  vm.renderer.canvas 
 
     class Vapor3DExtension {
         constructor() {
-            // 所有 Handler
             this.engineHandlers = new EngineHandlers(Scratch);
             this.sceneHandlers = new SceneHandlers(this.engineHandlers);
             this.loaderHandlers = new LoaderHandlers(this.engineHandlers, this.sceneHandlers);
@@ -88,7 +109,7 @@ import { TextHandlers } from './handlers/Text_h.js';
             };
         }
     }
-    
+
 
     // ==========================================
     // 包映射，侧边栏分类注入
@@ -99,8 +120,11 @@ import { TextHandlers } from './handlers/Text_h.js';
         const res = originalGetBlocksXML.call(this, target);
 
         try {
-            const ext = this._blockInfo.find(info => info.id === "vapor3D");
-            if (!ext) return res;
+            if (!this._blockInfo || !Array.isArray(this._blockInfo)) return res;
+
+            const ext = this._blockInfo.find(info => info && info.id === "vapor3D");
+
+            if (!ext || !ext.blocks) return res;
 
             const allBlocks = ext.blocks;
 
@@ -122,16 +146,11 @@ import { TextHandlers } from './handlers/Text_h.js';
                         return `<label text="${def.text}"/>`;
                     }
                     if (def.opcode) {
-                        const b = allBlocks.find(ab => ab.info.opcode === def.opcode);
-
-                        if (!b) {
-                            console.error(`Vapor3D XML："${def.opcode}"loading failed`);
-                            return '';
-                        }
+                        const b = allBlocks.find(ab => ab && ab.info && ab.info.opcode === def.opcode);
+                        if (!b) return '';
                         return b.xml || '';
                     }
                     return '';
-
                 }).join('');
 
                 if (groupXml) {
@@ -142,12 +161,21 @@ import { TextHandlers } from './handlers/Text_h.js';
                 }
             });
 
-            // 只显示注入的子类别
-            return res.filter(item => item.id !== "vapor3D");
+            return res.map(item => {
+                if (item.id === "vapor3D") {
+                    // 保留 Vapor 3D 的名字，但清空其内部积木
+                    // 占位符，防止 ccw 发布检查时报错
+                    return {
+                        id: "vapor3D",
+                        xml: `<category name="Vapor 3D" id="vapor3D" colour="#2f2f36" secondaryColour="#2f2f36"></category>`
+                    };
+                }
+                return item;
+            });
+
         } catch (e) {
-            console.error("Vapor3D: Category Injection Error:", e);
+            return res;
         }
-        return res;
     };
 
     Scratch.extensions.register(new Vapor3DExtension());
