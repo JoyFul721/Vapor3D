@@ -21,7 +21,7 @@ export const EngineMenus = {
         fboSlotMenu: ["COLOR_ATTACHMENT0", "COLOR_ATTACHMENT1", "COLOR_ATTACHMENT2", "COLOR_ATTACHMENT3", "DEPTH_STENCIL_ATTACHMENT", "DEPTH_ATTACHMENT"],
         depthMenu: ["RBO", "TEXTURE", "NONE"],
         filterMode: ["NEAREST", "LINEAR", "NEAREST_MIPMAP_NEAREST", "LINEAR_MIPMAP_NEAREST", "NEAREST_MIPMAP_LINEAR", "LINEAR_MIPMAP_LINEAR"],
-        wrapAxis: ["S", "T"],
+        // wrapAxis: ["S", "T"],
         wrapMode: ["REPEAT", "CLAMP_TO_EDGE", "MIRRORED_REPEAT"],
         boolMenu: ["true", "false"],
         funcMenu: ["NEVER", "LESS", "EQUAL", "LEQUAL", "GREATER", "NOTEQUAL", "GEQUAL", "ALWAYS"],
@@ -35,6 +35,16 @@ export const EngineMenus = {
                 { text: 'tangent', value: 'tangent' },
                 { text: 'color', value: 'color' }
         ],
+        TRSTypeMenu: { acceptReporters: true, items: [ { text: 'position', value: 'Pos' }, { text: 'rotation', value: 'Rot' }, { text: 'scale', value: 'Scale' } ] },
+        AxisMenu: { acceptReporters: true, items: [ { text: 'X', value: 'X' }, { text: 'Y', value: 'Y' }, { text: 'Z', value: 'Z' } ] },
+        playModeMenu: {
+                acceptReporters: true,
+                items: ['loop', 'play once']
+        },
+        animInfoMenu: {
+                acceptReporters: true,
+                items: ['current animation name', 'current time', 'duration', 'is playing', 'animation names']
+        }
 };
 
 
@@ -47,11 +57,13 @@ export const EngineBlocks = [
         { blockType: "label", text: "Shader" },
         { opcode: "Shader_Create", blockType: "command", text: "new Shader [ID] ([VS], [FS])", arguments: { ID: { type: "string" }, VS: { type: "string" }, FS: { type: "string" } } },
         { opcode: "Shader_Use", blockType: "command", text: "Shader [ID] .use()", arguments: { ID: { type: "string" } } },
-        { opcode: "Shader_SetMat4", blockType: "command", text: "Shader [ID] .setMat4([NAME], [VAL])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, VAL: { type: "string" } } },
-        { opcode: "Shader_SetVec3", blockType: "command", text: "Shader [ID] .setVec3([NAME], [X] [Y] [Z])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, X: { type: "number" }, Y: { type: "number" }, Z: { type: "number" } } },
         { opcode: "Shader_SetVec2", blockType: "command", text: "Shader [ID] .setVec2([NAME], [X] [Y])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, X: { type: "number" }, Y: { type: "number" } } },
+        { opcode: "Shader_SetVec3", blockType: "command", text: "Shader [ID] .setVec3([NAME], [X] [Y] [Z])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, X: { type: "number" }, Y: { type: "number" }, Z: { type: "number" } } },
+        { opcode: "Shader_SetVec4", blockType: "command", text: "Shader [ID] .setVec4([NAME], [X], [Y], [Z], [W])", arguments: { ID: { type: "string" }, NAME: { type: "string", defaultValue: "uVec" }, X: { type: "number", defaultValue: 0 }, Y: { type: "number", defaultValue: 0 }, Z: { type: "number", defaultValue: 0 }, W: { type: "number", defaultValue: 0 } } },
+        { opcode: "Shader_SetMat4", blockType: "command", text: "Shader [ID] .setMat4([NAME], [VAL])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, VAL: { type: "string" } } },
         { opcode: "Shader_SetFloat", blockType: "command", text: "Shader [ID] .setFloat([NAME], [V])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, V: { type: "number" } } },
         { opcode: "Shader_SetInt", blockType: "command", text: "Shader [ID] .setInt([NAME], [V])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, V: { type: "number" } } },
+        { opcode: "Shader_SetBool", blockType: "command", text: "Shader [ID] .setBool([NAME], [V])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, V: { type: "number", defaultValue: 0 } } },
 
         { blockType: "label", text: "Framebuffer" },
         { opcode: "FBO_Create", blockType: "command", text: "new FBO [ID] ()", arguments: { ID: { type: "string" } } },
@@ -69,6 +81,9 @@ export const EngineBlocks = [
         { blockType: "label", text: "Texture" },
         { opcode: "Texture_CreateEmpty", blockType: "command", text: "new Texture2D [NAME] ([W], [H], [FORMAT])", arguments: { NAME: { type: "string", defaultValue: "texture2D" }, W: { type: "number", defaultValue: 256 }, H: { type: "number", defaultValue: 256 }, FORMAT: { type: "string", menu: "texTypeMenu" } } },
         { opcode: "Texture_CreateEmptyCubemap", blockType: "command", text: "new TextureCube [NAME] ([SIZE], [FORMAT])", arguments: { NAME: { type: "string", defaultValue: "cubemap" }, SIZE: { type: "number", defaultValue: 256 }, FORMAT: { type: "string", menu: "texTypeMenu" } }},
+        { opcode: "Texture_SetFilter", blockType: "command", text: "Texture [NAME] .setFilter([MIN_MODE], [MAG_MODE])", arguments: { NAME: { type: "string" }, MIN_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" }, MAG_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" } }},
+        { opcode: "Texture_SetWrap", blockType: "command", text: "Texture [NAME] .setWrap([MODE])", arguments: { NAME: { type: "string" }, MODE: { type: "string", menu: "wrapMode", defaultValue: "REPEAT" } }},
+        { opcode: "Texture_GenerateMipmap", blockType: "command", text: "Texture [NAME] .generateMipmap()", arguments: { NAME: { type: "string" } }},
         { opcode: "Texture_Bind", blockType: "command", text: "Texture [NAME] .bind([UNIT])", arguments: { NAME: { type: "string" }, UNIT: { type: "number" } } },
         { opcode: "Texture_BindCube", blockType: "command", text: "TextureCube [NAME] .bind([UNIT])", arguments: { NAME: { type: "string" }, UNIT: { type: "number" } } },
 

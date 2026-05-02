@@ -5,16 +5,9 @@ export class LoaderHandlers {
         this._loader = null;
     }
 
-    /**
-     * 懒加载
-     */
     _getLoader() {
-        if (!this.engine.core) {
-            console.error("Vapor3D: Please initialize first!");
-            return null;
-        }
         if (!this._loader) {
-            const { Loader } = require('../lib/index.js');
+            const { Loader } = require('../lib/Loader.js');
             this._loader = new Loader(this.engine.core.gl);
         }
         return this._loader;
@@ -22,14 +15,16 @@ export class LoaderHandlers {
 
     async Loader_load_glb({ SCENE_ID, NAME, U }) {
         const loader = this._getLoader();
-        if (!loader) return;
-
         const targetScene = this.sceneHandlers.scenes.get(SCENE_ID);
-        if (!targetScene) return;
+        if (!loader || !targetScene) return;
 
         try {
-            const model = await loader.loadGLB(U, NAME);
-            targetScene.addModel(NAME, model);
+            const { root, meshNodes } = await loader.loadGLB(U, targetScene, NAME);
+
+            targetScene.addModel(NAME, root, meshNodes);
+
+            console.log(root);
+
         } catch (e) {
             console.error("Vapor3D: GLB Load Error:", e);
         }

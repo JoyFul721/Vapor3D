@@ -4,6 +4,7 @@ import { LoaderBlocks } from './blocks/Loader_b.js';
 import { Math3DBlocks } from './blocks/Math3D_b.js';
 import { CubeCameraBlocks } from './blocks/CubeCamera_b.js';
 import { TextBlocks } from './blocks/Text_b.js';
+import { AnimationPlayerBlocks } from './blocks/AnimationPlayer_b.js';
 
 import { EngineHandlers } from './handlers/Engine_h.js';
 import { SceneHandlers } from './handlers/Scene_h.js';
@@ -11,6 +12,7 @@ import { LoaderHandlers } from './handlers/Loader_h.js';
 import { Math3DHandlers } from './handlers/Math3D_h.js';
 import { CubeCameraHandlers } from './handlers/CubeCamera_h.js';
 import { TextHandlers } from './handlers/Text_h.js';
+import { AnimationPlayerHandlers } from './handlers/AnimationPlayer_h.js';
 
 (function (Scratch) {
     "use strict";
@@ -50,6 +52,9 @@ import { TextHandlers } from './handlers/Text_h.js';
             this.mathHandlers = new Math3DHandlers();
             this.cubeCameraHandlers = new CubeCameraHandlers();
             this.testHandlers = new TextHandlers(this.engineHandlers, Cast);
+            this.animationPlayerHandlers = new AnimationPlayerHandlers(this.engineHandlers, this.sceneHandlers);
+
+
 
             runtime.on('PROJECT_STOP_ALL', () => {
                 console.log("Vapor3D: Project stopped. releasing all resources...");
@@ -82,6 +87,7 @@ import { TextHandlers } from './handlers/Text_h.js';
             bindMethods(this.mathHandlers);
             bindMethods(this.cubeCameraHandlers);
             bindMethods(this.testHandlers);
+            bindMethods(this.animationPlayerHandlers);
         }
 
         getInfo() {
@@ -94,6 +100,8 @@ import { TextHandlers } from './handlers/Text_h.js';
                     ...EngineBlocks,
                     "---",
                     ...SceneBlocks,
+                    "---",
+                    ...AnimationPlayerBlocks,
                     "---",
                     ...LoaderBlocks,
                     "---",
@@ -131,11 +139,12 @@ import { TextHandlers } from './handlers/Text_h.js';
             // 定义子类别映射
             const groupDefinitions = [
                 { name: "Engine", data: EngineBlocks, color: "#2f2f36" },
-                { name: "Scene", data: SceneBlocks, color: "#3a3a42" },
+                { name: "Scene", data: SceneBlocks, color: "#36363d" },
+                { name: "AnimPlayer", data: AnimationPlayerBlocks, color: "#3d3d45" },
                 { name: "Loader", data: LoaderBlocks, color: "#45454d" },
-                { name: "CubeCamera", data: CubeCameraBlocks, color: "#505058" },
-                { name: "Math", data: Math3DBlocks, color: "#5a5a63" },
-                { name: "Text", data: TextBlocks, color: "#6d6d77" },
+                { name: "CubeCamera", data: CubeCameraBlocks, color: "#4d4d55" },
+                { name: "Math", data: Math3DBlocks, color: "#54545c" },
+                { name: "Text", data: TextBlocks, color: "#5a5a63" }
             ];
 
             // 构建每个子类别的 XML

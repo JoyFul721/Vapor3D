@@ -80,10 +80,12 @@ export class EngineHandlers {
         const mat = Utils.parseInput(VAL, util);
         if (mat) this.shaders.get(ID)?.setMat4(NAME, mat);
     }
+    Shader_SetVec4({ ID, NAME, X, Y, Z, W }) { this.shaders.get(ID)?.setVec4(NAME, [Number(X), Number(Y), Number(Z), Number(W)]); }
     Shader_SetVec3({ ID, NAME, X, Y, Z }) { this.shaders.get(ID)?.setVec3(NAME, X, Y, Z); }
     Shader_SetVec2({ ID, NAME, X, Y }) { this.shaders.get(ID)?.setVec2(NAME, X, Y); }
     Shader_SetFloat({ ID, NAME, V }) { this.shaders.get(ID)?.setFloat(NAME, V); }
     Shader_SetInt({ ID, NAME, V }) { this.shaders.get(ID)?.setInt(NAME, V); }
+    Shader_SetBool({ ID, NAME, V }) { this.shaders.get(ID)?.setInt(NAME, Boolean(Number(V)) ? 1 : 0); }
 
     FBO_Create({ ID }) { this.fbos.set(ID, new Framebuffer(this.core.gl)); }
     FBO_AttachTexture({ ID, TEX, SLOT }) {
@@ -139,7 +141,21 @@ export class EngineHandlers {
 
     Texture_Bind({ NAME, UNIT }) { this.textures.get(NAME)?.bind(UNIT); }
     Texture_BindCube({ NAME, UNIT }) { this.textures.get(NAME)?.bind(UNIT); }
-    Texture_SetFilter({ NAME, MODE }) { this.textures.get(NAME)?.setFilter(MODE, MODE); }
+
+    Texture_SetFilter({ NAME, MIN_MODE, MAG_MODE }) {
+        const tex = this.textures.get(NAME);
+        if (tex) tex.setFilter(MIN_MODE, MAG_MODE);
+    }
+    Texture_SetWrap({ NAME, MODE }) {
+        const tex = this.textures.get(NAME);
+        if (tex) {
+            tex.setWrap("S", MODE);
+            tex.setWrap("T", MODE);
+        }
+    }
+    Texture_GenerateMipmap({ NAME }) {
+        this.textures.get(NAME)?.generateMipmap();
+    }
 
     gl_Clear({ BIT }) { this.core?.clear(BIT); }
     gl_SetClearColor({ R, G, B, A }) { this.core?.setClearColor(R, G, B, A); }
