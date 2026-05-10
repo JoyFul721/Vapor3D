@@ -3,24 +3,24 @@ import { Node } from './Node.js';
 export class Scene {
     constructor(name = "Main", maxNodes = 2048) {
         this.name = name;
-        this.root = new Node(name + "_Root");
 
-        // 全局矩阵
-        this.maxNodes = maxNodes;
+        // 全局矩阵仓库
         this.worldMatrixBuffer = new Float32Array(maxNodes * 16);
-
-        this.nodes = []; // 存储所有注册到仓库的节点，方便按索引访问
-        this._freeIndices = []; // 被删除节点留下的空位
+        this.nodes = [];
+        this._freeIndices = [];
         this._nextIndex = 0;
+
+        this.root = new Node(name + "_Root");
         this.registerNode(this.root);
 
-        this.skeletons = new Set(); // 全局骨架注册表，解决 update 更新问题
-        this.modelsMap = new Map();
-        this.meshIndexMap = new Map(); // 展平的索引，方便 scratch 遍历，不然要 scene -> sampleModel -> head -> eyes 这样手动遍历  而且必须保留这个字典，这是一个复杂性守恒的坑
+        
+        // 通用实体注册表，以前专为 Model设计，本质是方便用户直接跳过复杂层级关系直接找到指定节点，比如model
+        this.entities = new Map();
 
+        // 资源注册表
         this.registry = {
-            vaos: new Map(),     // ID -> Promise<VAO>
-            textures: new Map()  // ID -> Promise<Texture>
+            vaos: new Map(),
+            textures: new Map()
         };
     }
 
@@ -55,85 +55,67 @@ export class Scene {
     }
 
     update() {
-        // 更新所有 Node 的世界矩阵并写入 Scene 持有的仓库
         const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
         this.root.updateWorldMatrix(identity, false, this.worldMatrixBuffer);
 
-        // 遍历所有骨架，从仓库计算出蒙皮矩阵
-        this.skeletons.forEach(skel => {
-            skel.updateCPU(this.worldMatrixBuffer);
-            skel.updateGPU();
-        });
-    }
-
-    /**
-     * @param {string} id 模型 ID
-     * @param {Node} rootNode 该模型树的根节点
-     * @param {Node[]} meshNodes 该模型内部所有带 Mesh 节点的扁平数组
-     */
-    addModel(id, rootNode, meshNodes) {
-        if (this.modelsMap.has(id)) {
-            this.removeModel(id);
-        }
-        this.root.addChild(rootNode);
-        this.modelsMap.set(id, rootNode);
-        this.meshIndexMap.set(id, meshNodes);
-
-        this.registerNode(rootNode); 
-    }
-    removeModel(id) {
-        const rootNode = this.modelsMap.get(id);
-        if (rootNode) {
-            const cleanup = (node) => {
-                // 如果节点关联了骨架，从 Set 中销毁
-                if (node.skeleton) {
-                    this.removeSkeleton(node.skeleton);
-                    node.skeleton.destroy();
+        for (const entity of this.entities.values()) {
+            const model = entity.getComponent('model');
+            if (model && model.flatSkeletons) {
+                for (const skel of model.flatSkeletons) {
+                    skel.updateCPU(this.worldMatrixBuffer);
+                    skel.updateGPU();
                 }
-                for (const child of node.children) cleanup(child);
-            };
-            cleanup(rootNode);
-
-            // 从场景树移除
-            this.root.removeChild(rootNode);
-
-            // 置空引用
-            rootNode.destroy();
-
-            this.modelsMap.delete(id);
-            this.meshIndexMap.delete(id);
+            }
         }
     }
 
-    addSkeleton(skeleton) {
-        this.skeletons.add(skeleton);
+    addEntity(id, node) {
+        if (this.entities.has(id)) this.removeEntity(id);
+
+        this.entities.set(id, node);
+        this.root.addChild(node);
+        this.registerNode(node); // 分配矩阵索引
     }
 
-    removeSkeleton(skeleton) {
-        this.skeletons.delete(skeleton);
+    removeEntity(id) {
+        const node = this.entities.get(id);
+        if (!node) return;
+
+        this.root.removeChild(node);
+        this.unregisterNode(node); // 回收矩阵索引
+        this.entities.delete(id);
+        node.destroy();
     }
 
 
     getNodeByPath(path) {
         if (!path) return null;
+
+        if (path.toLowerCase() === "root") return this.root;
+
         const parts = path.split('/');
 
-        // 查找模型根节点
-        let currentNode = this.modelsMap.get(parts[0]);
+        const entityID = parts[0].trim();
+        let currentNode = this.entities.get(entityID);
+
         if (!currentNode) {
-            console.warn(`Vapor3D: Can't find model: "${parts[0]}" , path: ${path}`);
-            return null;
+            currentNode = this.root.children.find(child => child.name === entityID);
+            if (!currentNode) {
+                console.warn(`Vapor3D: Can't find entity or root-node: "${entityID}"`);
+                return null;
+            }
         }
 
         if (parts.length === 1) return currentNode;
 
         for (let i = 1; i < parts.length; i++) {
-            const targetName = parts[i];
-            // 空格
-            const nextNode = currentNode.children.find(child => child.name.trim() === targetName.trim());
+            const targetName = parts[i].trim();
+            if (!targetName) continue;
+
+            const nextNode = currentNode.children.find(child => child.name.trim() === targetName);
 
             if (!nextNode) {
-                console.warn(`Vapor3D: "${currentNode.name}" don't have child node "${targetName}"`);
+                console.warn(`Vapor3D: Node "${currentNode.name}" has no child named "${targetName}"`);
                 return null;
             }
             currentNode = nextNode;
@@ -142,12 +124,6 @@ export class Scene {
         return currentNode;
     }
 
-
-    //For Scratch Scene(id).models(id).meshes(index).vao.draw
-    getMeshNode(modelID, index) {
-        const list = this.meshIndexMap.get(modelID);
-        return list ? (list[index] || null) : null;
-    }
 
     // ================== Registry Map ==================
 

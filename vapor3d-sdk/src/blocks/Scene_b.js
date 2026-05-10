@@ -42,7 +42,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetParent",
         blockType: "command",
-        text: "Scene [SCENE_ID] .nodes [CHILD_PATH] set parent to [PARENT_PATH]",
+        text: "Scene [SCENE_ID] node [CHILD_PATH] set parent to [PARENT_PATH]",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             CHILD_PATH: { type: "string", defaultValue: "cup" },
@@ -52,7 +52,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetNodeMatrix",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] .nodes [PATH] .worldMatrix",
+        text: "Scene [SCENE_ID] node [PATH] .worldMatrix",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             PATH: { type: "string", defaultValue: "sample/joint1" }
@@ -75,7 +75,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetJointCount",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] .nodes [MODEL] .jointCount",
+        text: "Scene [SCENE_ID] .models [MODEL] .jointCount",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             MODEL: { type: "string", defaultValue: "sample" }
@@ -84,7 +84,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_ModelSetJointTRS",
         blockType: "command",
-        text: "Scene [SCENE_ID] .nodes [MODEL] .joints [IDX] .setTRS [TRS]",
+        text: "Scene [SCENE_ID] .models [MODEL] .joints [IDX] .setTRS [TRS]",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             MODEL: { type: "string", defaultValue: "sample" },
@@ -95,7 +95,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_ModelJointIndexToName",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] model [MODEL] joint index [IDX] -> name",
+        text: "Scene [SCENE_ID] .models [MODEL] joint index [IDX] -> name",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             MODEL: { type: "string", defaultValue: "sample" },
@@ -105,7 +105,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_ModelJointNameToIndex",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] model [MODEL] joint name [NAME] -> index",
+        text: "Scene [SCENE_ID] .models [MODEL] joint name [NAME] -> index",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             MODEL: { type: "string", defaultValue: "sample" },
@@ -115,7 +115,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_ModelBindSkeletonTex",
         blockType: "command",
-        text: "Scene [SCENE_ID] .nodes [MODEL] .bindSkeletonTexture ( [UNIT] )",
+        text: "Scene [SCENE_ID] .models [MODEL] .bindSkeletonTexture ( [UNIT] )",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             MODEL: { type: "string", defaultValue: "sample" },
@@ -127,7 +127,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetMeshCount",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] .nodes [MODEL] .meshCount",
+        text: "Scene [SCENE_ID] .models [MODEL] .meshCount",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             MODEL: { type: "string", defaultValue: "sample" }
@@ -146,9 +146,34 @@ export const SceneBlocks = [
         }
     },
     {
+        opcode: "Scene_MeshTex_SetFilter",
+        blockType: "command",
+        text: "Scene [SCENE_ID] .models [MODEL] .meshes [IDX] .material .setFilter([NAME], [MIN_MODE], [MAG_MODE])",
+        arguments: {
+            SCENE_ID: { type: "string", defaultValue: "Main" },
+            MODEL: { type: "string", defaultValue: "sample" },
+            IDX: { type: "number", defaultValue: 0 },
+            NAME: { type: "string", menu: "pbrTexMenu" },
+            MIN_MODE: { type: "string", menu: "filterMode" },
+            MAG_MODE: { type: "string", menu: "filterMode" }
+        }
+    },
+    {
+        opcode: "Scene_MeshTex_SetWrap",
+        blockType: "command",
+        text: "Scene [SCENE_ID] .models [MODEL] .meshes [IDX] .material .setWrap([NAME], [MODE])",
+        arguments: {
+            SCENE_ID: { type: "string", defaultValue: "Main" },
+            MODEL: { type: "string", defaultValue: "sample" },
+            IDX: { type: "number", defaultValue: 0 },
+            NAME: { type: "string", menu: "pbrTexMenu" },
+            MODE: { type: "string", menu: "wrapMode" }
+        }
+    },
+    {
         opcode: "Scene_MeshGetParam",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] .nodes[MODEL] .meshes[IDX] .material .get([PARAM])",
+        text: "Scene [SCENE_ID] .models [MODEL] .meshes[IDX] .material .get([PARAM])",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             MODEL: { type: "string", defaultValue: "sample" },
@@ -159,7 +184,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_MeshDraw",
         blockType: "command",
-        text: "Scene [SCENE_ID] .nodes[MODEL] .meshes[IDX] .vao .draw([MODE])",
+        text: "Scene [SCENE_ID] .models [MODEL] .meshes[IDX] .vao .draw([MODE])",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             MODEL: { type: "string", defaultValue: "sample" },

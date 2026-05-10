@@ -67,7 +67,7 @@ export class EngineHandlers {
     gl_Present() {
         if (!this.core) return;
         this.core.resize(this.vm.renderer.canvas.width, this.vm.renderer.canvas.height);
-        this.vm.runtime.requestRedraw();
+        this.vm.runtime.requestRedraw(); // 这个可以蹭到 scratch vm 的锁帧效果
         return new Promise(r => requestAnimationFrame(r));
     }
 

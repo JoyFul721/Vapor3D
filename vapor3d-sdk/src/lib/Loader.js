@@ -7,7 +7,9 @@ import { Math3D } from './Math3D.js';
 import { Utils } from './Utils.js';
 import { Skeleton } from './Skeleton.js';
 import { Animation } from './Animation.js';
-import { AnimationPlayer } from './AnimationPlayer.js';
+
+import { ModelComponent, MeshComponent, AnimationComponent } from './Component.js';
+
 
 export class Loader {
     constructor(gl) {
@@ -271,7 +273,6 @@ export class Loader {
                     // 创建 Skeleton 实例
                     const skel = new Skeleton(this.gl, `${modelID}_skel`, jointNodes, ibms);
                     skeletons.push(skel);
-                    targetScene.addSkeleton(skel); // 注册到场景统一管理
                 }
             }
 
@@ -289,11 +290,11 @@ export class Loader {
                     if (meshInsts) {
                         meshInsts.forEach((mInst, pIdx) => {
                             if (pIdx === 0) {
-                                vNode.mesh = mInst;
+                                vNode.addComponent('mesh', new MeshComponent(mInst));
                                 meshNodesList.push(vNode);
                             } else {
                                 const subNode = new Node(`${vNode.name}_p${pIdx}`);
-                                subNode.mesh = mInst;
+                                subNode.addComponent('mesh', new MeshComponent(mInst));
                                 vNode.addChild(subNode);
                                 meshNodesList.push(subNode);
                             }
@@ -344,19 +345,24 @@ export class Loader {
 
             // 6 - 组装根节点
             const modelRoot = new Node(modelID);
+
+            // 层级树
             const defaultScene = asset.gltf.scenes[asset.gltf.scene || 0];
             if (defaultScene && defaultScene.nodes) {
                 defaultScene.nodes.forEach(idx => modelRoot.addChild(vNodes[idx]));
             }
-            if (skeletons.length > 0) {
-                modelRoot.skeleton = skeletons[0];
-            }
+
+            const modelComp = new ModelComponent();
+            modelComp.flatMeshes = meshNodesList;
+            modelComp.flatSkeletons = skeletons;
+            modelRoot.addComponent('model', modelComp);
+
             if (animations.size > 0) {
-                modelRoot.animations = animations;
-                modelRoot.animationPlayer = new AnimationPlayer(animations);
+                const animComp = new AnimationComponent(animations);
+                modelRoot.addComponent('animation', animComp);
             }
 
-            return { root: modelRoot, meshNodes: meshNodesList };
+            return { root: modelRoot };
 
         } catch (error) {
             console.error(`\n[Vapor3D: Failed to load GLB : "${modelID}"`);

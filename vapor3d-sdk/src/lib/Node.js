@@ -6,24 +6,34 @@ export class Node {
         this.parent = null;
         this.children = [];
 
-        this.worldMatrixIndex = -1; // 仓库索引，-1 表示未注册到 Scene
-        this._dirty = true;
-
         this.position = [0, 0, 0];
         this.quaternion = [0, 0, 0, 1];
         this.scale = [1, 1, 1];
+        this.worldMatrixIndex = -1;
+        this._dirty = true;
 
-        // 上面是 node 通用属性，下面是扩展
-        // For Skeleton
-        this.localMatrix = Math3D.mat4_identity();
-        this.worldMatrix = Math3D.mat4_identity();
-        // For Mesh
-        this.mesh = null;
+
         this.visible = true;
-        // For Animation
-        this.animations = null;
-        this.animationPlayer = null;
+
+        // 组件仓库
+        this.components = new Map();
     }
+
+    addComponent(key, component) {
+        // 组件需要引用宿主 Node，方便在组件内部获取世界矩阵
+        component.node = this;
+        this.components.set(key, component);
+        return component;
+    }
+
+    getComponent(key) {
+        return this.components.get(key);
+    }
+
+    hasComponent(key) {
+        return this.components.has(key);
+    }
+
 
     setDirty() {
         if (this._dirty) return;

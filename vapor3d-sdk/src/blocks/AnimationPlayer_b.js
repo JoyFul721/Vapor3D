@@ -3,7 +3,7 @@ export const AnimationPlayerBlocks = [
     {
         opcode: "Animation_Play",
         blockType: "command",
-        text: "Scene [SCENE_ID] .nodes [PATH] play animation [ANIM_NAME] with mode [MODE]",
+        text: "Scene [SCENE_ID] node [PATH] play animation [ANIM_NAME] with mode [MODE]",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             PATH: { type: "string", defaultValue: "sample" },
@@ -14,7 +14,7 @@ export const AnimationPlayerBlocks = [
     {
         opcode: "Animation_Stop",
         blockType: "command",
-        text: "Scene [SCENE_ID] .nodes [PATH] stop animation",
+        text: "Scene [SCENE_ID] node [PATH] stop animation",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             PATH: { type: "string", defaultValue: "sample" },
@@ -23,7 +23,7 @@ export const AnimationPlayerBlocks = [
     {
         opcode: "Animation_SetTime",
         blockType: "command",
-        text: "Scene [SCENE_ID] .nodes [PATH] set animation time to [TIME]",
+        text: "Scene [SCENE_ID] node [PATH] set animation time to [TIME]",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             PATH: { type: "string", defaultValue: "sample" },
@@ -33,7 +33,7 @@ export const AnimationPlayerBlocks = [
     {
         opcode: "Animation_SetSpeed",
         blockType: "command",
-        text: "Scene [SCENE_ID] .nodes [PATH] animation speed set to [SPEED]",
+        text: "Scene [SCENE_ID] node [PATH] animation speed set to [SPEED]",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             PATH: { type: "string", defaultValue: "sample" },
@@ -53,7 +53,7 @@ export const AnimationPlayerBlocks = [
     {
         opcode: "Animation_GetNodeTRS",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] .nodes [PATH] get current TRS",
+        text: "Scene [SCENE_ID] node [PATH] get current TRS",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             PATH: { type: "string", defaultValue: "sample/Hips" }
@@ -62,7 +62,7 @@ export const AnimationPlayerBlocks = [
     {
         opcode: "Animation_GetModelJointTRS",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] .nodes [MODEL] .joints [IDX] get current TRS",
+        text: "Scene [SCENE_ID] .models [MODEL] .joints [IDX] get current TRS", // 方便遍历模型的 joint
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             MODEL: { type: "string", defaultValue: "sample" },
@@ -72,7 +72,7 @@ export const AnimationPlayerBlocks = [
     {
         opcode: "Animation_GetInfo",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] .nodes [PATH] get animation [PARAM]",
+        text: "Scene [SCENE_ID] node [PATH] get animation [PARAM]",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
             PATH: { type: "string", defaultValue: "sample" },
