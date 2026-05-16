@@ -1,61 +1,15 @@
 import { Math3D } from './Math3D.js';
+import { Material } from './Mesh.js';
 
-export class Node {
+class Node {
     constructor(name = "unnamed") {
         this.name = name;
         this.parent = null;
         this.children = [];
-
-        this.position = [0, 0, 0];
-        this.quaternion = [0, 0, 0, 1];
-        this.scale = [1, 1, 1];
-        this.worldMatrixIndex = -1;
-        this._dirty = true;
-
-
-        this.visible = true;
-
-        // 组件仓库
-        this.components = new Map();
-    }
-
-    addComponent(key, component) {
-        // 组件需要引用宿主 Node，方便在组件内部获取世界矩阵
-        component.node = this;
-        this.components.set(key, component);
-        return component;
-    }
-
-    getComponent(key) {
-        return this.components.get(key);
-    }
-
-    hasComponent(key) {
-        return this.components.has(key);
-    }
-
-
-    setDirty() {
-        if (this._dirty) return;
-        this._dirty = true;// 子节点的世界矩阵依赖于父节点
-        for (let i = 0; i < this.children.length; i++) {
-            this.children[i].setDirty();
-        }
     }
 
     addChild(child) {
-        if (child === this) return; // 防自挂载
-
-        // 防循环引用
-        let p = this.parent;
-        while (p) {
-            if (p === child) {
-                console.error("Vapor3D: Circular dependency detected!");
-                return;
-            }
-            p = p.parent;
-        }
-
+        if (child === this) return;
         if (child.parent) child.parent.removeChild(child);
         child.parent = this;
         this.children.push(child);
@@ -68,46 +22,62 @@ export class Node {
             child.parent = null;
         }
     }
+}
 
-    updateWorldMatrix(parentMatrix, parentDirty, globalBuffer) {
-        const isDirty = this._dirty || parentDirty;
+export class TransformNode extends Node {
+    constructor(name) {
+        super(name);
+        this.position = [0, 0, 0];
+        this.quaternion = [0, 0, 0, 1];
+        this.scale = [1, 1, 1];
+        this.worldMatrixIndex = -1;
+        this._dirty = true;
+    }
 
-        if (isDirty && this.worldMatrixIndex !== -1) {
-            // Loacl Matrix
-            const local = Math3D.mat4_fromRTS(this.quaternion, this.position, this.scale);
-
-            // World Matrix：parent * local
-            const world = Math3D.mat4_multiply(parentMatrix, local);
-
-            // 写入全局仓库
-            const offset = this.worldMatrixIndex * 16;
-            globalBuffer.set(world, offset);
-
-            this._dirty = false;
-
-            // 递归子节点
-            for (let i = 0; i < this.children.length; i++) {
-                this.children[i].updateWorldMatrix(world, true, globalBuffer);
-            }
-        } else if (this.worldMatrixIndex !== -1) {
-            const offset = this.worldMatrixIndex * 16;
-            const myWorld = globalBuffer.subarray(offset, offset + 16);
-            for (let i = 0; i < this.children.length; i++) {
-                this.children[i].updateWorldMatrix(myWorld, false, globalBuffer);
+    setDirty() {
+        if (this._dirty) return;
+        this._dirty = true;
+        for (let i = 0; i < this.children.length; i++) {
+            if (this.children[i] instanceof TransformNode) {
+                this.children[i].setDirty();
             }
         }
     }
 
+    updateWorldMatrix(parentMatrix, parentDirty, globalBuffer) {
+        const isDirty = this._dirty || parentDirty;
+        if (isDirty && this.worldMatrixIndex !== -1) {
+            const local = Math3D.mat4_fromRTS(this.quaternion, this.position, this.scale);
+            const world = Math3D.mat4_multiply(parentMatrix, local);
+            globalBuffer.set(world, this.worldMatrixIndex * 16);
+            this._dirty = false;
+        }
 
-    destroy() {
-        this.parent = null;
-        if (this.mesh) {
-            this.mesh.destroy();
-            this.mesh = null;
-        }
+        const myWorld = this.worldMatrixIndex !== -1 ?
+            globalBuffer.subarray(this.worldMatrixIndex * 16, this.worldMatrixIndex * 16 + 16) : parentMatrix;
+
         for (let i = 0; i < this.children.length; i++) {
-            this.children[i].destroy();
+            if (this.children[i] instanceof TransformNode) {
+                this.children[i].updateWorldMatrix(myWorld, isDirty, globalBuffer);
+            }
         }
-        this.children = [];
+    }
+}
+
+export class MeshNode extends TransformNode {
+    constructor(name, vao) {
+        super(name);
+        this.vao = vao;
+        this.material = new Material();
+        this.visible = true;
+
+        this.isSkinned = false;
+        this.skeleton = null;
+    }
+
+    draw(mode) {
+        if (this.visible && this.vao) {
+            this.vao.draw(mode);
+        }
     }
 }

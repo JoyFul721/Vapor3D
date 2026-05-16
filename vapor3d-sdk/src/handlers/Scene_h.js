@@ -4,8 +4,10 @@ import { Math3D } from '../lib/Math3D.js';
 export class SceneHandlers {
     constructor(engineHandlers) {
         this.engine = engineHandlers;
-        this.scenes = new Map(); // 存储场景实例的 Map
+        this.scenes = new Map();
     }
+
+    // ====================== Scene Management ======================
 
     Scene_Create({ ID }) {
         if (this.scenes.has(ID)) {
@@ -24,23 +26,16 @@ export class SceneHandlers {
 
     Scene_Clear(args) {
         const { SCENE_ID } = args || {};
-
         if (SCENE_ID) {
             const scene = this.scenes.get(SCENE_ID);
-            if (scene) {
-                scene.destroy();
-            }
+            if (scene) scene.destroy();
         } else {
-            this.scenes.forEach(scene => {
-                if (scene && typeof scene.destroy === 'function') {
-                    scene.destroy();
-                }
-            });
+            this.scenes.forEach(scene => scene?.destroy());
             this.scenes.clear();
         }
     }
 
-    // ====================== Node ======================
+    // ====================== Node Transform ======================
 
     Scene_NodeSetTRS({ SCENE_ID, PATH, TRS }) {
         const scene = this.scenes.get(SCENE_ID);
@@ -53,39 +48,24 @@ export class SceneHandlers {
         node.position = data.position;
         node.quaternion = Math3D.quat_fromEuler(...data.euler);
         node.scale = data.scale;
-
-        node.setDirty(); // 触发矩阵重算
+        node.setDirty();
     }
-
 
     Scene_NodeSetParent({ SCENE_ID, CHILD_PATH, PARENT_PATH }) {
         const scene = this.scenes.get(SCENE_ID);
         if (!scene) return;
 
         const childNode = scene.getNodeByPath(CHILD_PATH);
-        if (!childNode) {
-            console.warn(`Vapor3D: Can't find child: ${CHILD_PATH}`);
-            return;
+        if (!childNode) return;
+
+        let parentNode = (!PARENT_PATH || PARENT_PATH.toLowerCase() === "root")
+            ? scene.root
+            : scene.getNodeByPath(PARENT_PATH);
+
+        if (parentNode) {
+            parentNode.addChild(childNode);
+            childNode.setDirty();
         }
-
-        let parentNode;
-        // 如果父节点路径是 Root 或为空，则挂到场景根部
-        if (!PARENT_PATH || PARENT_PATH.toLowerCase() === "root") {
-            parentNode = scene.root;
-        } else {
-            parentNode = scene.getNodeByPath(PARENT_PATH);
-        }
-
-        if (!parentNode) {
-            console.warn(`Vapor3D: Can't find parent ${PARENT_PATH}`);
-            return;
-        }
-
-        parentNode.addChild(childNode);
-
-        childNode.setDirty();
-
-        console.log(`Vapor3D: Set parent successfully ${childNode.name} -> ${parentNode.name}`);
     }
 
     Scene_GetNodeMatrix({ SCENE_ID, PATH }) {
@@ -95,43 +75,29 @@ export class SceneHandlers {
 
         const offset = node.worldMatrixIndex * 16;
         const mat = scene.worldMatrixBuffer.subarray(offset, offset + 16);
-
         return JSON.stringify(Array.from(mat));
     }
 
-    Scene_NodeGetName({ SCENE_ID, MODEL, IDX }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const node = scene?.getMeshNode(MODEL, Number(IDX));
-        return node ? node.name : "Null";
-    }
-
     Scene_UpdateWorldMatrix({ SCENE_ID }) {
-        const scene = this.scenes.get(SCENE_ID);
-        if (scene) {
-            scene.update(); // 调用 this.root.updateWorldMatrix(null)
-        }
+        this.scenes.get(SCENE_ID)?.update();
     }
 
-    // =================== Model Node ===================
+    // =================== AssetContainer (Model) ===================
 
-    _getModalComp(scene, modelID) {
-        const entity = scene?.entities.get(modelID);
-        return entity?.getComponent('model');
+    _getContainer(scene, modelID) {
+        return scene?.containers.get(modelID);
     }
 
-    // ====== Skeleton ======
+    // ====== Skeleton (via AssetContainer) ======
 
     Scene_GetJointCount({ SCENE_ID, MODEL }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const skel = modelComp?.flatSkeletons[0]; // 第一个
-        return skel ? skel.numJoints : 0;
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        return container?.skeletons[0]?.numJoints || 0;
     }
 
     Scene_ModelSetJointTRS({ SCENE_ID, MODEL, IDX, TRS }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const jointNode = modelComp?.flatSkeletons[0]?.joints[Number(IDX)];
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const jointNode = container?.skeletons[0]?.joints[Number(IDX)];
 
         if (jointNode) {
             const data = Math3D.TRS_parse(TRS);
@@ -144,16 +110,14 @@ export class SceneHandlers {
     }
 
     Scene_ModelJointIndexToName({ SCENE_ID, MODEL, IDX }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const joint = modelComp?.flatSkeletons[0]?.joints[Number(IDX)];
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const joint = container?.skeletons[0]?.joints[Number(IDX)];
         return joint ? joint.name : "Null";
     }
 
     Scene_ModelJointNameToIndex({ SCENE_ID, MODEL, NAME }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const joints = modelComp?.flatSkeletons[0]?.joints;
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const joints = container?.skeletons[0]?.joints;
         if (!joints) return -1;
 
         const targetName = String(NAME).trim();
@@ -161,48 +125,40 @@ export class SceneHandlers {
     }
 
     Scene_ModelBindSkeletonTex({ SCENE_ID, MODEL, UNIT }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const skel = modelComp?.flatSkeletons[0];
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const skel = container?.skeletons[0];
         const gl = this.engine.core.gl;
 
-        if (skel) {
-            gl.activeTexture(gl.TEXTURE0 + Number(UNIT));
-            gl.bindTexture(gl.TEXTURE_2D, skel.texture);
-        } else {
-            gl.activeTexture(gl.TEXTURE0 + Number(UNIT));
-            gl.bindTexture(gl.TEXTURE_2D, null);
-        }
+        gl.activeTexture(gl.TEXTURE0 + Number(UNIT));
+        gl.bindTexture(gl.TEXTURE_2D, skel ? skel.texture : null);
     }
 
-
-    // ====== Mesh ======
+    // ====== Mesh (via AssetContainer.meshes) ======
 
     Scene_GetMeshCount({ SCENE_ID, MODEL }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        return modelComp ? modelComp.flatMeshes.length : 0;
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        return container ? container.meshes.length : 0;
+    }
+
+    Scene_NodeGetName({ SCENE_ID, MODEL, IDX }) {
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        return container?.meshes[Number(IDX)]?.name || "Null";
     }
 
     Scene_MeshDraw({ SCENE_ID, MODEL, IDX, MODE }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const meshNode = modelComp?.flatMeshes[Number(IDX)];
-
-        const meshComp = meshNode?.getComponent('mesh');
-        if (meshComp && meshNode.visible) {
-            meshComp.mesh.vao.draw(MODE);
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const meshNode = container?.meshes[Number(IDX)];
+        if (meshNode) {
+            meshNode.draw(MODE);
         }
     }
 
     Scene_MeshBindTex({ SCENE_ID, MODEL, IDX, TEX_TYPE, UNIT }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const meshNode = modelComp?.flatMeshes[Number(IDX)];
-        const meshComp = meshNode?.getComponent('mesh');
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const meshNode = container?.meshes[Number(IDX)];
 
-        if (meshComp) {
-            const tex = meshComp.mesh.material[TEX_TYPE];
+        if (meshNode) {
+            const tex = meshNode.material[TEX_TYPE];
             if (tex) {
                 tex.bind(UNIT);
             } else {
@@ -214,25 +170,16 @@ export class SceneHandlers {
     }
 
     Scene_MeshTex_SetFilter({ SCENE_ID, MODEL, IDX, NAME, MIN_MODE, MAG_MODE }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const meshNode = modelComp?.flatMeshes[Number(IDX)];
-        const meshComp = meshNode?.getComponent('mesh');
-        if (!meshComp) return;
-
-        const tex = meshComp.mesh.material[NAME];
-
-        if (tex) tex.setFilter(MIN_MODE, MAG_MODE)
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const meshNode = container?.meshes[Number(IDX)];
+        const tex = meshNode?.material[NAME];
+        if (tex) tex.setFilter(MIN_MODE, MAG_MODE);
     }
 
     Scene_MeshTex_SetWrap({ SCENE_ID, MODEL, IDX, NAME, MODE }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const meshNode = modelComp?.flatMeshes[Number(IDX)];
-        const meshComp = meshNode?.getComponent('mesh');
-
-        const tex = meshComp.mesh.material[NAME];
-
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const meshNode = container?.meshes[Number(IDX)];
+        const tex = meshNode?.material[NAME];
         if (tex) {
             tex.setWrap("S", MODE);
             tex.setWrap("T", MODE);
@@ -240,13 +187,11 @@ export class SceneHandlers {
     }
 
     Scene_MeshGetParam({ SCENE_ID, MODEL, IDX, PARAM }) {
-        const scene = this.scenes.get(SCENE_ID);
-        const modelComp = this._getModalComp(scene, MODEL);
-        const meshNode = modelComp?.flatMeshes[Number(IDX)];
-        const meshComp = meshNode?.getComponent('mesh');
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const meshNode = container?.meshes[Number(IDX)];
 
-        if (!meshComp) return "";
-        const val = meshComp.mesh.material[PARAM];
+        if (!meshNode) return "";
+        const val = meshNode.material[PARAM];
         return Array.isArray(val) ? JSON.stringify(val) : val;
     }
 }

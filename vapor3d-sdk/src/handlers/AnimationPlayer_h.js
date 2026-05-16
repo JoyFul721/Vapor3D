@@ -4,23 +4,19 @@ export class AnimationPlayerHandlers {
         this.sceneHandlers = sceneHandlers;
     }
 
-    _getAnimComponent(sceneId, path) {
+    _getAnimPlayer(sceneId, path) {
         const scene = this.sceneHandlers.scenes.get(sceneId);
         if (!scene) return null;
 
-        let node = scene.getNodeByPath(path);
+        const containerID = path.split('/')[0].trim();
+        const container = scene.containers.get(containerID);
 
-        // 尝试找当前节点的动画组件
-        let animComp = node ? node.getComponent('animation') : null;
-
-        // 如果找不到，尝试找这个模型的根节点（Entity）
-        if (!animComp) {
-            const rootPath = path.split('/')[0];
-            const rootNode = scene.getNodeByPath(rootPath);
-            animComp = rootNode ? rootNode.getComponent('animation') : null;
+        if (!container) {
+            console.warn(`Vapor3D: Model/Container "${containerID}" not found for animation.`);
+            return null;
         }
 
-        return animComp;
+        return container.animationPlayer;
     }
 
     _getFlatTRS(node) {
@@ -31,49 +27,50 @@ export class AnimationPlayerHandlers {
         ];
     }
 
+    // ====================== Actions ======================
+
     Animation_Play({ SCENE_ID, PATH, ANIM_NAME, MODE }) {
-        const animComp = this._getAnimComponent(SCENE_ID, PATH);
-        if (animComp && animComp.player) {
+        const player = this._getAnimPlayer(SCENE_ID, PATH);
+        if (player) {
             const doLoop = (MODE === 'loop');
-            animComp.player.play(String(ANIM_NAME), doLoop);
+            player.play(String(ANIM_NAME), doLoop);
         }
     }
 
     Animation_Stop({ SCENE_ID, PATH }) {
-        const animComp = this._getAnimComponent(SCENE_ID, PATH);
-        if (animComp && animComp.player) {
-            animComp.player.stop();
+        const player = this._getAnimPlayer(SCENE_ID, PATH);
+        if (player) {
+            player.stop();
         }
     }
 
     Animation_SetTime({ SCENE_ID, PATH, TIME }) {
-        const animComp = this._getAnimComponent(SCENE_ID, PATH);
-        if (animComp && animComp.player) {
-            animComp.player.setTime(Number(TIME));
+        const player = this._getAnimPlayer(SCENE_ID, PATH);
+        if (player) {
+            player.setTime(Number(TIME));
         }
     }
 
     Animation_SetSpeed({ SCENE_ID, PATH, SPEED }) {
-        const animComp = this._getAnimComponent(SCENE_ID, PATH);
-        if (animComp && animComp.player) {
-            animComp.player.speed = Number(SPEED);
+        const player = this._getAnimPlayer(SCENE_ID, PATH);
+        if (player) {
+            player.speed = Number(SPEED);
         }
     }
 
+    // 遍历 container
     Animation_Update({ SCENE_ID, DT }) {
         const scene = this.sceneHandlers.scenes.get(SCENE_ID);
         if (!scene) return;
 
-        // 遍历所有实体，拿到 animation，更新
-        for (const entity of scene.entities.values()) {
-            const animComp = entity.getComponent('animation');
-
-            if (animComp && animComp.player) {
-                animComp.player.update(Number(DT));
-                // entity.setDirty(); 强制更新根节点
+        for (const container of scene.containers.values()) {
+            if (container.animationPlayer) {
+                container.animationPlayer.update(Number(DT));
             }
         }
     }
+
+    // ====================== Getters ======================
 
     Animation_GetNodeTRS({ SCENE_ID, PATH }) {
         const scene = this.sceneHandlers.scenes.get(SCENE_ID);
@@ -83,20 +80,18 @@ export class AnimationPlayerHandlers {
 
     Animation_GetModelJointTRS({ SCENE_ID, MODEL, IDX }) {
         const scene = this.sceneHandlers.scenes.get(SCENE_ID);
-        const entity = scene?.entities.get(MODEL);
-        const modelComp = entity?.getComponent('model');
+        const container = scene?.containers.get(MODEL);
 
-        if (!modelComp || !modelComp.flatSkeletons || modelComp.flatSkeletons.length === 0) return "[]";
+        if (!container || !container.skeletons || container.skeletons.length === 0) return "[]";
 
-        const jointNode = modelComp.flatSkeletons[0].joints[Number(IDX)];
+        const jointNode = container.skeletons[0].joints[Number(IDX)];
         return jointNode ? JSON.stringify(this._getFlatTRS(jointNode)) : "[]";
     }
 
     Animation_GetInfo({ SCENE_ID, PATH, PARAM }) {
-        const animComp = this._getAnimComponent(SCENE_ID, PATH);
-        if (!animComp || !animComp.player) return "";
+        const player = this._getAnimPlayer(SCENE_ID, PATH);
+        if (!player) return "";
 
-        const player = animComp.player;
         const activeAnim = player.activeAnimation;
 
         switch (PARAM) {

@@ -1,5 +1,4 @@
 import { GltfLoader } from 'gltf-loader-ts';
-import { Node } from './Node.js';
 import { Mesh } from './Mesh.js';
 import { VAO } from './VAO.js';
 import { Texture2D, TextureCube } from './Textures.js';
@@ -8,8 +7,8 @@ import { Utils } from './Utils.js';
 import { Skeleton } from './Skeleton.js';
 import { Animation } from './Animation.js';
 
-import { ModelComponent, MeshComponent, AnimationComponent } from './Component.js';
-
+import { TransformNode, MeshNode } from './Node.js';
+import { AssetContainer } from './AssetContainer.js';
 
 export class Loader {
     constructor(gl) {
@@ -244,7 +243,7 @@ export class Loader {
 
             // 3 - 解析 Node
             const vNodes = asset.gltf.nodes.map((n, i) => {
-                const vNode = new Node(n.name || `${modelID}_n${i}`);
+                const vNode = new TransformNode(n.name || `${modelID}_n${i}`); 
                 if (n.matrix) {
                     const { t, q, s } = Math3D.mat4_decompose(n.matrix);
                     vNode.position = t; vNode.quaternion = q; vNode.scale = s;
@@ -277,43 +276,36 @@ export class Loader {
             }
 
 
-            // 组装 Node 树
+            // 5 - 组装 Node 树
             asset.gltf.nodes.forEach((nDef, i) => {
-                const vNode = vNodes[i];
+                const vNode = vNodes[i]; // 当前 glTF 节点对应的 TransformNode
 
                 if (nDef.children) {
                     nDef.children.forEach(cIdx => vNode.addChild(vNodes[cIdx]));
                 }
 
                 if (nDef.mesh !== undefined) {
-                    const meshInsts = vaoLibrary.get(nDef.mesh);
+                    const meshInsts = vaoLibrary.get(nDef.mesh); // 这是一个数组，包含该 Mesh 的所有图元
                     if (meshInsts) {
                         meshInsts.forEach((mInst, pIdx) => {
-                            if (pIdx === 0) {
-                                vNode.addComponent('mesh', new MeshComponent(mInst));
-                                meshNodesList.push(vNode);
-                            } else {
-                                const subNode = new Node(`${vNode.name}_p${pIdx}`);
-                                subNode.addComponent('mesh', new MeshComponent(mInst));
-                                vNode.addChild(subNode);
-                                meshNodesList.push(subNode);
+                            const meshNode = new MeshNode(`${vNode.name}_p${pIdx}`, mInst.vao);
+
+                            meshNode.material = mInst.material;
+
+                            if (nDef.skin !== undefined) {
+                                meshNode.skeleton = skeletons[nDef.skin];
+                                meshNode.isSkinned = true;
                             }
-                        });
-                    }
-                    if (nDef.skin !== undefined) {
-                        // 找到对应的 Skeleton 并挂载到 Mesh 上
-                        const targetSkel = skeletons[nDef.skin];
-                        // 没考虑多个 prim
-                        const meshInstances = vaoLibrary.get(nDef.mesh);
-                        meshInstances.forEach(mInst => {
-                            mInst.skeleton = targetSkel; // 关联骨架
-                            mInst.isSkinned = true;
+
+                            vNode.addChild(meshNode);
+
+                            meshNodesList.push(meshNode);
                         });
                     }
                 }
             });
 
-            // 5 - Animation
+            // 6 - 解析 Animation
             const animations = new Map();
             if (asset.gltf.animations) {
                 for (const animDef of asset.gltf.animations) {
@@ -343,26 +335,23 @@ export class Loader {
                 }
             }
 
-            // 6 - 组装根节点
-            const modelRoot = new Node(modelID);
+            // 7 - 组装 AssetContainer
+            const modelRoot = new TransformNode(modelID);
 
-            // 层级树
+            // 组装层级树
             const defaultScene = asset.gltf.scenes[asset.gltf.scene || 0];
             if (defaultScene && defaultScene.nodes) {
                 defaultScene.nodes.forEach(idx => modelRoot.addChild(vNodes[idx]));
             }
 
-            const modelComp = new ModelComponent();
-            modelComp.flatMeshes = meshNodesList;
-            modelComp.flatSkeletons = skeletons;
-            modelRoot.addComponent('model', modelComp);
+            const container = new AssetContainer(modelID);
+            container.rootNode = modelRoot;
+            container.meshes = meshNodesList;   // 在 Step 4 中收集的 MeshNode 引用
+            container.skeletons = skeletons;    // 解析出的 Skeleton 数组
+            container.animations = animations;  // 解析出的 Animation Map
+            container.initAnimationPlayer();
 
-            if (animations.size > 0) {
-                const animComp = new AnimationComponent(animations);
-                modelRoot.addComponent('animation', animComp);
-            }
-
-            return { root: modelRoot };
+            return container;
 
         } catch (error) {
             console.error(`\n[Vapor3D: Failed to load GLB : "${modelID}"`);

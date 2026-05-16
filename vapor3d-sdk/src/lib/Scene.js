@@ -1,4 +1,4 @@
-import { Node } from './Node.js';
+import { TransformNode } from './Node.js';
 
 export class Scene {
     constructor(name = "Main", maxNodes = 2048) {
@@ -10,12 +10,11 @@ export class Scene {
         this._freeIndices = [];
         this._nextIndex = 0;
 
-        this.root = new Node(name + "_Root");
+        this.root = new TransformNode(name + "_Root");
         this.registerNode(this.root);
 
-        
-        // 通用实体注册表，以前专为 Model设计，本质是方便用户直接跳过复杂层级关系直接找到指定节点，比如model
-        this.entities = new Map();
+        // AssetContainer，可视为 models，这一版本中节点的变换&父子关系与资源查询（方便用户）解耦
+        this.containers = new Map(); 
 
         // 资源注册表
         this.registry = {
@@ -54,68 +53,65 @@ export class Scene {
         }
     }
 
-    update() {
+    addContainer(id, container) {
+        if (this.containers.has(id)) this.removeContainer(id);
+
+        this.containers.set(id, container);
+        this.root.addChild(container.rootNode);
+        this.registerNode(container.rootNode);
+    }
+
+    removeContainer(id) {
+        const container = this.containers.get(id);
+        if (!container) return;
+
+        this.root.removeChild(container.rootNode);
+        this.unregisterNode(container.rootNode);
+        container.dispose();
+        this.containers.delete(id);
+    }
+
+    update(dt) {
+
         const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
         this.root.updateWorldMatrix(identity, false, this.worldMatrixBuffer);
 
-        for (const entity of this.entities.values()) {
-            const model = entity.getComponent('model');
-            if (model && model.flatSkeletons) {
-                for (const skel of model.flatSkeletons) {
-                    skel.updateCPU(this.worldMatrixBuffer);
-                    skel.updateGPU();
-                }
+    
+        for (const container of this.containers.values()) {
+            for (const skel of container.skeletons) {
+                skel.updateCPU(this.worldMatrixBuffer);
+                skel.updateGPU();
             }
         }
-    }
-
-    addEntity(id, node) {
-        if (this.entities.has(id)) this.removeEntity(id);
-
-        this.entities.set(id, node);
-        this.root.addChild(node);
-        this.registerNode(node); // 分配矩阵索引
-    }
-
-    removeEntity(id) {
-        const node = this.entities.get(id);
-        if (!node) return;
-
-        this.root.removeChild(node);
-        this.unregisterNode(node); // 回收矩阵索引
-        this.entities.delete(id);
-        node.destroy();
     }
 
 
     getNodeByPath(path) {
         if (!path) return null;
 
+        // 根节点
         if (path.toLowerCase() === "root") return this.root;
 
         const parts = path.split('/');
+        const containerID = parts[0].trim();
 
-        const entityID = parts[0].trim();
-        let currentNode = this.entities.get(entityID);
-
-        if (!currentNode) {
-            currentNode = this.root.children.find(child => child.name === entityID);
-            if (!currentNode) {
-                console.warn(`Vapor3D: Can't find entity or root-node: "${entityID}"`);
-                return null;
-            }
+        // 第一层是 AssetContainer
+        const container = this.containers.get(containerID);
+        if (!container) {
+            console.warn(`Vapor3D: Container "${containerID}" not found in path "${path}"`);
+            return null;
         }
 
-        if (parts.length === 1) return currentNode;
+        let currentNode = container.rootNode;
 
         for (let i = 1; i < parts.length; i++) {
             const targetName = parts[i].trim();
             if (!targetName) continue;
 
-            const nextNode = currentNode.children.find(child => child.name.trim() === targetName);
+            const nextNode = currentNode.children.find(child => child.name === targetName);
 
             if (!nextNode) {
-                console.warn(`Vapor3D: Node "${currentNode.name}" has no child named "${targetName}"`);
+                console.warn(`Vapor3D: Node "${targetName}" is not a child of "${currentNode.name}"`);
                 return null;
             }
             currentNode = nextNode;

@@ -1,4 +1,3 @@
-// --- START OF FILE Animation_b.js ---
 export const AnimationPlayerBlocks = [
     {
         opcode: "Animation_Play",

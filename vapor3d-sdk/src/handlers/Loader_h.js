@@ -19,12 +19,11 @@ export class LoaderHandlers {
         if (!loader || !targetScene) return;
 
         try {
-            const result = await loader.loadGLB(U, targetScene, NAME);
+            const container = await loader.loadGLB(U, targetScene, NAME);
 
-            if (result && result.root) {
-                targetScene.addEntity(NAME, result.root);
-
-                console.log(`Vapor3D: Entity "${NAME}" plugged into Scene.`, result.root);
+            if (container && container.rootNode) {
+                targetScene.addContainer(NAME, container);
+                console.log(`Vapor3D: AssetContainer "${NAME}" plugged into Scene:`, container);
             }
         } catch (e) {
             console.error("Vapor3D: GLB Load Error:", e);
