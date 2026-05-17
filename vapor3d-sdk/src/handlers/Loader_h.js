@@ -7,7 +7,7 @@ export class LoaderHandlers {
 
     _getLoader() {
         if (!this._loader) {
-            const { Loader } = require('../lib/Loader.js');
+            const { Loader } = require('../lib/Loader/Loader.js');
             this._loader = new Loader(this.engine.core.gl);
         }
         return this._loader;

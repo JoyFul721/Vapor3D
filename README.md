@@ -1,8 +1,8 @@
 # Vapor 3D Engine
 
-高性能、可编程的 **多阶段渲染管线 (Multi-Stage Pipeline)** 框架。
+高性能、可编程的 WebGL2 3D 框架。
 
-![Version](https://img.shields.io/badge/version-3.5.0-007a1f?style=flat&logo=github&labelColor=24292e)
+![Version](https://img.shields.io/badge/version-3.6.0-007a1f?style=flat&logo=github&labelColor=24292e)
 
 ---
 
@@ -10,10 +10,25 @@
 
 ---
 
+## 已实现（包括二次开发）的功能：
+- [X] 延迟渲染
+- [X] GLB Loader
+- [X] Physically Based Rendering
+- [X] AABB Parallax-Corrected IBL
+- [X] Ping-Pong 双缓冲后处理
+- [X] Scene Graph & Node Tree
+- [X] Skinning Animation via Matrix Stream Texture Upload
+- [X] Multi-animation blend & bone mask
+- [ ] Shadowmap
+- [ ] Pre-baked Global Illumination
+- [ ] Bloom
+- [ ] TAA
+
 ## 核心特性
 
 * **完全可编程管线**：引擎不内置任何渲染算法。开发者可完全接管并自定义 Shader 逻辑。
-* **自定义渲染阶段**：引擎框架设计支持高效的中间数据交换，支持延迟渲染、G-Buffer 架构及代理几何体等高级技术的二次开发。
+* **自定义渲染阶段**：支持延迟渲染、G-Buffer 架构及代理几何体等高级技术的二次开发。
+* **动画系统**：支持蒙皮动画，支持基于 Track 的多动画混合以及骨骼遮罩。
 
 ## 渲染效果
 
@@ -23,6 +38,7 @@
 ![IBL1](screenshots/IBL2.png)
 ![IBL1](screenshots/IBL1.png)
 ![rain](screenshots/4f608e9e7445583d0d3df88c7549e611.png)
+
 
 * 可前往 example/ 查看我最近在写的一些二次开发作品，均采用MIT开源
 

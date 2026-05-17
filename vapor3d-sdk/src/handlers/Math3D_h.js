@@ -1,5 +1,5 @@
-import { Math3D } from '../lib/Math3D.js';
-import { Utils } from '../lib/Utils.js';
+import { Math3D } from '../lib/Tools/Math3D.js';
+import { Utils } from '../lib/Tools/Utils.js';
 
 export class Math3DHandlers {
     constructor(coreState) {

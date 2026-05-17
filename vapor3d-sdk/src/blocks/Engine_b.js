@@ -44,6 +44,13 @@ export const EngineMenus = {
         animInfoMenu: {
                 acceptReporters: true,
                 items: ['current animation name', 'current time', 'duration', 'is playing', 'animation names']
+        },
+        yesNoMenu: {
+                acceptReporters: true,
+                items: [
+                        { text: "yes", value: "true" },
+                        { text: "no", value: "false" }
+                ]
         }
 };
 

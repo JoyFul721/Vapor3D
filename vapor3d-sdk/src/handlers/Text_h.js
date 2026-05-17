@@ -1,4 +1,4 @@
-import { Text } from "../lib/Text";
+import { Text } from "../lib/Text/Text";
 
 export class TextHandlers {
     constructor(engine, Cast) {

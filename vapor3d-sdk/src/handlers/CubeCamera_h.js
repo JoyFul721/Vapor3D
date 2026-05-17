@@ -1,4 +1,4 @@
-import { CubeCamera } from '../lib/CubeCamera.js';
+import { CubeCamera } from '../lib/Tools/CubeCamera.js';
 
 export class CubeCameraHandlers {
     CubeCam_GetViewMatrix({ X, Y, Z, FACE }) {

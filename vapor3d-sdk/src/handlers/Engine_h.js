@@ -48,7 +48,7 @@ export class EngineHandlers {
 
     gl_Init() {
         if (this.core) return;
-        const { Core } = require('../lib/Core.js');
+        const { Core } = require('../lib/Engine/Core.js');
         this.core = new Core();
         const mainCanvas = this.vm.renderer.canvas;
         if (mainCanvas && mainCanvas.parentElement) {

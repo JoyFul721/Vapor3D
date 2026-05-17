@@ -1,23 +1,110 @@
+import { Track } from "../lib/index";
 export class AnimationPlayerHandlers {
     constructor(engineHandlers, sceneHandlers) {
         this.engine = engineHandlers;
         this.sceneHandlers = sceneHandlers;
     }
 
-    _getAnimPlayer(sceneId, path) {
+    _getTimeline(sceneId, path) {
         const scene = this.sceneHandlers.scenes.get(sceneId);
         if (!scene) return null;
 
         const containerID = path.split('/')[0].trim();
         const container = scene.containers.get(containerID);
 
-        if (!container) {
-            console.warn(`Vapor3D: Model/Container "${containerID}" not found for animation.`);
-            return null;
+        // 直接返回 container.timeline
+        return container?.timeline || null;
+    }
+
+    // ====================== Actions ======================
+
+    Animation_AddTrack({ SCENE_ID, PATH, TRACK_NAME }) {
+        const timeline = this._getTimeline(SCENE_ID, PATH);
+        if (timeline) timeline.tracks.set(TRACK_NAME, []);
+    }
+
+    Animation_RemoveTrack({ SCENE_ID, PATH, TRACK_NAME }) {
+        const timeline = this._getTimeline(SCENE_ID, PATH);
+        if (timeline) timeline.tracks.delete(TRACK_NAME);
+    }
+
+    Animation_ClearTracks({ SCENE_ID, PATH }) {
+        const timeline = this._getTimeline(SCENE_ID, PATH);
+        if (timeline) timeline.tracks.clear();
+    }
+
+    Animation_AddClip({ SCENE_ID, PATH, ANIM_NAME, TRACK_NAME, START, DURATION, WEIGHT }) {
+        const timeline = this._getTimeline(SCENE_ID, PATH);
+        const scene = this.sceneHandlers.scenes.get(SCENE_ID);
+        const container = scene?.containers.get(PATH.split('/')[0].trim());
+        const anim = container?.animations.get(ANIM_NAME);
+
+        if (timeline && anim) {
+            // 容错：如果音轨不存在，自动创建它
+            if (!timeline.tracks.has(TRACK_NAME)) {
+                timeline.tracks.set(TRACK_NAME, []);
+            }
+
+            timeline.tracks.get(TRACK_NAME).push({
+                animation: anim,
+                startTime: Number(START),
+                duration: Number(DURATION),
+                weight: Number(WEIGHT),
+                boneWeights: new Map()
+            });
+        }
+    }
+
+    _setBoneWeightRecursive(node, weightMap, weight) {
+        weightMap.set(node.name, weight);
+        for (const child of node.children) {
+            this._setBoneWeightRecursive(child, weightMap, weight);
+        }
+    }
+    Animation_SetClipBoneWeight({ SCENE_ID, PATH, TRACK_NAME, ANIM_NAME, BONE_NAME, WEIGHT, RECURSIVE }) {
+        const scene = this.sceneHandlers.scenes.get(SCENE_ID);
+        const containerID = PATH.split('/')[0].trim();
+        const container = scene?.containers.get(containerID);
+
+        if (!container) return;
+
+        const clips = container.timeline.tracks.get(TRACK_NAME);
+        const clip = clips?.find(c => c.animation.name === ANIM_NAME);
+        if (!clip) return;
+
+        // 从 skeletons 数组里找骨骼
+        let targetJoint = null;
+
+        // 遍历模型的所有骨架
+        for (const skel of container.skeletons) {
+            targetJoint = skel.joints.find(j => j.name === BONE_NAME);
+            if (targetJoint) break;
         }
 
-        return container.animationPlayer;
+        if (targetJoint) {
+            const isRecursive = String(RECURSIVE) === "true";
+            if (isRecursive) {
+                this._setBoneWeightRecursive(targetJoint, clip.boneWeights, Number(WEIGHT));
+            } else {
+                clip.boneWeights.set(targetJoint.name, Number(WEIGHT));
+            }
+        } else {
+            console.warn(`Vapor3D: Joint "${BONE_NAME}" not found in skeletons of model "${containerID}".`);
+        }
     }
+
+    Animation_ApplyTime({ SCENE_ID, TIME }) {
+        const scene = this.sceneHandlers.scenes.get(SCENE_ID);
+        if (!scene) return;
+
+        for (const container of scene.containers.values()) {
+            if (container.timeline) {
+                container.timeline.applyAt(Number(TIME), container.rootNode);
+            }
+        }
+    }
+
+    // ====================== Getters ======================
 
     _getFlatTRS(node) {
         return [
@@ -26,52 +113,7 @@ export class AnimationPlayerHandlers {
             ...node.scale
         ];
     }
-
-    // ====================== Actions ======================
-
-    Animation_Play({ SCENE_ID, PATH, ANIM_NAME, MODE }) {
-        const player = this._getAnimPlayer(SCENE_ID, PATH);
-        if (player) {
-            const doLoop = (MODE === 'loop');
-            player.play(String(ANIM_NAME), doLoop);
-        }
-    }
-
-    Animation_Stop({ SCENE_ID, PATH }) {
-        const player = this._getAnimPlayer(SCENE_ID, PATH);
-        if (player) {
-            player.stop();
-        }
-    }
-
-    Animation_SetTime({ SCENE_ID, PATH, TIME }) {
-        const player = this._getAnimPlayer(SCENE_ID, PATH);
-        if (player) {
-            player.setTime(Number(TIME));
-        }
-    }
-
-    Animation_SetSpeed({ SCENE_ID, PATH, SPEED }) {
-        const player = this._getAnimPlayer(SCENE_ID, PATH);
-        if (player) {
-            player.speed = Number(SPEED);
-        }
-    }
-
-    // 遍历 container
-    Animation_Update({ SCENE_ID, DT }) {
-        const scene = this.sceneHandlers.scenes.get(SCENE_ID);
-        if (!scene) return;
-
-        for (const container of scene.containers.values()) {
-            if (container.animationPlayer) {
-                container.animationPlayer.update(Number(DT));
-            }
-        }
-    }
-
-    // ====================== Getters ======================
-
+    
     Animation_GetNodeTRS({ SCENE_ID, PATH }) {
         const scene = this.sceneHandlers.scenes.get(SCENE_ID);
         const node = scene?.getNodeByPath(PATH);
@@ -88,25 +130,14 @@ export class AnimationPlayerHandlers {
         return jointNode ? JSON.stringify(this._getFlatTRS(jointNode)) : "[]";
     }
 
-    Animation_GetInfo({ SCENE_ID, PATH, PARAM }) {
-        const player = this._getAnimPlayer(SCENE_ID, PATH);
-        if (!player) return "";
+    Animation_GetTrackCount({ SCENE_ID, PATH }) {
+        const timeline = this._getTimeline(SCENE_ID, PATH);
+        return timeline ? timeline.tracks.length : 0;
+    }
 
-        const activeAnim = player.activeAnimation;
-
-        switch (PARAM) {
-            case 'current animation name':
-                return activeAnim ? activeAnim.name : "";
-            case 'current time':
-                return player.currentTime;
-            case 'duration':
-                return activeAnim ? activeAnim.duration : 0;
-            case 'is playing':
-                return player.isPlaying;
-            case 'animation names':
-                return JSON.stringify(Array.from(player.animations.keys()));
-            default:
-                return "";
-        }
+    Animation_IsTimelineActive({ SCENE_ID, PATH }) {
+        const timeline = this._getTimeline(SCENE_ID, PATH);
+        // 需要 timeline 类里维护一个 currentTime 属性
+        return timeline ? timeline.tracks.some(t => t.isActive(timeline.currentTime)) : false;
     }
 }

@@ -1,5 +1,5 @@
 import { Scene } from '../lib/index.js';
-import { Math3D } from '../lib/Math3D.js';
+import { Math3D } from '../lib/Tools/Math3D.js';
 
 export class SceneHandlers {
     constructor(engineHandlers) {
