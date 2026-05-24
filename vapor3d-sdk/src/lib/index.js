@@ -20,6 +20,5 @@ export { AssetContainer } from './Scene/Model/AssetContainer.js'
 export { Skeleton } from './Scene/Model/Skeleton.js'
 
 export { Animation } from './Animation/Animation.js'
-export { Track } from './Animation/Track.js'
 export { Mixer } from './Animation/Mixer.js'
 export { Timeline} from './Animation/Timeline.js'

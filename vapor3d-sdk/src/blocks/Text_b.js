@@ -11,5 +11,25 @@ export const TextBlocks = [
             SIZE: { type: "number", defaultValue: 0 },
             B_COLOR: { type: "color", defaultValue: "#000000" }
         }
+    },
+    {
+        opcode: "Text_GetWidth",
+        blockType: "reporter",
+        text: "width of text [TEXT] font [FONT] size [BORDER_SIZE]",
+        arguments: {
+            TEXT: { type: "string", defaultValue: "Hello!" },
+            FONT: { type: "string", defaultValue: "32px sans-serif" },
+            BORDER_SIZE: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Text_GetHeight",
+        blockType: "reporter",
+        text: "height of text [TEXT] font [FONT] size [BORDER_SIZE]",
+        arguments: {
+            TEXT: { type: "string", defaultValue: "Hello!" },
+            FONT: { type: "string", defaultValue: "32px sans-serif" },
+            BORDER_SIZE: { type: "number", defaultValue: 0 }
+        }
     }
 ]

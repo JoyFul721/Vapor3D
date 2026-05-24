@@ -24,4 +24,22 @@ export class TextHandlers {
 
         this.engine.textures.set(this.Cast.toString(NAME), tex);
     }
+
+    Text_GetWidth({ TEXT, FONT, BORDER_SIZE }, util) {
+        const size = Text.getBounds(
+            this.Cast.toString(TEXT),
+            this.Cast.toString(FONT),
+            this.Cast.toNumber(BORDER_SIZE)
+        );
+        return size.width;
+    }
+
+    Text_GetHeight({ TEXT, FONT, BORDER_SIZE }, util) {
+        const size = Text.getBounds(
+            this.Cast.toString(TEXT),
+            this.Cast.toString(FONT),
+            this.Cast.toNumber(BORDER_SIZE)
+        );
+        return size.height;
+    }
 }

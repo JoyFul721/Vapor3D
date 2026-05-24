@@ -37,9 +37,9 @@ export class SceneHandlers {
 
     // ====================== Node Transform ======================
 
-    Scene_NodeSetTRS({ SCENE_ID, PATH, TRS }) {
+    Scene_NodeSetTRS({ SCENE_ID, NODE_IDX, TRS }) {
         const scene = this.scenes.get(SCENE_ID);
-        const node = scene?.getNodeByPath(PATH);
+        const node = scene.getNodeByIndex(NODE_IDX);
         if (!node) return;
 
         const data = Math3D.TRS_parse(TRS);
@@ -51,31 +51,37 @@ export class SceneHandlers {
         node.setDirty();
     }
 
-    Scene_NodeSetParent({ SCENE_ID, CHILD_PATH, PARENT_PATH }) {
+    Scene_NodeSetParent({ SCENE_ID, CHILD_NODE_IDX, PARENT_NODE_IDX }) {
         const scene = this.scenes.get(SCENE_ID);
         if (!scene) return;
 
-        const childNode = scene.getNodeByPath(CHILD_PATH);
-        if (!childNode) return;
+        const childNode = scene.getNodeByIndex(CHILD_NODE_IDX);
+        // PARENT_NODE_IDX 为 -1，表示挂载到 Scene Root
+        const parentNode = (PARENT_NODE_IDX === -1) ? scene.root : scene.getNodeByIndex(PARENT_NODE_IDX);
 
-        let parentNode = (!PARENT_PATH || PARENT_PATH.toLowerCase() === "root")
-            ? scene.root
-            : scene.getNodeByPath(PARENT_PATH);
-
-        if (parentNode) {
+        if (childNode && parentNode) {
             parentNode.addChild(childNode);
             childNode.setDirty();
         }
     }
 
-    Scene_GetNodeMatrix({ SCENE_ID, PATH }) {
+    Scene_GetNodeMatrix({ SCENE_ID, NODE_IDX }) {
         const scene = this.scenes.get(SCENE_ID);
-        const node = scene?.getNodeByPath(PATH);
-        if (!node || node.worldMatrixIndex === -1) return "";
+        const node = scene?.getNodeByIndex(NODE_IDX);
+        if (!node || node.worldMatrixIndex === -1) return "[]";
 
         const offset = node.worldMatrixIndex * 16;
         const mat = scene.worldMatrixBuffer.subarray(offset, offset + 16);
         return JSON.stringify(Array.from(mat));
+    }
+
+    _getFlatTRS(node) {
+        return [...node.position, ...node.quaternion, ...node.scale];
+    }
+    Scene_GetNodeTRS({ SCENE_ID, NODE_IDX }) {
+        const scene = this.scenes.get(SCENE_ID);
+        const node = scene?.getNodeByIndex(NODE_IDX);
+        return node ? JSON.stringify(this._getFlatTRS(node)) : "[]";
     }
 
     Scene_UpdateWorldMatrix({ SCENE_ID }) {
@@ -88,7 +94,18 @@ export class SceneHandlers {
         return scene?.containers.get(modelID);
     }
 
+    Scene_GetModelRootIndex({ SCENE_ID, MODEL }) {
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        return container ? container.rootNode.worldMatrixIndex : -1;
+    }
+
     // ====== Skeleton (via AssetContainer) ======
+
+    Scene_GetJointNodeIndex({ SCENE_ID, MODEL, IDX }) {
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const joint = container?.skeletons[0]?.joints[Number(IDX)];
+        return joint ? joint.worldMatrixIndex : -1;
+    }
 
     Scene_GetJointCount({ SCENE_ID, MODEL }) {
         const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
@@ -135,12 +152,18 @@ export class SceneHandlers {
 
     // ====== Mesh (via AssetContainer.meshes) ======
 
+    Scene_GetMeshNodeIndex({ SCENE_ID, MODEL, IDX }) {
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const meshNode = container?.meshes[Number(IDX)];
+        return meshNode ? meshNode.worldMatrixIndex : -1;
+    }
+
     Scene_GetMeshCount({ SCENE_ID, MODEL }) {
         const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
         return container ? container.meshes.length : 0;
     }
 
-    Scene_NodeGetName({ SCENE_ID, MODEL, IDX }) {
+    Scene_MeshGetName({ SCENE_ID, MODEL, IDX }) {
         const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
         return container?.meshes[Number(IDX)]?.name || "Null";
     }
@@ -194,4 +217,37 @@ export class SceneHandlers {
         const val = meshNode.material[PARAM];
         return Array.isArray(val) ? JSON.stringify(val) : val;
     }
+
+    Scene_MeshGetLightmapParam({ SCENE_ID, MODEL, IDX, PARAM }) {
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const meshNode = container?.meshes[Number(IDX)];
+
+        if (!meshNode) {
+            return PARAM === "hasLightmap" ? "false" : -1;
+        }
+
+        switch (PARAM) {
+            case "hasLightmap":
+                return meshNode.hasLightmap ? "true" : "false";
+            case "lightmapIndex":
+                return meshNode.lightmapIndex !== undefined ? meshNode.lightmapIndex : -1;
+            default:
+                return "";
+        }
+    }
+
+    Scene_MeshGetLightmapScaleOffsetComp({ SCENE_ID, MODEL, IDX, COMP }) {
+        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const meshNode = container?.meshes[Number(IDX)];
+
+        const so = meshNode?.lightmapScaleOffset ?? [0, 0, 0, 0];
+
+        switch (COMP) {
+            case "X": return so[0]; // Scale X
+            case "Y": return so[1]; // Scale Y
+            case "Z": return so[2]; // Offset X
+            case "W": return so[3]; // Offset Y
+        }
+    }
+    
 }

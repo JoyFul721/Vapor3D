@@ -26,7 +26,7 @@ export class Loader {
             // 1 - 纹理去重加载
             if (asset.gltf.textures) {
                 for (let i = 0; i < asset.gltf.textures.length; i++) {
-                    const resId = `${modelID}_tex_${i}`; // 我是傻逼，我tm用原始url去拼接，直接炸缸了
+                    const resId = `${modelID}_tex_${i}`;
 
                     const tex = await targetScene.getOrCreateTexture(resId, async () => {
                         const texDef = asset.gltf.textures[i];
@@ -113,7 +113,7 @@ export class Loader {
                                         break;
                                     default:
                                         console.error(`Vapor3D: Unsupported joint component type: ${accessor.componentType}`);
-                                        jointsData = new Uint8Array(0); // 创建一个空数组避免后续代码崩溃
+                                        jointsData = new Uint8Array(0);
                                         break;
                                 }
 
@@ -124,13 +124,13 @@ export class Loader {
                                 v.addBuffer(jointsFloat, 4, 4);
                             }
 
+                            // 有关二进制解析的均借助了 AI 编程
                             const wIdx = prim.attributes.WEIGHTS_0; // weight
                             if (wIdx !== undefined) {
                                 const raw = await asset.accessorData(wIdx);
                                 const accessor = asset.gltf.accessors[wIdx];
                                 let weightsFloat;
 
-                                // 1. 根据数据类型正确解析
                                 if (accessor.componentType === 5126) { // FLOAT
                                     weightsFloat = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice();
                                 } else if (accessor.componentType === 5121) { // UNSIGNED_BYTE (Normalized)
@@ -146,7 +146,6 @@ export class Loader {
                                     weightsFloat = new Float32Array(0);
                                 }
 
-                                // 2. 你的旧代码智慧：权重归一化防爆保护
                                 for (let i = 0; i < weightsFloat.length; i += 4) {
                                     let sum = weightsFloat[i] + weightsFloat[i + 1] + weightsFloat[i + 2] + weightsFloat[i + 3];
                                     if (sum > 0.0001) {
@@ -155,7 +154,7 @@ export class Loader {
                                         weightsFloat[i + 2] /= sum;
                                         weightsFloat[i + 3] /= sum;
                                     } else {
-                                        // 兜底：如果都没有权重，让第一根骨头接管，防止塌陷
+                                        // 如果都没有权重，设置第一根为 1.0
                                         weightsFloat[i] = 1.0;
                                         weightsFloat[i + 1] = 0.0;
                                         weightsFloat[i + 2] = 0.0;
@@ -353,6 +352,40 @@ export class Loader {
     }
 
 
+    applyLightmapMetadata(container, json) {
+        if (!container || !container.meshes) {
+            console.warn("Vapor3D: Invalid container or no meshes found to apply lightmap.");
+            return 0;
+        }
+        const metadata = (typeof json === 'string') ? JSON.parse(json) : json;
+        if (!metadata || !metadata.items) {
+            console.warn("Vapor3D: No metadata.");
+            return 0;}
+
+        let appliedCount = 0;
+        container.meshes.forEach(meshNode => {
+            // 正则提取模糊匹配，因为我把预制件实例化了
+            let searchName = meshNode.name.replace(/_p\d+$/, '');
+            searchName = searchName.replace(/\.\d+$/, '');
+            const meta = metadata.items.find(item => {
+                return searchName.includes(item.name) || item.name.includes(searchName);
+            });
+
+            if (meta) {
+                meshNode.hasLightmap = true;
+                meshNode.lightmapIndex = meta.lightmapIndex;
+                meshNode.lightmapScaleOffset = [...meta.scaleOffset];
+                appliedCount++;
+            } else {
+                meshNode.hasLightmap = false;
+                meshNode.lightmapIndex = -1;
+                meshNode.lightmapScaleOffset = [0, 0, 0, 0];
+            }
+        });
+
+        
+        return appliedCount;
+    }
 
 
 

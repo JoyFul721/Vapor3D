@@ -10,9 +10,23 @@ export const LoaderBlocks = [
                 defaultValue: "https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Assets@main/Models/WaterBottle/glTF-Binary/WaterBottle.glb"
             },
             SCENE_ID: { type: "string", defaultValue: "Main" },
-            NAME: { type: "string", defaultValue: "sampleModel" }
+            NAME: { type: "string", defaultValue: "sample" }
         }
     },
+    {
+        opcode: "Loader_apply_lightmap_metadata",
+        blockType: "command",
+        text: "Loader.applyLightmapMeta([JSON]) to Model [NAME] in Scene [SCENE_ID]",
+        arguments: {
+            JSON: {
+                type: "string",
+                defaultValue: '{"items":[]}'
+            },
+            NAME: { type: "string", defaultValue: "sample" },
+            SCENE_ID: { type: "string", defaultValue: "Main" }
+        }
+    },
+
 
     { blockType: "label", text: "Texture Loader" },
     {

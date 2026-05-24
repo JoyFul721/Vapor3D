@@ -30,6 +30,20 @@ export class LoaderHandlers {
         }
     }
 
+    async Loader_apply_lightmap_metadata({ SCENE_ID, NAME, JSON }) {
+        const loader = this._getLoader();
+        const targetScene = this.sceneHandlers.scenes.get(SCENE_ID);
+        if (!loader || !targetScene) return;
+
+        const container = targetScene.containers ? targetScene.containers.get(NAME) : null;
+
+        const count = loader.applyLightmapMetadata(container, JSON);
+
+        if (count > 0) {
+            console.log(`Vapor3D: Loader applied lightmap metadata to ${count} meshes in "${NAME}".`);
+        }
+    }
+
     async Loader_load_texture_url({ NAME, U }) {
         const loader = this._getLoader();
         if (!loader) return;

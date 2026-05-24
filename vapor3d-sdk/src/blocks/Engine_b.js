@@ -12,6 +12,7 @@ export const EngineMenus = {
         axisMenu: ["X", "Y", "Z"],
         v3OpMenu: ["+", "-", "mul"],
         v3CompMenu: ["X", "Y", "Z"],
+        v4CompMenu: ["X", "Y", "Z", "W"],
         costumeMenu: { acceptReporters: true, items: "tex_getCostumes" },
         listMenu: { acceptReporters: true, items: "getAllLists" },
         texTypeMenu: [
@@ -51,6 +52,18 @@ export const EngineMenus = {
                         { text: "yes", value: "true" },
                         { text: "no", value: "false" }
                 ]
+        },
+        clipPropMenu: {
+                acceptReporters: true,
+                items: [
+                        { text: "start time", value: "startTime" },
+                        { text: "duration", value: "duration" },
+                        { text: "mix weight", value: "weight" }
+                ]
+        },
+        lightmapParamMenu: {
+                acceptReporters: true,
+                items: ["hasLightmap", "lightmapIndex"]
         }
 };
 

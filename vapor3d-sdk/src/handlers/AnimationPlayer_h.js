@@ -1,4 +1,3 @@
-import { Track } from "../lib/index";
 export class AnimationPlayerHandlers {
     constructor(engineHandlers, sceneHandlers) {
         this.engine = engineHandlers;
@@ -18,64 +17,48 @@ export class AnimationPlayerHandlers {
 
     // ====================== Actions ======================
 
-    Animation_AddTrack({ SCENE_ID, PATH, TRACK_NAME }) {
-        const timeline = this._getTimeline(SCENE_ID, PATH);
-        if (timeline) timeline.tracks.set(TRACK_NAME, []);
-    }
-
-    Animation_RemoveTrack({ SCENE_ID, PATH, TRACK_NAME }) {
-        const timeline = this._getTimeline(SCENE_ID, PATH);
-        if (timeline) timeline.tracks.delete(TRACK_NAME);
-    }
-
-    Animation_ClearTracks({ SCENE_ID, PATH }) {
-        const timeline = this._getTimeline(SCENE_ID, PATH);
-        if (timeline) timeline.tracks.clear();
-    }
-
-    Animation_AddClip({ SCENE_ID, PATH, ANIM_NAME, TRACK_NAME, START, DURATION, WEIGHT }) {
-        const timeline = this._getTimeline(SCENE_ID, PATH);
+    Animation_ClearClips({ SCENE_ID, MODEL }) {
         const scene = this.sceneHandlers.scenes.get(SCENE_ID);
-        const container = scene?.containers.get(PATH.split('/')[0].trim());
+        const container = scene?.containers.get(MODEL);
+
+        if (container && container.timeline) {
+            container.timeline.clips.clear();
+        }
+    }
+
+    Animation_AddClip({ SCENE_ID, MODEL, CLIP_ID, ANIM_NAME }) {
+        const scene = this.sceneHandlers.scenes.get(SCENE_ID);
+        const container = scene?.containers.get(MODEL);
         const anim = container?.animations.get(ANIM_NAME);
 
-        if (timeline && anim) {
-            // 容错：如果音轨不存在，自动创建它
-            if (!timeline.tracks.has(TRACK_NAME)) {
-                timeline.tracks.set(TRACK_NAME, []);
-            }
-
-            timeline.tracks.get(TRACK_NAME).push({
-                animation: anim,
-                startTime: Number(START),
-                duration: Number(DURATION),
-                weight: Number(WEIGHT),
-                boneWeights: new Map()
-            });
+        if (container && anim) {
+            container.timeline.addClip(CLIP_ID, anim);
         }
     }
 
-    _setBoneWeightRecursive(node, weightMap, weight) {
-        weightMap.set(node.name, weight);
-        for (const child of node.children) {
-            this._setBoneWeightRecursive(child, weightMap, weight);
-        }
-    }
-    Animation_SetClipBoneWeight({ SCENE_ID, PATH, TRACK_NAME, ANIM_NAME, BONE_NAME, WEIGHT, RECURSIVE }) {
+    Animation_RemoveClip({ SCENE_ID, MODEL, CLIP_ID }) {
         const scene = this.sceneHandlers.scenes.get(SCENE_ID);
-        const containerID = PATH.split('/')[0].trim();
-        const container = scene?.containers.get(containerID);
+        const container = scene?.containers.get(MODEL);
+        container?.timeline.removeClip(CLIP_ID);
+    }
 
-        if (!container) return;
+    Animation_SetClipProperty({ SCENE_ID, MODEL, CLIP_ID, PROP, VALUE }) {
+        const scene = this.sceneHandlers.scenes.get(SCENE_ID);
+        const container = scene?.containers.get(MODEL);
+        const clip = container?.timeline.clips.get(CLIP_ID);
+        if (clip) {
+            clip[PROP] = Number(VALUE);
+        }
+    }
 
-        const clips = container.timeline.tracks.get(TRACK_NAME);
-        const clip = clips?.find(c => c.animation.name === ANIM_NAME);
-        if (!clip) return;
+    Animation_SetClipBoneWeight({ SCENE_ID, MODEL, CLIP_ID, BONE_NAME, WEIGHT, RECURSIVE }) {
+        const scene = this.sceneHandlers.scenes.get(SCENE_ID);
+        const container = scene?.containers.get(MODEL);
+        const clip = container?.timeline.clips.get(CLIP_ID);
 
-        // 从 skeletons 数组里找骨骼
+        if (!container || !clip) return;
+
         let targetJoint = null;
-
-        // 遍历模型的所有骨架
         for (const skel of container.skeletons) {
             targetJoint = skel.joints.find(j => j.name === BONE_NAME);
             if (targetJoint) break;
@@ -88,19 +71,21 @@ export class AnimationPlayerHandlers {
             } else {
                 clip.boneWeights.set(targetJoint.name, Number(WEIGHT));
             }
-        } else {
-            console.warn(`Vapor3D: Joint "${BONE_NAME}" not found in skeletons of model "${containerID}".`);
+        }
+    }
+
+    _setBoneWeightRecursive(node, weightMap, weight) {
+        weightMap.set(node.name, weight);
+        for (const child of node.children) {
+            this._setBoneWeightRecursive(child, weightMap, weight);
         }
     }
 
     Animation_ApplyTime({ SCENE_ID, TIME }) {
         const scene = this.sceneHandlers.scenes.get(SCENE_ID);
         if (!scene) return;
-
         for (const container of scene.containers.values()) {
-            if (container.timeline) {
-                container.timeline.applyAt(Number(TIME), container.rootNode);
-            }
+            container.timeline?.applyAt(Number(TIME), container.rootNode);
         }
     }
 
@@ -114,11 +99,6 @@ export class AnimationPlayerHandlers {
         ];
     }
     
-    Animation_GetNodeTRS({ SCENE_ID, PATH }) {
-        const scene = this.sceneHandlers.scenes.get(SCENE_ID);
-        const node = scene?.getNodeByPath(PATH);
-        return node ? JSON.stringify(this._getFlatTRS(node)) : "[]";
-    }
 
     Animation_GetModelJointTRS({ SCENE_ID, MODEL, IDX }) {
         const scene = this.sceneHandlers.scenes.get(SCENE_ID);
@@ -130,14 +110,15 @@ export class AnimationPlayerHandlers {
         return jointNode ? JSON.stringify(this._getFlatTRS(jointNode)) : "[]";
     }
 
-    Animation_GetTrackCount({ SCENE_ID, PATH }) {
-        const timeline = this._getTimeline(SCENE_ID, PATH);
+    Animation_GetTrackCount({ SCENE_ID, MODEL }) {
+        const timeline = this._getTimeline(SCENE_ID, MODEL);
         return timeline ? timeline.tracks.length : 0;
     }
 
-    Animation_IsTimelineActive({ SCENE_ID, PATH }) {
-        const timeline = this._getTimeline(SCENE_ID, PATH);
-        // 需要 timeline 类里维护一个 currentTime 属性
-        return timeline ? timeline.tracks.some(t => t.isActive(timeline.currentTime)) : false;
+    Animation_IsTimelineActive({ SCENE_ID, MODEL }) {
+        const timeline = this._getTimeline(SCENE_ID, MODEL);
+        return timeline ? Array.from(timeline.clips.values()).some(t =>
+            timeline.currentTime >= t.startTime && timeline.currentTime < (t.startTime + t.duration)
+        ) : false;
     }
 }

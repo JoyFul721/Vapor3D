@@ -73,6 +73,12 @@ export class MeshNode extends TransformNode {
 
         this.isSkinned = false;
         this.skeleton = null;
+
+
+        this.hasLightmap = false;
+        this.lightmapIndex = -1;
+        this.lightmapScaleOffset = [1, 1, 0, 0];
+        this.lightmapTex = null;
     }
 
     draw(mode) {

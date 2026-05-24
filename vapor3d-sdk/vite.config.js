@@ -7,7 +7,7 @@ export default defineConfig({
     cors: true
   },
   build: {
-    minify: false,
+    minify: true,
 
     lib: {
       entry: resolve(__dirname, 'src/index.js'),

@@ -23,6 +23,12 @@ export class Scene {
         };
     }
 
+    getNodeByIndex(idx) {
+        const i = parseInt(idx);
+        if (i < 0 || i >= this.nodes.length) return null;
+        return this.nodes[i] || null;
+    }
+
     registerNode(node) {
         if (node.worldMatrixIndex !== -1) return;
 
@@ -84,42 +90,6 @@ export class Scene {
             }
         }
     }
-
-
-    getNodeByPath(path) {
-        if (!path) return null;
-
-        // 根节点
-        if (path.toLowerCase() === "root") return this.root;
-
-        const parts = path.split('/');
-        const containerID = parts[0].trim();
-
-        // 第一层是 AssetContainer
-        const container = this.containers.get(containerID);
-        if (!container) {
-            console.warn(`Vapor3D: Container "${containerID}" not found in path "${path}"`);
-            return null;
-        }
-
-        let currentNode = container.rootNode;
-
-        for (let i = 1; i < parts.length; i++) {
-            const targetName = parts[i].trim();
-            if (!targetName) continue;
-
-            const nextNode = currentNode.children.find(child => child.name === targetName);
-
-            if (!nextNode) {
-                console.warn(`Vapor3D: Node "${targetName}" is not a child of "${currentNode.name}"`);
-                return null;
-            }
-            currentNode = nextNode;
-        }
-
-        return currentNode;
-    }
-
 
     // ================== Registry Map ==================
 

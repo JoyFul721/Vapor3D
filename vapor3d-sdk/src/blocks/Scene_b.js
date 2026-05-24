@@ -32,30 +32,39 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetTRS",
         blockType: "command",
-        text: "Scene [SCENE_ID] node [PATH] set transform [TRS]",
+        text: "Scene [SCENE_ID] node index [NODE_IDX] set transform [TRS]",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
-            PATH: { type: "string", defaultValue: "sample/root" },
+            NODE_IDX: { type: "number", defaultValue: 0 },
             TRS: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" }
         }
     },
     {
         opcode: "Scene_NodeSetParent",
         blockType: "command",
-        text: "Scene [SCENE_ID] node [CHILD_PATH] set parent to [PARENT_PATH]",
+        text: "Scene [SCENE_ID] node index [CHILD_IDX] set parent to index [PARENT_IDX]",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
-            CHILD_PATH: { type: "string", defaultValue: "cup" },
-            PARENT_PATH: { type: "string", defaultValue: "sample" }
+            CHILD_IDX: { type: "number", defaultValue: 0 },
+            PARENT_IDX: { type: "number", defaultValue: -1 }
         }
     },
     {
         opcode: "Scene_GetNodeMatrix",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] node [PATH] .worldMatrix",
+        text: "Scene [SCENE_ID] node index [NODE_IDX] .worldMatrix",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
-            PATH: { type: "string", defaultValue: "sample/joint1" }
+            NODE_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Scene_GetNodeTRS",
+        blockType: "reporter",
+        text: "Scene [SCENE_ID] node index [NODE_IDX] .TRS",
+        arguments: {
+            SCENE_ID: { type: "string", defaultValue: "Main" },
+            NODE_IDX: { type: "number", defaultValue: 0 }
         }
     },
     {
@@ -71,14 +80,34 @@ export const SceneBlocks = [
     // ======================= Model =======================
 
     { blockType: "label", text: "Model" }, // 参考babylon, Model 归纳为 Node ，现在的 model 相当于 node extension
+    {
+        opcode: "Scene_GetModelRootIndex",
+        blockType: "reporter",
+        text: "Scene [SCENE_ID] get model [MODEL] root index",
+        arguments: {
+            SCENE_ID: { type: "string", defaultValue: "Main" },
+            MODEL: { type: "string", defaultValue: "sample" }
+        }
+    },   
     // ========= Joint =========
+    { blockType: "label", text: "Joint"},
+    {
+        opcode: "Scene_GetJointNodeIndex",
+        blockType: "reporter",
+        text: "Scene [SCENE_ID] get model [MODEL] joint [IDX] index",
+        arguments: {
+            SCENE_ID: { type: "string", defaultValue: "Main" },
+            MODEL: { type: "string", defaultValue: "animation" },
+            IDX: { type: "number", defaultValue: 0 }
+        }
+    },
     {
         opcode: "Scene_GetJointCount",
         blockType: "reporter",
         text: "Scene [SCENE_ID] model [MODEL] .jointCount",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "sample" }
+            MODEL: { type: "string", defaultValue: "animation" }
         }
     },
     {
@@ -87,7 +116,7 @@ export const SceneBlocks = [
         text: "Scene [SCENE_ID] model [MODEL] .joints [IDX] .setTRS [TRS]",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "sample" },
+            MODEL: { type: "string", defaultValue: "animation" },
             IDX: { type: "number", defaultValue: 0 },
             TRS: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" }
         }
@@ -98,7 +127,7 @@ export const SceneBlocks = [
         text: "Scene [SCENE_ID] model [MODEL] joint index [IDX] -> name",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "sample" },
+            MODEL: { type: "string", defaultValue: "animation" },
             IDX: { type: "number", defaultValue: 0 }
         }
     },
@@ -108,7 +137,7 @@ export const SceneBlocks = [
         text: "Scene [SCENE_ID] model [MODEL] joint name [NAME] -> index",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "sample" },
+            MODEL: { type: "string", defaultValue: "animation" },
             NAME: { type: "string", defaultValue: "Hips" }
         }
     },
@@ -118,12 +147,23 @@ export const SceneBlocks = [
         text: "Scene [SCENE_ID] model [MODEL] .bindSkeletonTexture ( [UNIT] )",
         arguments: {
             SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "sample" },
+            MODEL: { type: "string", defaultValue: "animation" },
             UNIT: { type: "number", defaultValue: 1 }
         }
     },
 
     // ======== Mesh ========
+    { blockType: "label", text: "Mesh" },
+    {
+        opcode: "Scene_GetMeshNodeIndex",
+        blockType: "reporter",
+        text: "Scene [SCENE_ID] get model [MODEL] mesh [IDX] index",
+        arguments: {
+            SCENE_ID: { type: "string", defaultValue: "Main" },
+            MODEL: { type: "string", defaultValue: "sample" },
+            IDX: { type: "number", defaultValue: 0 }
+        }
+    },
     {
         opcode: "Scene_GetMeshCount",
         blockType: "reporter",
@@ -179,6 +219,28 @@ export const SceneBlocks = [
             MODEL: { type: "string", defaultValue: "sample" },
             IDX: { type: "number", defaultValue: 0 },
             PARAM: { type: "string", menu: "pbrParamMenu" }
+        }
+    },
+    {
+        opcode: "Scene_MeshGetLightmapParam",
+        blockType: "reporter",
+        text: "Scene [SCENE_ID] model [MODEL] .meshes[IDX] .getLightmap([PARAM])",
+        arguments: {
+            SCENE_ID: { type: "string", defaultValue: "Main" },
+            MODEL: { type: "string", defaultValue: "sample" },
+            IDX: { type: "number", defaultValue: 0 },
+            PARAM: { type: "string", menu: "lightmapParamMenu" }
+        }
+    },
+    {
+        opcode: "Scene_MeshGetLightmapScaleOffsetComp",
+        blockType: "reporter",
+        text: "Scene [SCENE_ID] model [MODEL] .meshes[IDX] .material .lightmapScaleOffset .[COMP]",
+        arguments: {
+            SCENE_ID: { type: "string", defaultValue: "Main" },
+            MODEL: { type: "string", defaultValue: "sample" },
+            IDX: { type: "number", defaultValue: 0 },
+            COMP: { type: "string", menu: "v4CompMenu" }
         }
     },
     {

@@ -35,4 +35,16 @@ export class Text {
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
         return tex;
     }
+
+    static getBounds(text, font, borderSize) {
+        const ctx = this.ctx;
+        ctx.font = font;
+        const m = ctx.measureText(text);
+        const b = borderSize > 0 ? Math.ceil(borderSize) : 0;
+
+        const w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight + 2 * b;
+        const h = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent + 2 * b;
+
+        return { width: w, height: h };
+    }
 }
