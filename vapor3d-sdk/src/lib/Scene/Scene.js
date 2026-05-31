@@ -1,7 +1,7 @@
 import { TransformNode } from '../index.js';
 
 export class Scene {
-    constructor(name = "Main", maxNodes = 2048) {
+    constructor(name = "Main", maxNodes = 8192) {
         this.name = name;
 
         // 全局矩阵仓库

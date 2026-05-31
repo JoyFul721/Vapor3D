@@ -1,7 +1,7 @@
 export class Core {
     constructor() {
         this.canvas = document.createElement('canvas');
-        this.canvas.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated;z-index:0;';
+        this.canvas.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;z-index:0;';
 
         this.gl = this.canvas.getContext('webgl2', {
             alpha: true, depth: true, stencil: true, antialias: false,

@@ -1,33 +1,37 @@
-/*
- * Vapor3D - Lightmap Metadata Exporter
- * 
- * Description: 
- * Exports static lightmap metadata (index and scale/offset) from Unity's 
- * internal LightmapSettings and MeshRenderer components to a JSON format 
- * compatible with the Vapor3D engine pipeline.
- * 
- * Author: Joy_Ful
- * Date: 2026-05-24
- * 
- * Copyright (c) 2026 Joy_Ful. All rights reserved.
- * 
- * License: MIT License
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * Disclaimer:
- * This script utilizes Unity's Editor API. Use of this script is subject to 
- * Unity Technologies' Terms of Service and EULA. The software is provided "as is",
- * without warranty of any kind, express or implied, including but not limited to
- * the warranties of merchantability, fitness for a particular purpose.
- */
+// ============================================================================
+// Copyright (c) 2026 Joy_Ful
+//
+// Project: Vapor3D Engine Pipeline
+// Module: LightmapMetadataExporter.cs
+// Author: Joy_Ful
+// Acknowledgments: Developed with the assistance of Gemini AI. 借助 Google Gemini Ai 辅助开发
+// Date: 2026-05-24
+//
+// Description:
+// Exports static lightmap metadata (index and scale/offset) from Unity's 
+// internal LightmapSettings and MeshRenderer components to a JSON format 
+// compatible with the Vapor3D engine pipeline.
+//
+// License: MIT License
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// ============================================================================
 
 using UnityEngine;
 using UnityEditor;
@@ -57,7 +61,7 @@ public class LightmapMetadataExporter : Editor
 
         string json = JsonUtility.ToJson(new Wrapper { items = items }, true);
         File.WriteAllText(Application.dataPath + "/lightmap_metadata.json", json);
-        Debug.Log("export successfully: lightmap_metadata.json");
+        Debug.Log("Export successful: lightmap_metadata.json");
     }
 
     [System.Serializable]

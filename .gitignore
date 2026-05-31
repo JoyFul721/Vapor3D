@@ -5,6 +5,7 @@
 /vapor3d-sdk/dist
 /example/pbr/pbr_ccw.sb3
 /example/pbr/Vapor3D.sb3
+/test/
 
 *.zip
 *.blend1

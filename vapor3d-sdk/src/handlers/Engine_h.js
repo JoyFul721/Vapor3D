@@ -8,6 +8,8 @@ export class EngineHandlers {
         this.vaos = new Map();
         this.textures = new Map();
         this.fbos = new Map();
+
+        this.activeShader = null;
     }
 
 
@@ -67,18 +69,27 @@ export class EngineHandlers {
     gl_Present() {
         if (!this.core) return;
         this.core.resize(this.vm.renderer.canvas.width, this.vm.renderer.canvas.height);
-        this.vm.runtime.requestRedraw(); // 这个可以蹭到 scratch vm 的锁帧效果
-        return new Promise(r => requestAnimationFrame(r));
+        // this.vm.runtime.requestRedraw();
+        // return new Promise(r => requestAnimationFrame(r)); // 这个可以蹭到 scratch vm 的锁帧效果
     }
 
     Shader_Create({ ID, VS, FS }) {
         const shader = new Shader(this.core.gl, VS, FS);
         if (shader.program) this.shaders.set(ID, shader);
     }
-    Shader_Use({ ID }) { this.shaders.get(ID)?.use(); }
+    Shader_Use({ ID }) {
+        const shader = this.shaders.get(ID);
+        if (shader) {
+            shader.use();
+            this.activeShader = shader;
+        }
+    }
     Shader_SetMat4({ ID, NAME, VAL }, util) {
         const mat = Utils.parseInput(VAL, util);
-        if (mat) this.shaders.get(ID)?.setMat4(NAME, mat);
+        if (mat) {
+            const arrayData = ArrayBuffer.isView(mat) ? mat : new Float32Array(mat);
+            this.shaders.get(ID)?.setMat4(NAME, arrayData);
+        }
     }
     Shader_SetVec4({ ID, NAME, X, Y, Z, W }) { this.shaders.get(ID)?.setVec4(NAME, [Number(X), Number(Y), Number(Z), Number(W)]); }
     Shader_SetVec3({ ID, NAME, X, Y, Z }) { this.shaders.get(ID)?.setVec3(NAME, X, Y, Z); }

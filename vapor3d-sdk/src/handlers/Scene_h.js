@@ -13,7 +13,7 @@ export class SceneHandlers {
         if (this.scenes.has(ID)) {
             this.scenes.get(ID).destroy();
         }
-        this.scenes.set(ID, new Scene(ID, 2048));
+        this.scenes.set(ID, new Scene(ID, 8192));
     }
 
     Scene_Destroy({ ID }) {
@@ -169,9 +169,17 @@ export class SceneHandlers {
     }
 
     Scene_MeshDraw({ SCENE_ID, MODEL, IDX, MODE }) {
-        const container = this._getContainer(this.scenes.get(SCENE_ID), MODEL);
+        const scene = this.scenes.get(SCENE_ID);
+        const container = this._getContainer(scene, MODEL);
         const meshNode = container?.meshes[Number(IDX)];
-        if (meshNode) {
+        const shader = this.engine.activeShader;
+
+        if (meshNode && shader && meshNode.worldMatrixIndex !== -1) { // 在 Scratch 用字符串传输矩阵太慢了
+
+            const offset = meshNode.worldMatrixIndex * 16;
+            const mat = scene.worldMatrixBuffer.subarray(offset, offset + 16);
+            shader.setMat4("uModel", mat);
+
             meshNode.draw(MODE);
         }
     }
