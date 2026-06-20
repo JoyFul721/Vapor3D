@@ -20,7 +20,7 @@
 - [X] Skinning Animation via Matrix Stream Texture Upload
 - [X] Multi-animation blend & bone mask
 - [ ] Shadowmap
-- [ ] Pre-baked Global Illumination
+- [X] Pre-baked Global Illumination
 - [ ] Bloom
 - [ ] TAA
 
@@ -32,10 +32,10 @@
 
 ## 渲染效果
 
-![Cover](screenshots/Cover.png)
+![Cover2](screenshots/Cover2.png)
+![GL](screenshots/GL.png)
+![GL2](screenshots/GL2.png)
 ![ExtLoad_Stencil](screenshots/ExtLoad_Stencil.png)
-![BOXIBL1](screenshots/BOXIBL1.png)
-![IBL1](screenshots/IBL2.png)
 ![IBL1](screenshots/IBL1.png)
 ![rain](screenshots/4f608e9e7445583d0d3df88c7549e611.png)
 
