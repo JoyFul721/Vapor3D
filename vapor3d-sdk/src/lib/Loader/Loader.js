@@ -2,6 +2,11 @@ import { GltfLoader } from 'gltf-loader-ts';
 
 import { Mesh, VAO, Texture2D, TextureCube, Math3D, Utils, Skeleton, Animation, TransformNode, MeshNode, AssetContainer } from '../index.js';
 
+// 全局物理缓冲区映射
+// 使用 WeakMap 确保 ArrayBuffer 被释放时，对应的 SourceID 也会被回收
+const bufferToSourceID = new WeakMap();
+let sourceCounter = 0;
+
 export class Loader {
     constructor(gl) {
         this.gl = gl;
@@ -11,13 +16,23 @@ export class Loader {
     async loadGLB(url, targetScene, modelID) {
 
         try {
-            let loadUrl = String(url).trim();
-            if (loadUrl.length > 200 && !loadUrl.startsWith('http') && !loadUrl.startsWith('data:')) {
-                loadUrl = 'data:application/octet-stream;base64,' + loadUrl;
-            }
+            // 获取二进制数据并建立 SourceID
+            const data = await Utils.fetchBinary(url);
+            const buffer = data.buffer;
 
-            const asset = await this.gltfLoader.load(loadUrl);
+            if (!bufferToSourceID.has(buffer)) {
+                bufferToSourceID.set(buffer, `SRC_${sourceCounter++}`);
+            }
+            const sourceID = bufferToSourceID.get(buffer);
+
+            const blob = new Blob([data]);
+            const blobUrl = URL.createObjectURL(blob);
+
+            const asset = await this.gltfLoader.load(blobUrl);
             await asset.preFetchAll();
+
+            // 释放临时 Blob URL
+            URL.revokeObjectURL(blobUrl);
 
             const meshNodesList = [];
             const vaoLibrary = new Map();
@@ -26,7 +41,7 @@ export class Loader {
             // 1 - 纹理去重加载
             if (asset.gltf.textures) {
                 for (let i = 0; i < asset.gltf.textures.length; i++) {
-                    const resId = `${modelID}_tex_${i}`;
+                    const resId = `${sourceID}:TEX:${i}`;
 
                     const tex = await targetScene.getOrCreateTexture(resId, async () => {
                         const texDef = asset.gltf.textures[i];
@@ -49,7 +64,7 @@ export class Loader {
                         if (!img || img.width === 0) return null;
 
                         const t = new Texture2D(this.gl);
-                        t.uploadImageBitmap(img); 
+                        t.uploadImageBitmap(img);
                         t.generateMipmap();
                         t.setFilter("LINEAR_MIPMAP_LINEAR", "LINEAR");
                         return t;
@@ -59,6 +74,7 @@ export class Loader {
             }
 
             // 2 - 解析 Mesh
+            // 基于 SourceID + Accessor 索引去重
             if (asset.gltf.meshes) {
                 for (let mIdx = 0; mIdx < asset.gltf.meshes.length; mIdx++) {
                     const gltfMesh = asset.gltf.meshes[mIdx];
@@ -67,43 +83,47 @@ export class Loader {
                     for (let pIdx = 0; pIdx < gltfMesh.primitives.length; pIdx++) {
                         const prim = gltfMesh.primitives[pIdx];
 
-                        const resId = `${modelID}_m${mIdx}_p${pIdx}`;
+                        const posIdx = prim.attributes.POSITION;
+                        const vaoResId = `${sourceID}:ACC:${posIdx}`;
 
-                        const vao = await targetScene.getOrCreateVAO(resId, async () => {
+                        const vao = await targetScene.getOrCreateVAO(vaoResId, async () => {
                             const v = new VAO(this.gl);
 
-                            const posIdx = prim.attributes.POSITION; // pos
+                            // POS
                             if (posIdx !== undefined) {
                                 const raw = await asset.accessorData(posIdx);
                                 v.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 0, 3);
                             }
 
-                            const normIdx = prim.attributes.NORMAL; // normal
+                            // NORMAL
+                            const normIdx = prim.attributes.NORMAL;
                             if (normIdx !== undefined) {
                                 const raw = await asset.accessorData(normIdx);
                                 v.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 1, 3);
                             }
 
-                            const uvIdx = prim.attributes.TEXCOORD_0; // uv0
+                            // UV0
+                            const uvIdx = prim.attributes.TEXCOORD_0;
                             if (uvIdx !== undefined) {
                                 const raw = await asset.accessorData(uvIdx);
                                 v.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 2, 2);
                             }
 
-                            const uv2Idx = prim.attributes.TEXCOORD_1; // uv1
+                            // UV1
+                            const uv2Idx = prim.attributes.TEXCOORD_1;
                             if (uv2Idx !== undefined) {
                                 const raw = await asset.accessorData(uv2Idx);
                                 v.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 3, 2);
                             }
 
-
-                            const jIdx = prim.attributes.JOINTS_0; // joint
+                            // JOINT
+                            const jIdx = prim.attributes.JOINTS_0;
                             if (jIdx !== undefined) {
                                 const raw = await asset.accessorData(jIdx);
-                                const accessor = asset.gltf.accessors[jIdx]; // 获取 accessor 的元数据
+                                const accessor = asset.gltf.accessors[jIdx]; // 获取 accessor
                                 let jointsData;
 
-                                // 根据 accessor.componentType 动态选择正确的 TypedArray
+                                // 根据 accessor.componentType 选择 TypedArray
                                 switch (accessor.componentType) {
                                     case 5121: // UNSIGNED_BYTE
                                         jointsData = new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
@@ -117,10 +137,8 @@ export class Loader {
                                         break;
                                 }
 
-                                // 将整数索引转换为 Float32Array，因为顶点属性通常要求是浮点数
+                                // 将整数索引转换为 Float32Array，vao 接收 float 数据
                                 const jointsFloat = new Float32Array(jointsData);
-
-                                // 添加到 VAO
                                 v.addBuffer(jointsFloat, 4, 4);
                             }
 
@@ -181,8 +199,7 @@ export class Loader {
                         });
 
                         const meshInstance = new Mesh(gltfMesh.name || `m${mIdx}_p${pIdx}`, vao);
-
-                        meshInstance.material.hasUV2 = (prim.attributes.TEXCOORD_1 !== undefined); // has uv2
+                        meshInstance.material.hasUV2 = (prim.attributes.TEXCOORD_1 !== undefined);
 
                         const matIdx = prim.material;
                         if (matIdx !== undefined && asset.gltf.materials && asset.gltf.materials[matIdx]) {
@@ -192,7 +209,7 @@ export class Loader {
                             if (matData.pbrMetallicRoughness) {
                                 const pbr = matData.pbrMetallicRoughness;
                                 if (pbr.baseColorFactor) meshInstance.material.baseColor = pbr.baseColorFactor;
-
+                                
                                 // Albedo
                                 if (pbr.baseColorTexture) {
                                     meshInstance.material.albedoTex = textureCache.get(pbr.baseColorTexture.index);
@@ -203,29 +220,21 @@ export class Loader {
                                 }
                             }
 
-                            // Normal tex
+                            // Normal Texture
                             if (matData.normalTexture && matData.normalTexture.index !== undefined) {
                                 meshInstance.material.normalTex = textureCache.get(matData.normalTexture.index);
                             }
 
-                            // Emissive tex
+                            // Emissive Texture
                             if (matData.emissiveTexture && matData.emissiveTexture.index !== undefined) {
                                 meshInstance.material.emissiveTex = textureCache.get(matData.emissiveTexture.index);
                             }
 
-                            // Ao tex
+                            // Ao Texture
                             if (!meshInstance.material.ormTex && matData.occlusionTexture) {
                                 meshInstance.material.ormTex = textureCache.get(matData.occlusionTexture.index);
                             }
-
-                            if (matData.normalTexture) {
-                                const nIdx = matData.normalTexture.index;
-                                const cachedTex = textureCache.get(nIdx);
-                                meshInstance.material.normalTex = cachedTex;
-                            }
                         }
-
-
                         meshInstances.push(meshInstance);
                     }
                     vaoLibrary.set(mIdx, meshInstances);
@@ -234,7 +243,7 @@ export class Loader {
 
             // 3 - 解析 Node
             const vNodes = asset.gltf.nodes.map((n, i) => {
-                const vNode = new TransformNode(n.name || `${modelID}_n${i}`); 
+                const vNode = new TransformNode(n.name || `${modelID}_n${i}`);
                 if (n.matrix) {
                     const { t, q, s } = Math3D.mat4_decompose(n.matrix);
                     vNode.position = t; vNode.quaternion = q; vNode.scale = s;
@@ -250,46 +259,35 @@ export class Loader {
             const skeletons = [];
             if (asset.gltf.skins) {
                 for (let sDef of asset.gltf.skins) {
-                    // 获取骨骼节点引用：将索引 [0, 5, 22] 变成 [vNodes[0], vNodes[5], vNodes[22]]
                     const jointNodes = sDef.joints.map(idx => vNodes[idx]);
-
-                    // 获取 IBM
                     let ibms = null;
                     if (sDef.inverseBindMatrices !== undefined) {
                         const rawIbm = await asset.accessorData(sDef.inverseBindMatrices);
                         ibms = new Float32Array(rawIbm.buffer, rawIbm.byteOffset, rawIbm.byteLength / 4).slice();
                     }
-
-                    // 创建 Skeleton 实例
                     const skel = new Skeleton(this.gl, `${modelID}_skel`, jointNodes, ibms);
                     skeletons.push(skel);
                 }
             }
 
-
             // 5 - 组装 Node 树
             asset.gltf.nodes.forEach((nDef, i) => {
-                const vNode = vNodes[i]; // 当前 glTF 节点对应的 TransformNode
-
+                const vNode = vNodes[i];
                 if (nDef.children) {
                     nDef.children.forEach(cIdx => vNode.addChild(vNodes[cIdx]));
                 }
-
                 if (nDef.mesh !== undefined) {
-                    const meshInsts = vaoLibrary.get(nDef.mesh); // 这是一个数组，包含该 Mesh 的所有图元
+                    const meshInsts = vaoLibrary.get(nDef.mesh);
                     if (meshInsts) {
                         meshInsts.forEach((mInst, pIdx) => {
+                            // VAO 已经实现了基于 Accessor 的底层查重，这里直接创建 MeshNode
                             const meshNode = new MeshNode(`${vNode.name}_p${pIdx}`, mInst.vao);
-
                             meshNode.material = mInst.material;
-
                             if (nDef.skin !== undefined) {
                                 meshNode.skeleton = skeletons[nDef.skin];
                                 meshNode.isSkinned = true;
                             }
-
                             vNode.addChild(meshNode);
-
                             meshNodesList.push(meshNode);
                         });
                     }
@@ -301,7 +299,6 @@ export class Loader {
             if (asset.gltf.animations) {
                 for (const animDef of asset.gltf.animations) {
                     const samplers = [];
-                    // 1. Pre-fetch and parse all samplers for this animation
                     for (const samplerDef of animDef.samplers) {
                         const inputData = await asset.accessorData(samplerDef.input);
                         const outputData = await asset.accessorData(samplerDef.output);
@@ -311,16 +308,13 @@ export class Loader {
                             interpolation: samplerDef.interpolation || 'LINEAR',
                         });
                     }
-
-                    // 2. Parse channels which link samplers to nodes
                     const channels = animDef.channels.map(channelDef => {
                         return {
                             sampler: channelDef.sampler,
-                            targetNode: vNodes[channelDef.target.node], // Link to the actual Node instance
-                            path: channelDef.target.path, // 'translation', 'rotation', or 'scale'
+                            targetNode: vNodes[channelDef.target.node],
+                            path: channelDef.target.path,
                         };
                     });
-
                     const animName = animDef.name || `anim_${animations.size}`;
                     animations.set(animName, new Animation(animName, channels, samplers));
                 }
@@ -340,12 +334,10 @@ export class Loader {
             container.meshes = meshNodesList;   // 在 Step 4 中收集的 MeshNode 引用
             container.skeletons = skeletons;    // 解析出的 Skeleton 数组
             container.animations = animations;  // 解析出的 Animation Map
-
             return container;
 
         } catch (error) {
             console.error(`\n[Vapor3D: Failed to load GLB : "${modelID}"`);
-            console.error(`Source: ${String(url).substring(0, 50)}...`);
             console.error(error);
             return null;
         }
@@ -354,36 +346,61 @@ export class Loader {
 
     applyLightmapMetadata(container, json) {
         if (!container || !container.meshes) {
-            console.warn("Vapor3D: Invalid container or no meshes found to apply lightmap.");
+            console.error("Vapor3D [Error]: Invalid container or no meshes found to apply lightmap.");
             return 0;
         }
+
         const metadata = (typeof json === 'string') ? JSON.parse(json) : json;
         if (!metadata || !metadata.items) {
-            console.warn("Vapor3D: No metadata.");
-            return 0;}
+            console.error("Vapor3D [Error]: Lightmap metadata is empty or has no 'items' array.");
+            return 0;
+        }
+
+        const metaMap = new Map();
+        metadata.items.forEach(item => {
+            metaMap.set(item.name, item); // 这里 item.name 带有 _p0, _p1
+        });
 
         let appliedCount = 0;
+        let missingCount = 0;
+        const missingNames = [];
+
         container.meshes.forEach(meshNode => {
-            // 正则提取模糊匹配，因为我把预制件实例化了
-            let searchName = meshNode.name.replace(/_p\d+$/, '');
-            searchName = searchName.replace(/\.\d+$/, '');
-            const meta = metadata.items.find(item => {
-                return searchName.includes(item.name) || item.name.includes(searchName);
-            });
+            let searchName = meshNode.name;
+            const meta = metaMap.get(searchName);
 
             if (meta) {
                 meshNode.hasLightmap = true;
                 meshNode.lightmapIndex = meta.lightmapIndex;
-                meshNode.lightmapScaleOffset = [...meta.scaleOffset];
+
+                const sx = meta.scaleOffset[0];
+                const sy = meta.scaleOffset[1];
+                const ox = meta.scaleOffset[2];
+                const oy = meta.scaleOffset[3];
+
+                meshNode.lightmapScaleOffset = [sx, sy, ox, oy];
                 appliedCount++;
             } else {
                 meshNode.hasLightmap = false;
                 meshNode.lightmapIndex = -1;
-                meshNode.lightmapScaleOffset = [0, 0, 0, 0];
+                missingCount++;
+
+                if (missingNames.length < 10) {
+                    missingNames.push(`- ${meshNode.name}`);
+                }
             }
         });
 
-        
+        if (missingCount > 0) {
+            console.warn(
+                `Vapor3D : Lightmap apply completed with warnings.\n` +
+                `Missing Metadata: ${missingCount} meshes have NO lightmap data!\n` +
+                `First few missing meshes:\n${missingNames.join('\n')}${missingCount > 10 ? '\n...and more.' : ''}`
+            );
+        } else {
+            console.log(`Vapor3D: All ${appliedCount} meshes successfully mapped.`);
+        }
+
         return appliedCount;
     }
 
@@ -413,6 +430,15 @@ export class Loader {
         const ktxData = Utils.parseKTX(data.buffer);
         const tex = new TextureCube(this.gl);
         tex.uploadKTX(ktxData);
+        return tex;
+    }
+
+    // 加载 HDR
+    async loadHDRTexture(url) {
+        const data = await Utils.fetchBinary(url);
+        const hdrData = Utils.parseHDR(data.buffer);
+        const tex = new Texture2D(this.gl);
+        tex.uploadHDR(hdrData);
         return tex;
     }
 }

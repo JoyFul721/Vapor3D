@@ -86,4 +86,107 @@ export class Utils {
         }
         return { glInternalFormat, glFormat, glType, numberOfMipmapLevels, mipmaps };
     }
+
+    static parseHDR(buffer) {
+        const view = new DataView(buffer);
+        let pos = 0;
+
+        const readLine = () => {
+            let str = "";
+            while (pos < buffer.byteLength) {
+                const char = String.fromCharCode(view.getUint8(pos++));
+                if (char === "\n") break;
+                str += char;
+            }
+            return str;
+        };
+
+        let line = readLine();
+        if (!line.startsWith("#?")) throw new Error("Vapor3D: Invalid HDR format");
+
+        while (pos < buffer.byteLength) {
+            line = readLine();
+            if (line.startsWith("-Y") || line.startsWith("+Y")) break;
+        }
+
+        const parts = line.split(/\s+/);
+        const height = parseInt(parts[1]);
+        const width = parseInt(parts[3]);
+
+        const floatData = new Float32Array(width * height * 3);
+        let floatOffset = 0;
+
+        for (let y = 0; y < height; y++) {
+            const rgbe = new Uint8Array(4);
+            rgbe[0] = view.getUint8(pos++);
+            rgbe[1] = view.getUint8(pos++);
+            rgbe[2] = view.getUint8(pos++);
+            rgbe[3] = view.getUint8(pos++);
+
+            // If New RLE
+            const isNewRLE = (rgbe[0] === 2 && rgbe[1] === 2 && !(rgbe[2] & 0x80));
+
+            if (!isNewRLE) {
+                // 非压缩格式
+                const convertToFloat = (r, g, b, e) => {
+                    if (e === 0) return [0, 0, 0];
+                    const f = Math.pow(2.0, e - 128) / 256.0;
+                    return [r * f, g * f, b * f];
+                };
+                let res = convertToFloat(rgbe[0], rgbe[1], rgbe[2], rgbe[3]);
+                floatData[floatOffset++] = res[0];
+                floatData[floatOffset++] = res[1];
+                floatData[floatOffset++] = res[2];
+
+                for (let x = 1; x < width; x++) {
+                    const r = view.getUint8(pos++);
+                    const g = view.getUint8(pos++);
+                    const b = view.getUint8(pos++);
+                    const e = view.getUint8(pos++);
+                    res = convertToFloat(r, g, b, e);
+                    floatData[floatOffset++] = res[0];
+                    floatData[floatOffset++] = res[1];
+                    floatData[floatOffset++] = res[2];
+                }
+            } else {
+                // New RLE
+                const scanline = new Uint8Array(4 * width);
+                let scanOffset = 0;
+
+                for (let channel = 0; channel < 4; channel++) {
+                    const channelEnd = (channel + 1) * width;
+                    while (scanOffset < channelEnd) {
+                        let code = view.getUint8(pos++);
+                        if (code > 128) {
+                            let count = code - 128;
+                            let val = view.getUint8(pos++);
+                            while (count-- > 0) scanline[scanOffset++] = val;
+                        } else {
+                            let count = code;
+                            while (count-- > 0) scanline[scanOffset++] = view.getUint8(pos++);
+                        }
+                    }
+                }
+                for (let x = 0; x < width; x++) {
+                    const r = scanline[x];
+                    const g = scanline[x + width];
+                    const b = scanline[x + 2 * width];
+                    const e = scanline[x + 3 * width];
+
+                    if (e > 0) {
+                        const f = Math.pow(2.0, e - 136);
+                        floatData[floatOffset++] = r * f;
+                        floatData[floatOffset++] = g * f;
+                        floatData[floatOffset++] = b * f;
+                    } else {
+                        floatData[floatOffset++] = 0;
+                        floatData[floatOffset++] = 0;
+                        floatData[floatOffset++] = 0;
+                    }
+                }
+            }
+        }
+
+        return { width, height, data: floatData };
+    }
 }

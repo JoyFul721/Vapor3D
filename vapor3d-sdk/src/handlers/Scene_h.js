@@ -236,7 +236,7 @@ export class SceneHandlers {
 
         switch (PARAM) {
             case "hasLightmap":
-                return meshNode.hasLightmap ? "true" : "false";
+                return meshNode.hasLightmap ? "1" : "0";
             case "lightmapIndex":
                 return meshNode.lightmapIndex !== undefined ? meshNode.lightmapIndex : -1;
             default:

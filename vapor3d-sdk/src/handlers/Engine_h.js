@@ -91,7 +91,7 @@ export class EngineHandlers {
             this.shaders.get(ID)?.setMat4(NAME, arrayData);
         }
     }
-    Shader_SetVec4({ ID, NAME, X, Y, Z, W }) { this.shaders.get(ID)?.setVec4(NAME, [Number(X), Number(Y), Number(Z), Number(W)]); }
+    Shader_SetVec4({ ID, NAME, X, Y, Z, W }) { this.shaders.get(ID)?.setVec4(NAME, X, Y, Z, W); }
     Shader_SetVec3({ ID, NAME, X, Y, Z }) { this.shaders.get(ID)?.setVec3(NAME, X, Y, Z); }
     Shader_SetVec2({ ID, NAME, X, Y }) { this.shaders.get(ID)?.setVec2(NAME, X, Y); }
     Shader_SetFloat({ ID, NAME, V }) { this.shaders.get(ID)?.setFloat(NAME, V); }

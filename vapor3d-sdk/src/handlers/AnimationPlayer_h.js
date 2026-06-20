@@ -65,8 +65,7 @@ export class AnimationPlayerHandlers {
         }
 
         if (targetJoint) {
-            const isRecursive = String(RECURSIVE) === "true";
-            if (isRecursive) {
+            if (RECURSIVE === "true") {
                 this._setBoneWeightRecursive(targetJoint, clip.boneWeights, Number(WEIGHT));
             } else {
                 clip.boneWeights.set(targetJoint.name, Number(WEIGHT));

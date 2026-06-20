@@ -83,6 +83,18 @@ export class LoaderHandlers {
             console.error("Vapor3D: KTX Load Error:", e);
         }
     }
+    
+    async Loader_load_hdr_url({ NAME, U }) {
+        const loader = this._getLoader();
+        if (!loader) return;
+
+        try {
+            const tex = await loader.loadHDRTexture(U);
+            this.engine.textures.set(NAME, tex);
+        } catch (e) {
+            console.error("Vapor3D: HDR Load Error:", e);
+        }
+    }
 
     Loader_get_status() {
         return this._loader ? "ready" : "idle";

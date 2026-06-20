@@ -17,6 +17,7 @@ export class Scene {
         this.containers = new Map(); 
 
         // 资源注册表
+        // Scene 的 gl 资源和 Core 的是互相独立的
         this.registry = {
             vaos: new Map(),
             textures: new Map()

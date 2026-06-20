@@ -56,6 +56,28 @@ export class Texture2D extends Texture {
         this.setWrap("S", "REPEAT");
         this.setWrap("T", "REPEAT");
     }
+
+    uploadHDR(hdr) {
+        this.bind();
+        const gl = this.gl;
+        // 默认 RGB16F
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGB16F,
+            hdr.width,
+            hdr.height,
+            0,
+            gl.RGB,
+            gl.FLOAT,
+            hdr.data
+        );
+        this.width = hdr.width;
+        this.height = hdr.height;
+        this.setFilter("LINEAR", "LINEAR");
+        this.setWrap("S", "CLAMP_TO_EDGE");
+        this.setWrap("T", "CLAMP_TO_EDGE");
+    }
 }
 
 export class TextureCube extends Texture {

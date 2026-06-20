@@ -19,12 +19,11 @@ export const EngineMenus = {
                 "RGB16F", "RGBA16F", "RGB32F", "RGB8", "RGBA8",
                 "R11G11B10F", "R16F", "RG16F", "DEPTH24_STENCIL8", "DEPTH_COMPONENT24"
         ],
-        fboSlotMenu: ["COLOR_ATTACHMENT0", "COLOR_ATTACHMENT1", "COLOR_ATTACHMENT2", "COLOR_ATTACHMENT3", "DEPTH_STENCIL_ATTACHMENT", "DEPTH_ATTACHMENT"],
+        fboSlotMenu: ["COLOR_ATTACHMENT0", "COLOR_ATTACHMENT1", "COLOR_ATTACHMENT2", "COLOR_ATTACHMENT3", "COLOR_ATTACHMENT4", "COLOR_ATTACHMENT5", "DEPTH_STENCIL_ATTACHMENT", "DEPTH_ATTACHMENT"],
         depthMenu: ["RBO", "TEXTURE", "NONE"],
         filterMode: ["NEAREST", "LINEAR", "NEAREST_MIPMAP_NEAREST", "LINEAR_MIPMAP_NEAREST", "NEAREST_MIPMAP_LINEAR", "LINEAR_MIPMAP_LINEAR"],
         // wrapAxis: ["S", "T"],
         wrapMode: ["REPEAT", "CLAMP_TO_EDGE", "MIRRORED_REPEAT"],
-        boolMenu: ["true", "false"],
         funcMenu: ["NEVER", "LESS", "EQUAL", "LEQUAL", "GREATER", "NOTEQUAL", "GEQUAL", "ALWAYS"],
         opMenu: { acceptReporters: true, items: [{ text: "KEEP", value: "KEEP" }, { text: "ZERO", value: "ZERO" }, { text: "REPLACE", value: "REPLACE" }, { text: "INCR", value: "INCR" }, { text: "DECR", value: "DECR" }, { text: "INVERT", value: "INVERT" }, { text: "INCR_WRAP", value: "INCR_WRAP" }, { text: "DECR_WRAP", value: "DECR_WRAP" }] },
         faceMenu: { acceptReporters: true, items: [{ text: "FRONT", value: "FRONT" }, { text: "BACK", value: "BACK" }, { text: "FRONT_AND_BACK", value: "FRONT_AND_BACK" }] },
@@ -49,8 +48,8 @@ export const EngineMenus = {
         yesNoMenu: {
                 acceptReporters: true,
                 items: [
-                        { text: "yes", value: "true" },
-                        { text: "no", value: "false" }
+                        { text: "on", value: "true" },
+                        { text: "off", value: "false" }
                 ]
         },
         clipPropMenu: {

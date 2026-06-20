@@ -44,33 +44,83 @@ public class LightmapMetadataExporter : Editor
     static void ExportMetadata()
     {
         var items = new List<LightmapDataEntry>();
-        MeshRenderer[] renderers = Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
+        
+        Renderer[] renderers = Object.FindObjectsByType<Renderer>(
+            FindObjectsInactive.Include, 
+            FindObjectsSortMode.None
+        );
+
+        var nameCounters = new Dictionary<string, int>();
 
         foreach (var renderer in renderers)
         {
-            if (renderer.lightmapIndex >= 0)
+            if (renderer is MeshRenderer || renderer is SkinnedMeshRenderer)
             {
-                Vector4 so = renderer.lightmapScaleOffset;
-                items.Add(new LightmapDataEntry {
-                    name = renderer.gameObject.name,
-                    lightmapIndex = renderer.lightmapIndex,
-                    scaleOffset = new float[] { so.x, so.y, so.z, so.w }
-                });
+                if (renderer.lightmapIndex >= 0 && renderer.lightmapIndex != 65534)
+                {
+                    string rawName = renderer.gameObject.name;
+                    string blenderSimulatedName = rawName;
+
+                    // 模拟 Blender 的全局重名递增后缀逻辑
+                    if (!nameCounters.ContainsKey(rawName))
+                    {
+                        nameCounters[rawName] = 1;
+                    }
+                    else
+                    {
+                        int currentCount = nameCounters[rawName];
+                        blenderSimulatedName = $"{rawName}.{currentCount:D3}";
+                        nameCounters[rawName]++;
+                    }
+
+                    Vector4 so = renderer.lightmapScaleOffset;
+
+                    // V 翻转
+                    float webGLOffsetY = 1.0f - so.y - so.w;
+                    float[] correctedSO = new float[] { so.x, so.y, so.z, webGLOffsetY };
+
+                    Material[] sharedMaterials = renderer.sharedMaterials;
+                    if (sharedMaterials != null && sharedMaterials.Length > 1)
+                    {
+                        for (int i = 0; i < sharedMaterials.Length; i++)
+                        {
+                            items.Add(new LightmapDataEntry {
+                                name = $"{blenderSimulatedName}_p{i}",
+                                lightmapIndex = renderer.lightmapIndex,
+                                scaleOffset = correctedSO
+                            });
+                        }
+                    }
+                    else
+                    {
+                        items.Add(new LightmapDataEntry {
+                            name = $"{blenderSimulatedName}_p0",
+                            lightmapIndex = renderer.lightmapIndex,
+                            scaleOffset = correctedSO
+                        });
+                    }
+                }
             }
         }
-
-        string json = JsonUtility.ToJson(new Wrapper { items = items }, true);
+        LightmapWrapper myWrapper = new LightmapWrapper { items = items };
+        string json = JsonUtility.ToJson(myWrapper, true);
+        
         File.WriteAllText(Application.dataPath + "/lightmap_metadata.json", json);
-        Debug.Log("Export successful: lightmap_metadata.json");
+        
+        Debug.Log($"文件已保存至 /lightmap_metadata.json");
     }
+}
 
-    [System.Serializable]
-    private class LightmapDataEntry {
-        public string name;
-        public int lightmapIndex;
-        public float[] scaleOffset;
-    }
+[System.Serializable]
+public class LightmapDataEntry 
+{
+    public string name;
+    public int lightmapIndex;
+    public float[] scaleOffset;
+}
 
-    [System.Serializable]
-    private class Wrapper { public List<LightmapDataEntry> items; }
-} 
+[System.Serializable]
+public class LightmapWrapper 
+{ 
+    public List<LightmapDataEntry> items; 
+}

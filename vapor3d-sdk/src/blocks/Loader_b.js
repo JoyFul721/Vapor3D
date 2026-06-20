@@ -56,5 +56,14 @@ export const LoaderBlocks = [
             NAME: { type: "string", defaultValue: "envMap1" }
         }
     },
+    {
+        opcode: "Loader_load_hdr_url",
+        blockType: "command",
+        text: "Loader.loadHDR( [U] , [NAME] )",
+        arguments: {
+            U: { type: "string", defaultValue: "https://..." },
+            NAME: { type: "string", defaultValue: "lightmap1" }
+        }
+    },
     "---", "---",
 ];
