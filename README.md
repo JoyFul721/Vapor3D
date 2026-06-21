@@ -2,7 +2,7 @@
 
 高性能、可编程的 WebGL2 3D 框架。
 
-![Version](https://img.shields.io/badge/version-3.9.0-007a1f?style=flat&logo=github&labelColor=24292e)
+![Version](https://img.shields.io/badge/version-3.9.1-007a1f?style=flat&logo=github&labelColor=24292e)
 
 ---
 

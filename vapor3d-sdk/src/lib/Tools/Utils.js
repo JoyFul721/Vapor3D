@@ -17,7 +17,7 @@ export class Utils {
             return bytes;
         }
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) throw new Error(`Vapor3D: HTTP error! status: ${response.status}`);
         return new Uint8Array(await response.arrayBuffer());
     }
 

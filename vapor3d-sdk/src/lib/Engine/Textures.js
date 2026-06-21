@@ -57,6 +57,33 @@ export class Texture2D extends Texture {
         this.setWrap("T", "REPEAT");
     }
 
+    uploadData(width, height, data, internalFormat = this.gl.RGBA, format = this.gl.RGBA, type = this.gl.UNSIGNED_BYTE) {
+        this.bind();
+        const gl = this.gl;
+        if (width === 1 && height === 1) {
+            gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+        }
+        gl.texImage2D(
+            this.target,
+            0,
+            internalFormat,
+            width,
+            height,
+            0,
+            format,
+            type,
+            data
+        );
+        this.width = width;
+        this.height = height;
+        if (width === 1 && height === 1) {
+            gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+        }
+        this.setFilter("NEAREST", "NEAREST");
+        this.setWrap("S", "CLAMP_TO_EDGE");
+        this.setWrap("T", "CLAMP_TO_EDGE");
+    }
+
     uploadHDR(hdr) {
         this.bind();
         const gl = this.gl;
