@@ -47,6 +47,51 @@ export class Framebuffer {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     }
 
+    detach(slotPointName) {
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.id);
+        const point = this.gl[slotPointName];
+
+        if (slotPointName.startsWith("COLOR_ATTACHMENT")) {
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, point, this.gl.TEXTURE_2D, null, 0);
+
+            const index = this.activeSlots.indexOf(point);
+            if (index > -1) {
+                this.activeSlots.splice(index, 1);
+                this.gl.drawBuffers(this.activeSlots.length > 0 ? this.activeSlots : [this.gl.NONE]);
+            }
+        } else {
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, point, this.gl.TEXTURE_2D, null, 0);
+        }
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    }
+
+    attachStencilBuffer(stencilObj) {
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.id);
+
+        this.gl.framebufferRenderbuffer(
+            this.gl.FRAMEBUFFER,
+            this.gl.STENCIL_ATTACHMENT,
+            this.gl.RENDERBUFFER,
+            stencilObj.id
+        );
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    }
+
+    detachStencilBuffer() {
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.id);
+
+        this.gl.framebufferRenderbuffer(
+            this.gl.FRAMEBUFFER,
+            this.gl.STENCIL_ATTACHMENT,
+            this.gl.RENDERBUFFER,
+            null
+        );
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    }
+
     bind(fallbackW, fallbackH) {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.id);
         this.gl.viewport(0, 0, this.width || fallbackW, this.height || fallbackH);

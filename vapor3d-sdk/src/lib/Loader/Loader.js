@@ -14,31 +14,17 @@ export class Loader {
     }
 
     async loadGLB(url, targetScene, modelID) {
-
         try {
-            // 获取二进制数据并建立 SourceID
-            const data = await Utils.fetchBinary(url);
-            const buffer = data.buffer;
-
-            if (!bufferToSourceID.has(buffer)) {
-                bufferToSourceID.set(buffer, `SRC_${sourceCounter++}`);
-            }
-            const sourceID = bufferToSourceID.get(buffer);
-
-            const blob = new Blob([data]);
-            const blobUrl = URL.createObjectURL(blob);
-
-            const asset = await this.gltfLoader.load(blobUrl);
+            const asset = await this.gltfLoader.load(url);
             await asset.preFetchAll();
-
-            // 释放临时 Blob URL
-            URL.revokeObjectURL(blobUrl);
 
             const meshNodesList = [];
             const vaoLibrary = new Map();
             const textureCache = new Map();
 
-            // 1x1 贴图缓存，避免相同材质参数重复创建纹理
+            const sourceID = `MODEL_${modelID}`;
+
+            // 1x1 占位贴图
             const valueTextureCache = new Map();
             const getOrCreateValueTexture = (key, r, g, b, a = 255) => {
                 if (valueTextureCache.has(key)) {

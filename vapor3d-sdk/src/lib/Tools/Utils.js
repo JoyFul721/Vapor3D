@@ -21,23 +21,30 @@ export class Utils {
         return new Uint8Array(await response.arrayBuffer());
     }
 
+
     static getFormatConfig(gl, formatStr) {
         if (!gl) return null;
         const key = String(formatStr).toUpperCase().trim();
         const map = {
-            "RGB16F": { internal: gl.RGB16F, format: gl.RGB, type: gl.HALF_FLOAT },
-            "RGBA16F": { internal: gl.RGBA16F, format: gl.RGBA, type: gl.HALF_FLOAT },
-            "RGB32F": { internal: gl.RGB32F, format: gl.RGB, type: gl.FLOAT },
             "RGB8": { internal: gl.RGB8, format: gl.RGB, type: gl.UNSIGNED_BYTE },
             "RGBA8": { internal: gl.RGBA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE },
-            "R11G11B10F": { internal: gl.R11F_G11F_B10F, format: gl.RGB, type: gl.FLOAT },
+
             "R16F": { internal: gl.R16F, format: gl.RED, type: gl.HALF_FLOAT },
             "RG16F": { internal: gl.RG16F, format: gl.RG, type: gl.HALF_FLOAT },
-            "DEPTH24_STENCIL8": { internal: gl.DEPTH24_STENCIL8, format: gl.DEPTH_STENCIL, type: gl.UNSIGNED_INT_24_8 },
-            "DEPTH_COMPONENT24": { internal: gl.DEPTH_COMPONENT24, format: gl.DEPTH_COMPONENT, type: gl.UNSIGNED_INT }
+            "RGB16F": { internal: gl.RGB16F, format: gl.RGB, type: gl.HALF_FLOAT },
+            "RGBA16F": { internal: gl.RGBA16F, format: gl.RGBA, type: gl.HALF_FLOAT },
+
+            "R32F": { internal: gl.R32F, format: gl.RED, type: gl.FLOAT },
+            "RGB32F": { internal: gl.RGB32F, format: gl.RGB, type: gl.FLOAT },
+
+            "R11G11B10F": { internal: gl.R11F_G11F_B10F, format: gl.RGB, type: gl.UNSIGNED_INT_10F_11F_11F_REV },
+
+            "DEPTH_COMPONENT24": { internal: gl.DEPTH_COMPONENT24, format: gl.DEPTH_COMPONENT, type: gl.UNSIGNED_INT },
+            "DEPTH24_STENCIL8": { internal: gl.DEPTH24_STENCIL8, format: gl.DEPTH_STENCIL, type: gl.UNSIGNED_INT_24_8 }
         };
         return map[key] || map["RGBA8"];
     }
+
 
     static parseKTX(buffer) {
         const bytes = new Uint8Array(buffer);

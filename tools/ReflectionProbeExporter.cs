@@ -5,11 +5,6 @@
 // Module: ReflectionProbeExporter.cs
 // Author: Joy_Ful
 // Acknowledgments: Developed with the assistance of Gemini AI. 借助 Google Gemini Ai 辅助开发
-// Date: 2026-05-31
-//
-// NOTE: For this pipeline to function correctly, users must first convert 
-// Unity's custom .exr lightmap assets into standard 2D textures and ensure 
-// that 'Read/Write' is explicitly enabled in their import settings.
 //
 // License: MIT License
 //
@@ -31,41 +26,68 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // ============================================================================
-
 using UnityEngine;
 using UnityEditor;
 using System.IO;
 
 public class ReflectionProbeExporter : Editor
 {
-    [MenuItem("Vapor3D/Export Direct to KTX 1.0 Cubemap")]
-    static void ExportDirectToKTX1()
+    [MenuItem("Vapor3D/Export All Reflection Probes to KTX")]
+    static void ExportProbes()
     {
-        UnityEngine.Object activeObj = Selection.activeObject;
-        string assetPath = AssetDatabase.GetAssetPath(activeObj);
-        Texture srcTex = activeObj as Texture;
+        // GUID 全局查找所有 ReflectionProbe EXR
+        string[] guids = AssetDatabase.FindAssets("ReflectionProbe t:Texture");
+        string exportDir = Path.Combine(Application.dataPath, "Exported_ReflectionProbe");
+        if (!Directory.Exists(exportDir)) Directory.CreateDirectory(exportDir);
 
-        if (srcTex == null || string.IsNullOrEmpty(assetPath))
+        foreach (string guid in guids)
         {
-            Debug.LogError("Please select the lightmap first!");
-            return;
-        }
+            string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            if (Path.GetExtension(assetPath).ToLower() != ".exr") continue;
 
-        TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-        TextureImporterShape originalShape = importer.textureShape;
-        TextureImporterType originalType = importer.textureType;
-        bool originalReadWrite = importer.isReadable;
-        bool originalSRGB = importer.sRGBTexture;
+            TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (importer == null) continue;
 
-        if (originalType != TextureImporterType.Default || originalShape != TextureImporterShape.Texture2D || !originalReadWrite)
-        {
+            // 备份
+            var originalShape = importer.textureShape;
+            var originalRead = importer.isReadable;
+            var originalType = importer.textureType;
+            var originalSRGB = importer.sRGBTexture;
+
+            // 设置为可读 2D
             importer.textureType = TextureImporterType.Default;
             importer.textureShape = TextureImporterShape.Texture2D;
             importer.isReadable = true;
-            importer.sRGBTexture = false; 
+            importer.sRGBTexture = false;
             importer.SaveAndReimport();
+
+            AssetDatabase.Refresh();
+
+            Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
+            if (tex != null)
+            {
+                string outPath = Path.Combine(exportDir, Path.GetFileNameWithoutExtension(assetPath) + ".ktx");
+
+                if (SaveTextureAsKTX(tex, outPath))
+                    Debug.Log($"[DEBUG] Export success: {Path.GetFileName(outPath)}");
+            }
+
+            // 恢复并清理内存
+            importer.textureType = originalType;
+            importer.textureShape = originalShape;
+            importer.isReadable = originalRead;
+            importer.sRGBTexture = originalSRGB;
+            importer.SaveAndReimport();
+            
+            Resources.UnloadUnusedAssets();
         }
 
+        AssetDatabase.Refresh();
+        Debug.Log("<color=green>[Vapor3D] All handled successfully. Path: Assets/Exported_ReflectionProbe/ </color>");
+    }
+
+    static bool SaveTextureAsKTX(Texture2D srcTex, string outputPath)
+    {
         int width = srcTex.width;
         int height = srcTex.height;
         int faceSize = width < height ? width : height;
@@ -79,86 +101,74 @@ public class ReflectionProbeExporter : Editor
         Texture2D readableTex = new Texture2D(width, height, TextureFormat.RGBAHalf, false, true);
         readableTex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
         readableTex.Apply();
-
-        string scriptPath = AssetDatabase.GetAssetPath(MonoScript.FromScriptableObject(ScriptableObject.CreateInstance<ReflectionProbeExporter>()));
-        string scriptDir = Path.GetDirectoryName(Path.GetFullPath(scriptPath));
-        string outputPath = Path.Combine(scriptDir, "probe_cubemap.ktx");
-
-        using (BinaryWriter writer = new BinaryWriter(File.Open(outputPath, FileMode.Create)))
-        {
-            // KTX 1.0 12字节标识符
-            byte[] identifier = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
-            writer.Write(identifier);
-
-            // KTX 头信息 
-            writer.Write((uint)0x04030201);       // endianness
-            writer.Write((uint)0x140B);           // glType: GL_HALF_FLOAT
-            writer.Write((uint)2);                // glTypeSize: 2 字节 (Float16)
-            writer.Write((uint)0x1908);           // glFormat: GL_RGBA
-            writer.Write((uint)0x881A);           // glInternalFormat: GL_RGBA16F
-            writer.Write((uint)0x1908);           // glBaseInternalFormat: GL_RGBA
-            writer.Write((uint)faceSize);         // pixelWidth
-            writer.Write((uint)faceSize);         // pixelHeight
-            writer.Write((uint)0);                // pixelDepth
-            writer.Write((uint)0);                // numberOfArrayElements
-            writer.Write((uint)6);                // numberOfFaces
-            writer.Write((uint)1);                // numberOfMiplevels
-            writer.Write((uint)0);                // bytesOfKeyValueData
-
-            // 声明单面大小 (长 * 宽 * 4通道 * 2字节)
-            uint bytesPerFace = (uint)(faceSize * faceSize * 8);
-            writer.Write(bytesPerFace);
-
-            for (int i = 0; i < 6; i++)
-            {
-                int srcX = isVertical ? 0 : i * faceSize;
-                int srcY = isVertical ? (5 - i) * faceSize : 0;
-
-                if (srcX + faceSize > width)  srcX = width - faceSize;
-                if (srcY + faceSize > height) srcY = height - height;
-
-                Color[] facePixels = readableTex.GetPixels(srcX, srcY, faceSize, faceSize);
-                byte[] faceData = new byte[bytesPerFace];
-                int dataIndex = 0;
-
-                // 转换至 OpenGL 坐标系。不知道 x 轴要不要一起转换
-                for (int row = faceSize - 1; row >= 0; row--)
-                {
-                    for (int col = 0; col < faceSize; col++)
-                    {
-                        Color c = facePixels[row * faceSize + col];
-
-                        float r = c.r;
-                        float g = c.g;
-                        float b = c.b;
-                        float a = Mathf.Clamp01(c.a);
-
-                        ushort hR = Mathf.FloatToHalf(r);
-                        ushort hG = Mathf.FloatToHalf(g);
-                        ushort hB = Mathf.FloatToHalf(b);
-                        ushort hA = Mathf.FloatToHalf(a);
-
-                        faceData[dataIndex++] = (byte)(hR & 0xFF); faceData[dataIndex++] = (byte)((hR >> 8) & 0xFF);
-                        faceData[dataIndex++] = (byte)(hG & 0xFF); faceData[dataIndex++] = (byte)((hG >> 8) & 0xFF);
-                        faceData[dataIndex++] = (byte)(hB & 0xFF); faceData[dataIndex++] = (byte)((hB >> 8) & 0xFF);
-                        faceData[dataIndex++] = (byte)(hA & 0xFF); faceData[dataIndex++] = (byte)((hA >> 8) & 0xFF);
-                    }
-                }
-                
-                writer.Write(faceData);
-            }
-        }
-
+        
         RenderTexture.active = previous;
         RenderTexture.ReleaseTemporary(rt);
-        DestroyImmediate(readableTex);
 
-        importer.textureType = originalType;
-        importer.textureShape = originalShape;
-        importer.isReadable = originalReadWrite;
-        importer.sRGBTexture = originalSRGB;
-        importer.SaveAndReimport();
+        try
+        {
+            using (BinaryWriter writer = new BinaryWriter(File.Open(outputPath, FileMode.Create)))
+            {
+                byte[] identifier = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
+                writer.Write(identifier);
+                writer.Write((uint)0x04030201);
+                writer.Write((uint)0x140B);
+                writer.Write((uint)2);
+                writer.Write((uint)0x1908);
+                writer.Write((uint)0x881A);
+                writer.Write((uint)0x1908);
+                writer.Write((uint)faceSize);
+                writer.Write((uint)faceSize);
+                writer.Write((uint)0);
+                writer.Write((uint)0);
+                writer.Write((uint)6);
+                writer.Write((uint)1);
+                writer.Write((uint)0);
 
-        Debug.Log($"KTX 1.0 Cubemap export successful! \nPath:{outputPath}");
+                uint bytesPerFace = (uint)(faceSize * faceSize * 8);
+                writer.Write(bytesPerFace);
+
+                for (int i = 0; i < 6; i++)
+                {
+                    int srcX = isVertical ? 0 : i * faceSize;
+                    int srcY = isVertical ? (5 - i) * faceSize : 0;
+
+                    if (srcX + faceSize > width)  srcX = width - faceSize;
+                    if (srcY + faceSize > height) srcY = height - height;
+
+                    Color[] facePixels = readableTex.GetPixels(srcX, srcY, faceSize, faceSize);
+                    byte[] faceData = new byte[bytesPerFace];
+                    int dataIndex = 0;
+
+                    for (int row = faceSize - 1; row >= 0; row--)
+                    {
+                        for (int col = 0; col < faceSize; col++)
+                        {
+                            Color c = facePixels[row * faceSize + col];
+                            ushort hR = Mathf.FloatToHalf(c.r);
+                            ushort hG = Mathf.FloatToHalf(c.g);
+                            ushort hB = Mathf.FloatToHalf(c.b);
+                            ushort hA = Mathf.FloatToHalf(Mathf.Clamp01(c.a));
+
+                            faceData[dataIndex++] = (byte)(hR & 0xFF); faceData[dataIndex++] = (byte)((hR >> 8) & 0xFF);
+                            faceData[dataIndex++] = (byte)(hG & 0xFF); faceData[dataIndex++] = (byte)((hG >> 8) & 0xFF);
+                            faceData[dataIndex++] = (byte)(hB & 0xFF); faceData[dataIndex++] = (byte)((hB >> 8) & 0xFF);
+                            faceData[dataIndex++] = (byte)(hA & 0xFF); faceData[dataIndex++] = (byte)((hA >> 8) & 0xFF);
+                        }
+                    }
+                    writer.Write(faceData);
+                }
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"KTX write error: {e.Message}");
+            return false;
+        }
+        finally
+        {
+            Object.DestroyImmediate(readableTex);
+        }
+        return true;
     }
 }

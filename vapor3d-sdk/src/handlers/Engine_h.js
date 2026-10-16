@@ -8,6 +8,7 @@ export class EngineHandlers {
         this.vaos = new Map();
         this.textures = new Map();
         this.fbos = new Map();
+        this.stencilBuffers = new Map();
 
         this.activeShader = null;
     }
@@ -71,6 +72,7 @@ export class EngineHandlers {
         this.core.resize(this.vm.renderer.canvas.width, this.vm.renderer.canvas.height);
         // this.vm.runtime.requestRedraw();
         // return new Promise(r => requestAnimationFrame(r)); // 这个可以蹭到 scratch vm 的锁帧效果
+        // 但是，对于性能不够无法上 60 帧的项目，取消注释后会进入挂起死循环，整个编辑器未响应
     }
 
     Shader_Create({ ID, VS, FS }) {
@@ -108,6 +110,38 @@ export class EngineHandlers {
         const fbo = this.fbos.get(ID);
         const tex = this.textures.get(TEX);
         if (fbo && tex instanceof TextureCube) fbo.attachCubeFace(tex, FACE_INDEX, SLOT);
+    }
+    FBO_Detach({ ID, SLOT }) {
+        const fbo = this.fbos.get(ID);
+        if (fbo) {
+            fbo.detach(SLOT);
+        }
+    }
+    Stencil_Create({ ID, W, H }) {
+        const gl = this.core.gl;
+        const rb = gl.createRenderbuffer();
+        gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+        gl.renderbufferStorage(gl.RENDERBUFFER, gl.STENCIL_INDEX8, W, H);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
+        this.stencilBuffers.set(ID, {
+            id: rb,
+            width: W,
+            height: H
+        });
+    }
+    FBO_AttachStencil({ ID, STENCIL_NAME }) {
+        const fbo = this.fbos.get(ID);
+        const stencil = this.stencilBuffers.get(STENCIL_NAME);
+        if (fbo && stencil) {
+            fbo.attachStencilBuffer(stencil);
+        }
+    }
+    FBO_DetachStencil({ ID }) {
+        const fbo = this.fbos.get(ID);
+        if (fbo) {
+            fbo.detachStencilBuffer();
+        }
     }
     FBO_Bind({ ID }) {
         const fbo = this.fbos.get(ID);

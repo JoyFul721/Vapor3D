@@ -16,8 +16,11 @@ export const EngineMenus = {
         costumeMenu: { acceptReporters: true, items: "tex_getCostumes" },
         listMenu: { acceptReporters: true, items: "getAllLists" },
         texTypeMenu: [
-                "RGB16F", "RGBA16F", "RGB32F", "RGB8", "RGBA8",
-                "R11G11B10F", "R16F", "RG16F", "DEPTH24_STENCIL8", "DEPTH_COMPONENT24"
+                "RGB8", "RGBA8",
+                "R16F", "RG16F", "RGB16F", "RGBA16F",
+                "R32F", "RGB32F",
+                "R11G11B10F",
+                "DEPTH_COMPONENT24", "DEPTH24_STENCIL8"
         ],
         fboSlotMenu: ["COLOR_ATTACHMENT0", "COLOR_ATTACHMENT1", "COLOR_ATTACHMENT2", "COLOR_ATTACHMENT3", "COLOR_ATTACHMENT4", "COLOR_ATTACHMENT5", "DEPTH_STENCIL_ATTACHMENT", "DEPTH_ATTACHMENT"],
         depthMenu: ["RBO", "TEXTURE", "NONE"],
@@ -78,7 +81,7 @@ export const EngineBlocks = [
         { opcode: "Shader_Use", blockType: "command", text: "Shader [ID] .use()", arguments: { ID: { type: "string" } } },
         { opcode: "Shader_SetVec2", blockType: "command", text: "Shader [ID] .setVec2([NAME], [X] [Y])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, X: { type: "number" }, Y: { type: "number" } } },
         { opcode: "Shader_SetVec3", blockType: "command", text: "Shader [ID] .setVec3([NAME], [X] [Y] [Z])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, X: { type: "number" }, Y: { type: "number" }, Z: { type: "number" } } },
-        { opcode: "Shader_SetVec4", blockType: "command", text: "Shader [ID] .setVec4([NAME], [X], [Y], [Z], [W])", arguments: { ID: { type: "string" }, NAME: { type: "string", defaultValue: "uVec" }, X: { type: "number", defaultValue: 0 }, Y: { type: "number", defaultValue: 0 }, Z: { type: "number", defaultValue: 0 }, W: { type: "number", defaultValue: 0 } } },
+        { opcode: "Shader_SetVec4", blockType: "command", text: "Shader [ID] .setVec4([NAME], [X], [Y], [Z], [W])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, X: { type: "number", defaultValue: 0 }, Y: { type: "number", defaultValue: 0 }, Z: { type: "number", defaultValue: 0 }, W: { type: "number", defaultValue: 0 } } },
         { opcode: "Shader_SetMat4", blockType: "command", text: "Shader [ID] .setMat4([NAME], [VAL])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, VAL: { type: "string" } } },
         { opcode: "Shader_SetFloat", blockType: "command", text: "Shader [ID] .setFloat([NAME], [V])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, V: { type: "number" } } },
         { opcode: "Shader_SetInt", blockType: "command", text: "Shader [ID] .setInt([NAME], [V])", arguments: { ID: { type: "string" }, NAME: { type: "string" }, V: { type: "number" } } },
@@ -88,6 +91,10 @@ export const EngineBlocks = [
         { opcode: "FBO_Create", blockType: "command", text: "new FBO [ID] ()", arguments: { ID: { type: "string" } } },
         { opcode: "FBO_AttachTexture", blockType: "command", text: "FBO [ID] .attachTexture([TEX], [SLOT])", arguments: { ID: { type: "string" }, TEX: { type: "string" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
         { opcode: "FBO_AttachCubeTexture", blockType: "command", text: "FBO [ID] .attachCubemap([TEX], Face:[FACE_INDEX], [SLOT])", arguments: { ID: { type: "string" }, TEX: { type: "string" }, FACE_INDEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
+        { opcode: "FBO_Detach", blockType: "command", text: "FBO [ID] .detach([SLOT])", arguments: { ID: { type: "string" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
+        { opcode: "Stencil_Create", blockType: "command", text: "new StencilBuffer [ID] ([W], [H])", arguments: { ID: { type: "string" }, W: { type: "number"}, H: { type: "number"} } },
+        { opcode: "FBO_AttachStencil", blockType: "command", text: "FBO [ID] .attachStencil([STENCIL_NAME])", arguments: { ID: { type: "string" }, STENCIL_NAME: { type: "string" } } },
+        { opcode: "FBO_DetachStencil", blockType: "command", text: "FBO [ID] .detachStencil()", arguments: { ID: { type: "string" } } },
         { opcode: "FBO_Bind", blockType: "command", text: "FBO [ID] .bind()", arguments: { ID: { type: "string", defaultValue: "null" } } },
 
         { blockType: "label", text: "Vertex Array Object" },
