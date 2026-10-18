@@ -1,3 +1,5 @@
+// /lib/Animation/Animation.js
+
 import { Math3D } from '../index';
 
 
@@ -7,6 +9,8 @@ export class Animation {
         this.channels = channels; // { sampler, targetNode, path }
         this.samplers = samplers; // { input, output, interpolation }
         this.duration = 0;
+
+        this.registryIndex = -1;
 
         // Calculate the total duration of the animation
         if (this.samplers.length > 0) {

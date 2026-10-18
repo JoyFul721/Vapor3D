@@ -14,5 +14,7 @@ export const CubeCameraBlocks = [
         opcode: "CubeCam_GetProjection",
         blockType: "reporter",
         text: "CubeCam.projectionMatrix()"
-    }
+    },
+    
+    "---", "---",
 ];

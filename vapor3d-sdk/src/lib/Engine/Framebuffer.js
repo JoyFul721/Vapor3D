@@ -1,10 +1,13 @@
 export class Framebuffer {
     constructor(gl) {
+        this.name = null;
         this.gl = gl;
         this.id = gl.createFramebuffer();
         this.width = 0;
         this.height = 0;
         this.activeSlots = [];
+
+        this.registryIndex = -1;
     }
 
     attachTexture(texture, slotPointName) {

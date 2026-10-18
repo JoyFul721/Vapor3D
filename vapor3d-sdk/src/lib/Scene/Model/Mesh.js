@@ -11,7 +11,7 @@ export class Material {
     }
 }
 
-export class Mesh {
+export class Mesh { // legacy
     constructor(name, vao) {
         this.name = name;
         this.vao = vao;

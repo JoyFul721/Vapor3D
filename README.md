@@ -2,15 +2,16 @@
 
 高性能、可编程的 WebGL2 3D 框架。
 
-![Version](https://img.shields.io/badge/version-3.9.2-007a1f?style=flat&logo=github&labelColor=24292e)
+![Version](https://img.shields.io/badge/version-4.0.0-007a1f?style=flat&logo=github&labelColor=24292e)
 
 ---
 
 > **TODO**: 扩展处于测试阶段，遇到问题欢迎向我反馈。文档目前仅为大纲，将来有时间会来完善。
 
 ---
+# 4.0.0 是最近一次大重构，动画系统还存在一些问题，可以在 History 中使用更为稳定的 3.9.2
 
-## 已实现（包括二次开发）的功能：
+## 待办事项：
 - [X] 延迟渲染
 - [X] GLB Loader
 - [X] Physically Based Rendering
@@ -24,11 +25,6 @@
 - [ ] Bloom
 - [ ] TAA
 
-## 核心特性
-
-* **完全可编程管线**：引擎不内置任何渲染算法。开发者可完全接管并自定义 Shader 逻辑。
-* **自定义渲染阶段**：支持延迟渲染、G-Buffer 架构及代理几何体等高级技术的二次开发。
-* **动画系统**：支持蒙皮动画，支持基于 Track 的多动画混合以及骨骼遮罩。
 
 ## 渲染效果
 
@@ -47,7 +43,7 @@
 > <b>资源致谢 (Credits):</b>
 > <br>本文档及示例项目（example/pbr.sb3）中使用的资源包括：PBR 贴图 (FreePBR.com)、IBL 预卷积贴图 (cmftStudio)、Water Bottle 模型 (Khronos Group, CC-BY 4.0)、BRDF 查找表 (LearnOpenGL, CC BY-NC 4.0)、Vanguard 角色模型 (T. Choonyung, Mixamo.com)。本扩展引用了第三方库 <b>gltf-loader-ts</b>，在此一并鸣谢。
 > 
-> <b>⚠️ Unity 资源声明:</b>
+> <b>Unity 资源声明:</b>
 > <br>项目场景中使用了由 <b>Unity</b> 提供的 <b>HDRP Sample Scene</b> 示例资源。
 > <br><b>特别强调：此类资源版权完全归 Unity 所有，仅限用于本项目引擎开发的学习参考与渲染兼容性测试，严禁用于任何形式的商业用途或二次分发。</b>
 > 

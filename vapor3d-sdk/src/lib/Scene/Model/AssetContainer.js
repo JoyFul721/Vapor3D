@@ -8,13 +8,16 @@ import { Timeline } from "../../index";
 然后，再从拿到的 container 中去查询网格或者骨骼
 */
 export class AssetContainer {
-    constructor(id) {
-        this.id = id;
+    constructor(name) {
+        this.name = name;
+        this.id = name;           // 气死我了，历史遗留问题，以前是 id ，现在是 name
         this.rootNode = null;     // glb 加载时所创建的节点
         this.meshes = [];         // 扁平 MeshNode 引用
         this.skeletons = [];      // 扁平 Skeleton 引用
         this.animations = new Map();
         this.timeline = new Timeline(); 
+
+        this.registryIndex = -1;
     }
 
     dispose() {

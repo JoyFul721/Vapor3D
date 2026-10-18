@@ -1,3 +1,5 @@
+// /lib/Animation/Mixer
+
 import { Math3D } from '../index';
 
 export class Mixer {

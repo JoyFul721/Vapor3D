@@ -3,45 +3,37 @@ export const LoaderBlocks = [
     {
         opcode: "Loader_load_glb",
         blockType: "command",
-        text: "Loader.loadGLB([U]) to Scene [SCENE_ID] as [NAME]",
+        text: "Loader.loadGLB([U]) to Scene [SCENE_INDEX] as [NAME]",
         arguments: {
-            U: {
-                type: "string",
-                defaultValue: "https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Assets@main/Models/WaterBottle/glTF-Binary/WaterBottle.glb"
-            },
-            SCENE_ID: { type: "string", defaultValue: "Main" },
+            U: { type: "string", defaultValue: "https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Assets@main/Models/WaterBottle/glTF-Binary/WaterBottle.glb" },
+            SCENE_INDEX: { type: "number", defaultValue: 0 },
             NAME: { type: "string", defaultValue: "sample" }
         }
     },
     {
         opcode: "Loader_apply_lightmap_metadata",
         blockType: "command",
-        text: "Loader.applyLightmapMeta([JSON]) to Model [NAME] in Scene [SCENE_ID]",
+        text: "Loader.applyLightmapMeta([JSON]) to Container [CONTAINER_INDEX]",
         arguments: {
-            JSON: {
-                type: "string",
-                defaultValue: '{"items":[]}'
-            },
-            NAME: { type: "string", defaultValue: "sample" },
-            SCENE_ID: { type: "string", defaultValue: "Main" }
+            JSON: { type: "string", defaultValue: '{"items":[]}' },
+            CONTAINER_INDEX: { type: "number", defaultValue: 0 }
         }
     },
-
 
     { blockType: "label", text: "Texture Loader" },
     {
         opcode: "Loader_load_texture_url",
-        blockType: "command",
-        text: "Loader.loadTexture( [U] , [NAME] )",
+        blockType: "reporter",
+        text: "Loader.loadTexture([U], [NAME])",
         arguments: {
-            U: { type: "string", defaultValue: "https://..." },
+            U: { type: "string", defaultValue: "https://example.com/texture.png" },
             NAME: { type: "string", defaultValue: "texURL1" }
         }
     },
     {
         opcode: "Loader_load_texture_costume",
-        blockType: "command",
-        text: "Loader.loadTextureFromCostume( [C], [NAME] )",
+        blockType: "reporter",
+        text: "Loader.loadTextureFromCostume([C], [NAME])",
         arguments: {
             C: { type: "string", menu: "costumeMenu" },
             NAME: { type: "string", defaultValue: "texCostume1" }
@@ -49,21 +41,21 @@ export const LoaderBlocks = [
     },
     {
         opcode: "Loader_load_ktx_url",
-        blockType: "command",
-        text: "Loader.loadKTX( [U] , [NAME] )",
+        blockType: "reporter",
+        text: "Loader.loadKTX([U], [NAME])",
         arguments: {
-            U: { type: "string", defaultValue: "https://..." },
+            U: { type: "string", defaultValue: "https://example.com/env.ktx" },
             NAME: { type: "string", defaultValue: "envMap1" }
         }
     },
     {
         opcode: "Loader_load_hdr_url",
-        blockType: "command",
-        text: "Loader.loadHDR( [U] , [NAME] )",
+        blockType: "reporter",
+        text: "Loader.loadHDR([U], [NAME])",
         arguments: {
-            U: { type: "string", defaultValue: "https://..." },
+            U: { type: "string", defaultValue: "https://example.com/env.hdr" },
             NAME: { type: "string", defaultValue: "lightmap1" }
         }
     },
-    "---", "---",
+    "---", "---"
 ];

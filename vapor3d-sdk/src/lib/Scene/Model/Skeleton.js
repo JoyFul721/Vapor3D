@@ -1,4 +1,5 @@
 import { Math3D } from '../../index';
+import { Timeline } from '../../index';
 
 /**
  * 骨架类：管理模型的骨骼调色板 (Matrix Palette)
@@ -13,12 +14,19 @@ import { Math3D } from '../../index';
 
 
 export class Skeleton {
-    constructor(gl, id, joints, ibms) {
+    constructor(gl, name, joints, ibms) {
+        this.name = name;
         this.gl = gl;
-        this.id = id;
+        this.id = name;
         this.joints = joints; // Node 数组
         this.inverseBindMatrices = ibms; // Float32Array
         this.numJoints = joints.length;
+
+        this.timeline = new Timeline();
+
+        this.registryIndex = -1;
+
+        this.sceneIndex = -1;
 
         // handler，Model 持有的仓库
         this.matrixPalette = new Float32Array(this.numJoints * 16);
@@ -71,6 +79,10 @@ export class Skeleton {
         if (this.texture) {
             this.gl.deleteTexture(this.texture);
             this.texture = null;
+        }
+        if (this.timeline) {
+            this.timeline.clips.clear();
+            this.timeline = null;
         }
         this.joints = [];
         this.inverseBindMatrices = null;

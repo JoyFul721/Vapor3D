@@ -1,8 +1,11 @@
 export class Shader {
     constructor(gl, vsSource, fsSource) {
+        this.name = null;
         this.gl = gl;
         this.program = gl.createProgram();
         this.locationCache = new Map();
+
+        this.registryIndex = -1;
 
         const vSrc = this._fixGLSL(vsSource);
         const fSrc = this._fixGLSL(fsSource);

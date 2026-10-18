@@ -1,22 +1,28 @@
+// /lib/Loader/Loader.js
+
 import { GltfLoader } from 'gltf-loader-ts';
 
 import { Mesh, VAO, Texture2D, TextureCube, Math3D, Utils, Skeleton, Animation, TransformNode, MeshNode, AssetContainer } from '../index.js';
 
-// 全局物理缓冲区映射
-// 使用 WeakMap 确保 ArrayBuffer 被释放时，对应的 SourceID 也会被回收
-const bufferToSourceID = new WeakMap();
-let sourceCounter = 0;
+
 
 export class Loader {
-    constructor(gl) {
+    constructor(gl, registry) {
         this.gl = gl;
         this.gltfLoader = new GltfLoader();
+        this.registry = registry;
     }
 
     async loadGLB(url, targetScene, modelID) {
         try {
             const asset = await this.gltfLoader.load(url);
             await asset.preFetchAll();
+
+            console.log({
+                gltfTextures: asset.gltf.textures?.length ?? 0,
+                gltfImages: asset.gltf.images?.length ?? 0,
+                registryTextures: this.registry.textures?.length
+            });
 
             const meshNodesList = [];
             const vaoLibrary = new Map();
@@ -32,8 +38,18 @@ export class Loader {
                 }
                 const tex = new Texture2D(this.gl);
                 tex.uploadData(1, 1, new Uint8Array([r, g, b, a]));
+
+                reg('textures', tex);
+
                 valueTextureCache.set(key, tex);
                 return tex;
+            };
+
+            // 辅助函数：注册到 Registry 并标记索引
+            const reg = (type, obj) => {
+                const idx = this.registry.allocate(type, obj);
+                obj.registryIndex = idx; // 将索引反向注入对象
+                return idx;
             };
 
             // 1 - 纹理去重加载
@@ -62,9 +78,11 @@ export class Loader {
                         if (!img || img.width === 0) return null;
 
                         const t = new Texture2D(this.gl);
+                        reg('textures', t);
                         t.uploadImageBitmap(img);
                         t.generateMipmap();
                         t.setFilter("LINEAR_MIPMAP_LINEAR", "LINEAR");
+
                         return t;
                     });
                     textureCache.set(i, tex);
@@ -86,6 +104,7 @@ export class Loader {
 
                         const vao = await targetScene.getOrCreateVAO(vaoResId, async () => {
                             const v = new VAO(this.gl);
+                            reg('vaos', v);
 
                             // POS
                             if (posIdx !== undefined) {
@@ -276,6 +295,7 @@ export class Loader {
                     vNode.quaternion = n.rotation ? [...n.rotation] : [0, 0, 0, 1];
                     vNode.scale = n.scale ? [...n.scale] : [1, 1, 1];
                 }
+                reg('nodes', vNode);
                 return vNode;
             });
 
@@ -290,6 +310,7 @@ export class Loader {
                         ibms = new Float32Array(rawIbm.buffer, rawIbm.byteOffset, rawIbm.byteLength / 4).slice();
                     }
                     const skel = new Skeleton(this.gl, `${modelID}_skel`, jointNodes, ibms);
+                    reg('skeletons', skel);
                     skeletons.push(skel);
                 }
             }
@@ -306,6 +327,7 @@ export class Loader {
                         meshInsts.forEach((mInst, pIdx) => {
                             // VAO 已经实现了基于 Accessor 的底层查重，这里直接创建 MeshNode
                             const meshNode = new MeshNode(`${vNode.name}_p${pIdx}`, mInst.vao);
+                            reg('nodes', meshNode);
                             meshNode.material = mInst.material;
                             if (nDef.skin !== undefined) {
                                 meshNode.skeleton = skeletons[nDef.skin];
@@ -340,7 +362,9 @@ export class Loader {
                         };
                     });
                     const animName = animDef.name || `anim_${animations.size}`;
-                    animations.set(animName, new Animation(animName, channels, samplers));
+                    const animationInstance = new Animation(animName, channels, samplers);
+                    reg('animations', animationInstance);
+                    animations.set(animName, animationInstance);
                 }
             }
 
@@ -358,6 +382,7 @@ export class Loader {
             container.meshes = meshNodesList;   // 在 Step 4 中收集的 MeshNode 引用
             container.skeletons = skeletons;    // 解析出的 Skeleton 数组
             container.animations = animations;  // 解析出的 Animation Map
+            reg('containers', container);       // 注册到 registry
             return container;
 
         } catch (error) {

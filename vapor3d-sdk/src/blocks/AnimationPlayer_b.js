@@ -1,107 +1,79 @@
+// /blocks/AnimationPlayer_b.js
+
 export const AnimationPlayerBlocks = [
-    { blockType: "label", text: "Clip" },
     {
         opcode: "Animation_AddClip",
         blockType: "command",
-        text: "Scene [SCENE_ID] model [MODEL] create clip [CLIP_ID] ( [ANIM_NAME] )",
+        text: "Skeleton [SKELETON_INDEX] add clip ([CLIP_ID]) animation ([ANIMATION_INDEX])",
         arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "animation" },
-            CLIP_ID: { type: "string", defaultValue: "walk_layer" },
-            ANIM_NAME: { type: "string", defaultValue: "Walk" }
+            SKELETON_INDEX: { type: "number", defaultValue: 0 },
+            CLIP_ID: { type: "string", defaultValue: "walk" },
+            ANIMATION_INDEX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Animation_SetClipProperty",
         blockType: "command",
-        text: "Scene [SCENE_ID] model [MODEL] clips [CLIP_ID] .set([PROP], [VALUE])",
+        text: "Skeleton [SKELETON_INDEX] clip [CLIP_ID] .set([PROP], [VALUE])",
         arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "animation" },
-            CLIP_ID: { type: "string", defaultValue: "walk_layer" },
-            PROP: { type: "string", menu: "clipPropMenu" }, // startTime, duration, weight
-            VALUE: { type: "number", defaultValue: 0 }
+            SKELETON_INDEX: { type: "number", defaultValue: 0 },
+            CLIP_ID: { type: "string", defaultValue: "walk" },
+            PROP: { type: "string", menu: "clipPropMenu", defaultValue: "weight" }, // 支持 startTime, duration, weight 等
+            VALUE: { type: "number", defaultValue: 1.0 }
         }
     },
     {
         opcode: "Animation_RemoveClip",
         blockType: "command",
-        text: "Scene [SCENE_ID] model [MODEL] clips [CLIP_ID] .remove()",
+        text: "Skeleton [SKELETON_INDEX] clip [CLIP_ID] .remove()",
         arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "animation" },
-            CLIP_ID: { type: "string", defaultValue: "walk_layer" }
+            SKELETON_INDEX: { type: "number", defaultValue: 0 },
+            CLIP_ID: { type: "string", defaultValue: "walk" }
         }
     },
     {
         opcode: "Animation_ClearClips",
         blockType: "command",
-        text: "Scene [SCENE_ID] .models [MODEL] .clearAllClips()",
+        text: "Skeleton [SKELETON_INDEX] .clearAllClips()",
         arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "sample" }
+            SKELETON_INDEX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Animation_SetClipBoneWeight",
         blockType: "command",
-        text: "Scene [SCENE_ID] model [MODEL] clips [CLIP_ID] .setBoneWeight([BONE_NAME], [WEIGHT], [RECURSIVE])",
+        text: "Skeleton [SKELETON_INDEX] clip [CLIP_ID] .setBoneWeight([BONE_NAME], [WEIGHT], [RECURSIVE])",
         arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "animation" },
-            CLIP_ID: { type: "string", defaultValue: "walk_layer" },
+            SKELETON_INDEX: { type: "number", defaultValue: 0 },
+            CLIP_ID: { type: "string", defaultValue: "walk" },
             BONE_NAME: { type: "string", defaultValue: "Spine" },
-            WEIGHT: { type: "number", defaultValue: 0 },
-            RECURSIVE: { type: "string", menu: "yesNoMenu" }
+            WEIGHT: { type: "number", defaultValue: 1.0 },
+            RECURSIVE: { type: "string", menu: "yesNoMenu", defaultValue: "false" }
         }
     },
     {
         opcode: "Animation_ApplyTime",
         blockType: "command",
-        text: "Scene [SCENE_ID] .animationTime = [TIME]",
+        text: "Skeleton [SKELETON_INDEX] .applyTime([TIME])",
         arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
+            SKELETON_INDEX: { type: "number", defaultValue: 0 },
             TIME: { type: "number", defaultValue: 0 }
-        }
-    },
-
-
-    "---",
-    {
-        opcode: "Animation_GetNodeTRS",
-        blockType: "reporter",
-        text: "Scene [SCENE_ID] node [MODEL] get current TRS",
-        arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "animation" }
-        }
-    },
-    {
-        opcode: "Animation_GetModelJointTRS",
-        blockType: "reporter",
-        text: "Scene [SCENE_ID] model [MODEL] .joints [IDX] get current TRS",
-        arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "animation" },
-            IDX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Animation_GetTrackCount",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] model [MODEL] get tracks count",
+        text: "Animation [ANIMATION_INDEX] .getTrackCount()",
         arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "animation" }
+            ANIMATION_INDEX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Animation_IsTimelineActive",
         blockType: "reporter",
-        text: "Scene [SCENE_ID] model [MODEL] is timeline active?",
+        text: "Skeleton [SKELETON_INDEX] .isTimelineActive()",
         arguments: {
-            SCENE_ID: { type: "string", defaultValue: "Main" },
-            MODEL: { type: "string", defaultValue: "animation" }
+            SKELETON_INDEX: { type: "number", defaultValue: 0 }
         }
     }
 ];

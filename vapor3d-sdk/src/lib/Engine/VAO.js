@@ -1,5 +1,6 @@
 export class VAO {
     constructor(gl) {
+        this.name = null;
         this.gl = gl;
         this.id = gl.createVertexArray();
         this.vbos = [];
@@ -7,6 +8,8 @@ export class VAO {
         this.hasElements = false;
         this.defaultCount = 0;
         this.elementType = gl.UNSIGNED_SHORT;
+
+        this.registryIndex = -1;
     }
 
     bind() { this.gl.bindVertexArray(this.id); }

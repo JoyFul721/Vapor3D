@@ -1,10 +1,13 @@
 export class Texture {
     constructor(gl) {
+        this.name = null;
         this.gl = gl;
         this.id = gl.createTexture();
         this.target = gl.TEXTURE_2D;
         this.width = 0;
         this.height = 0;
+
+        this.registryIndex = -1;
     }
 
     bind(unit = 0) {

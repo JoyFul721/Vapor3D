@@ -1,16 +1,20 @@
 import { Shader, VAO, Texture2D, TextureCube, Framebuffer, Utils } from '../lib/index.js';
 
 export class EngineHandlers {
-    constructor(Scratch) {
+    constructor(Scratch, registry) {
         this.vm = Scratch.vm;
+        this.registry = registry;
         this.core = null;
-        this.shaders = new Map();
-        this.vaos = new Map();
-        this.textures = new Map();
-        this.fbos = new Map();
-        this.stencilBuffers = new Map();
-
         this.activeShader = null;
+
+        this.scene = null;
+
+        // 存储 name -> index 映射，用于 Inspector 查询
+        this.shadersMap = new Map();
+        this.vaosMap = new Map();
+        this.texturesMap = new Map();
+        this.fbosMap = new Map();
+        this.stencilBuffersMap = new Map();
     }
 
 
@@ -61,10 +65,12 @@ export class EngineHandlers {
     }
 
     gl_ResetResources() {
-        [this.shaders, this.vaos, this.textures, this.fbos].forEach(map => {
-            map.forEach(obj => { if (obj && obj.destroy) obj.destroy(); });
+        for (const map of [this.shadersMap, this.vaosMap, this.texturesMap, this.fbosMap, this.stencilBuffersMap]) {
             map.clear();
-        });
+        }
+        this.activeShader = null;
+        this.scene?.Scene_ClearAll();
+        this.registry?.clear?.();
     }
 
     gl_Present() {
@@ -75,157 +81,144 @@ export class EngineHandlers {
         // 但是，对于性能不够无法上 60 帧的项目，取消注释后会进入挂起死循环，整个编辑器未响应
     }
 
-    Shader_Create({ ID, VS, FS }) {
+    // Shader
+    Shader_Create({ NAME, VS, FS }) {
         const shader = new Shader(this.core.gl, VS, FS);
-        if (shader.program) this.shaders.set(ID, shader);
+        if (!shader.program) return -1;
+        const index = this.registry.allocate('shaders', shader);
+        this.shadersMap.set(NAME, index);
+        return index;
     }
-    Shader_Use({ ID }) {
-        const shader = this.shaders.get(ID);
-        if (shader) {
-            shader.use();
-            this.activeShader = shader;
-        }
+    Shader_Use({ Index }) {
+        const shader = this.registry.get('shaders', Index);
+        if (shader) { shader.use(); this.activeShader = shader; }
     }
-    Shader_SetMat4({ ID, NAME, VAL }, util) {
+    Shader_SetMat4({ Index, NAME, VAL }, util) {
+        const shader = this.registry.get('shaders', Index);
+        if (!shader) return;
         const mat = Utils.parseInput(VAL, util);
-        if (mat) {
-            const arrayData = ArrayBuffer.isView(mat) ? mat : new Float32Array(mat);
-            this.shaders.get(ID)?.setMat4(NAME, arrayData);
-        }
+        if (mat) shader.setMat4(NAME, ArrayBuffer.isView(mat) ? mat : new Float32Array(mat));
     }
-    Shader_SetVec4({ ID, NAME, X, Y, Z, W }) { this.shaders.get(ID)?.setVec4(NAME, X, Y, Z, W); }
-    Shader_SetVec3({ ID, NAME, X, Y, Z }) { this.shaders.get(ID)?.setVec3(NAME, X, Y, Z); }
-    Shader_SetVec2({ ID, NAME, X, Y }) { this.shaders.get(ID)?.setVec2(NAME, X, Y); }
-    Shader_SetFloat({ ID, NAME, V }) { this.shaders.get(ID)?.setFloat(NAME, V); }
-    Shader_SetInt({ ID, NAME, V }) { this.shaders.get(ID)?.setInt(NAME, V); }
-    Shader_SetBool({ ID, NAME, V }) { this.shaders.get(ID)?.setInt(NAME, Boolean(Number(V)) ? 1 : 0); }
+    Shader_SetVec4({ Index, NAME, X, Y, Z, W }) { this.registry.get('shaders', Index)?.setVec4(NAME, X, Y, Z, W); }
+    Shader_SetVec3({ Index, NAME, X, Y, Z }) { this.registry.get('shaders', Index)?.setVec3(NAME, X, Y, Z); }
+    Shader_SetVec2({ Index, NAME, X, Y }) { this.registry.get('shaders', Index)?.setVec2(NAME, X, Y); }
+    Shader_SetFloat({ Index, NAME, V }) { this.registry.get('shaders', Index)?.setFloat(NAME, V); }
+    Shader_SetInt({ Index, NAME, V }) { this.registry.get('shaders', Index)?.setInt(NAME, V); }
+    Shader_SetBool({ Index, NAME, V }) { this.registry.get('shaders', Index)?.setInt(NAME, Boolean(Number(V)) ? 1 : 0); }
 
-    FBO_Create({ ID }) { this.fbos.set(ID, new Framebuffer(this.core.gl)); }
-    FBO_AttachTexture({ ID, TEX, SLOT }) {
-        const fbo = this.fbos.get(ID);
-        const tex = this.textures.get(TEX);
+    // Framebuffer
+    FBO_Create({ NAME }) {
+        const fbo = new Framebuffer(this.core.gl);
+        const index = this.registry.allocate('fbos', fbo);
+        this.fbosMap.set(NAME, index);
+        return index;
+    }
+    FBO_AttachTexture({ Index, TEX, SLOT }) {
+        const fbo = this.registry.get('fbos', Index);
+        const tex = this.registry.get('textures', TEX);
         if (fbo && tex) fbo.attachTexture(tex, SLOT);
     }
-    FBO_AttachCubeTexture({ ID, TEX, FACE_INDEX, SLOT }) {
-        const fbo = this.fbos.get(ID);
-        const tex = this.textures.get(TEX);
+    FBO_AttachCubeTexture({ Index, TEX, FACE_INDEX, SLOT }) {
+        const fbo = this.registry.get('fbos', Index);
+        const tex = this.registry.get('textures', TEX);
         if (fbo && tex instanceof TextureCube) fbo.attachCubeFace(tex, FACE_INDEX, SLOT);
     }
-    FBO_Detach({ ID, SLOT }) {
-        const fbo = this.fbos.get(ID);
-        if (fbo) {
-            fbo.detach(SLOT);
-        }
-    }
-    Stencil_Create({ ID, W, H }) {
+    FBO_Detach({ Index, SLOT }) { this.registry.get('fbos', Index)?.detach(SLOT); }
+
+    Stencil_Create({ NAME, W, H }) {
         const gl = this.core.gl;
         const rb = gl.createRenderbuffer();
+        if (!rb) return -1;
         gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
         gl.renderbufferStorage(gl.RENDERBUFFER, gl.STENCIL_INDEX8, W, H);
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-
-        this.stencilBuffers.set(ID, {
-            id: rb,
-            width: W,
-            height: H
-        });
+        const index = this.registry.allocate('stencilBuffers', { id: rb, width: W, height: H });
+        this.stencilBuffersMap.set(NAME, index);
+        return index;
     }
-    FBO_AttachStencil({ ID, STENCIL_NAME }) {
-        const fbo = this.fbos.get(ID);
-        const stencil = this.stencilBuffers.get(STENCIL_NAME);
-        if (fbo && stencil) {
-            fbo.attachStencilBuffer(stencil);
-        }
+    FBO_AttachStencil({ Index, STENCIL_INDEX }) {
+        const fbo = this.registry.get('fbos', Index);
+        const stencil = this.registry.get('stencilBuffers', STENCIL_INDEX);
+        if (fbo && stencil) fbo.attachStencilBuffer(stencil);
     }
-    FBO_DetachStencil({ ID }) {
-        const fbo = this.fbos.get(ID);
-        if (fbo) {
-            fbo.detachStencilBuffer();
-        }
-    }
-    FBO_Bind({ ID }) {
-        const fbo = this.fbos.get(ID);
+    FBO_DetachStencil({ Index }) { this.registry.get('fbos', Index)?.detachStencilBuffer(); }
+    FBO_Bind({ Index }) {
+        const fbo = this.registry.get('fbos', Index);
         if (fbo) fbo.bind(this.core.canvas.width, this.core.canvas.height);
         else Framebuffer.bindScreen(this.core.gl, this.core.canvas.width, this.core.canvas.height);
     }
 
-    VAO_CreateScreenQuad({ ID }) {
-        this.vaos.set(ID, VAO.createScreenQuad(this.core.gl));
+    // VAO
+    VAO_CreateScreenQuad({ NAME }) {
+        const index = this.registry.allocate('vaos', VAO.createScreenQuad(this.core.gl));
+        this.vaosMap.set(NAME, index);
+        return index;
     }
-
-    VAO_CreateCube({ ID }) {
-        this.vaos.set(ID, VAO.createCube(this.core.gl));
+    VAO_CreateCube({ NAME }) {
+        const index = this.registry.allocate('vaos', VAO.createCube(this.core.gl));
+        this.vaosMap.set(NAME, index);
+        return index;
     }
-
-    VAO_CreateSphere({ ID, LAT, LON }) {
-        this.vaos.set(ID, VAO.createSphere(this.core.gl, LAT, LON));
+    VAO_CreateSphere({ NAME, LAT, LON }) {
+        const index = this.registry.allocate('vaos', VAO.createSphere(this.core.gl, LAT, LON));
+        this.vaosMap.set(NAME, index);
+        return index;
     }
-
-    VAO_CreateEmpty({ ID }) { this.vaos.set(ID, new VAO(this.core.gl)); }
-
-    VAO_Draw({ ID, COUNT, MODE }) {
-        this.vaos.get(ID)?.draw(MODE, COUNT);
+    VAO_CreateEmpty({ NAME }) {
+        const index = this.registry.allocate('vaos', new VAO(this.core.gl));
+        this.vaosMap.set(NAME, index);
+        return index;
     }
-
-    VAO_Destroy({ ID }) { this.vaos.get(ID)?.destroy(); this.vaos.delete(ID); }
+    VAO_Draw({ Index, COUNT, MODE }) { this.registry.get('vaos', Index)?.draw(MODE, COUNT); }
+    VAO_Destroy({ Index }) {
+        const vao = this.registry.get('vaos', Index);
+        if (!vao) return;
+        vao.destroy?.();
+        this.registry.vaos[Number(Index)] = null;
+        for (const [name, value] of this.vaosMap) if (value === Number(Index)) this.vaosMap.delete(name);
+    }
 
     // Texture
+    // Scene 中的贴图也可用这类积木
     Texture_CreateEmpty({ NAME, W, H, FORMAT }) {
         const conf = Utils.getFormatConfig(this.core.gl, FORMAT);
         const tex = new Texture2D(this.core.gl);
         tex.uploadEmpty(W, H, conf.internal, conf.format, conf.type);
-        this.textures.set(NAME, tex);
+        const index = this.registry.allocate('textures', tex);
+        this.texturesMap.set(NAME, index);
+        return index;
     }
-
     Texture_CreateEmptyCubemap({ NAME, SIZE, FORMAT }) {
         const conf = Utils.getFormatConfig(this.core.gl, FORMAT);
         const tex = new TextureCube(this.core.gl);
         tex.uploadEmpty(SIZE, conf.internal, conf.format, conf.type);
-        this.textures.set(NAME, tex);
+        const index = this.registry.allocate('textures', tex);
+        this.texturesMap.set(NAME, index);
+        return index;
     }
+    Texture_Bind({ Index, UNIT }) { this.registry.get('textures', Index)?.bind(UNIT); }
+    Texture_BindCube({ Index, UNIT }) { this.registry.get('textures', Index)?.bind(UNIT); }
+    Texture_SetFilter({ Index, MIN_MODE, MAG_MODE }) { this.registry.get('textures', Index)?.setFilter(MIN_MODE, MAG_MODE); }
+    Texture_SetWrap({ Index, MODE }) {
+        const tex = this.registry.get('textures', Index);
+        if (tex) { tex.setWrap('S', MODE); tex.setWrap('T', MODE); }
+    }
+    Texture_GenerateMipmap({ Index }) { this.registry.get('textures', Index)?.generateMipmap(); }
 
-    Texture_Bind({ NAME, UNIT }) { this.textures.get(NAME)?.bind(UNIT); }
-    Texture_BindCube({ NAME, UNIT }) { this.textures.get(NAME)?.bind(UNIT); }
-
-    Texture_SetFilter({ NAME, MIN_MODE, MAG_MODE }) {
-        const tex = this.textures.get(NAME);
-        if (tex) tex.setFilter(MIN_MODE, MAG_MODE);
-    }
-    Texture_SetWrap({ NAME, MODE }) {
-        const tex = this.textures.get(NAME);
-        if (tex) {
-            tex.setWrap("S", MODE);
-            tex.setWrap("T", MODE);
-        }
-    }
-    Texture_GenerateMipmap({ NAME }) {
-        this.textures.get(NAME)?.generateMipmap();
-    }
-
+    // GL state
     gl_Clear({ BIT }) { this.core?.clear(BIT); }
     gl_SetClearColor({ R, G, B, A }) { this.core?.setClearColor(R, G, B, A); }
     ST_Enable({ CAP }) { this.core?.enable(CAP); }
     ST_Disable({ CAP }) { this.core?.disable(CAP); }
     ST_CullFace({ MODE }) { this.core?.cullFace(MODE); }
     ST_ColorMask({ STATE }) {
-        const b = STATE === "true";
+        const b = STATE === 'true';
         this.core?.colorMask(b, b, b, b);
     }
-
-    ST_BlendFuncSeparate({ SRGB, DRGB, SA, DA }) {
-        this.core?.blendFuncSeparate(SRGB, DRGB, SA, DA);
-    }
-
-    ST_DepthMask({ STATE }) { this.core?.depthMask(STATE === "true"); }
+    ST_BlendFuncSeparate({ SRGB, DRGB, SA, DA }) { this.core?.blendFuncSeparate(SRGB, DRGB, SA, DA); }
+    ST_DepthMask({ STATE }) { this.core?.depthMask(STATE === 'true'); }
     ST_DepthFunc({ FUNC }) { this.core?.depthFunc(FUNC); }
-
-    ST_StencilMask({ MASK }) {
-        this.core?.stencilMask(parseInt(MASK) || 0xFF);
-    }
-    ST_StencilOp({ FACE, SF, DF, DP }) {
-        this.core?.stencilOp(FACE, SF, DF, DP);
-    }
-    ST_StencilFunc({ FACE, FUNC, REF, MASK }) {
-        this.core?.stencilFunc(FACE, FUNC, parseInt(REF) || 0, parseInt(MASK) || 0xFF);
-    }
+    ST_StencilMask({ MASK }) { this.core?.stencilMask(parseInt(MASK) || 0xFF); }
+    ST_StencilOp({ FACE, SF, DF, DP }) { this.core?.stencilOp(FACE, SF, DF, DP); }
+    ST_StencilFunc({ FACE, FUNC, REF, MASK }) { this.core?.stencilFunc(FACE, FUNC, parseInt(REF) || 0, parseInt(MASK) || 0xFF); }
 }

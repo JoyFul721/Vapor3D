@@ -5,6 +5,7 @@ import { Math3DBlocks } from './blocks/Math3D_b.js';
 import { CubeCameraBlocks } from './blocks/CubeCamera_b.js';
 import { TextBlocks } from './blocks/Text_b.js';
 import { AnimationPlayerBlocks } from './blocks/AnimationPlayer_b.js';
+import { InspectorBlocks } from './blocks/Inspector_b.js';
 
 import { EngineHandlers } from './handlers/Engine_h.js';
 import { SceneHandlers } from './handlers/Scene_h.js';
@@ -13,6 +14,9 @@ import { Math3DHandlers } from './handlers/Math3D_h.js';
 import { CubeCameraHandlers } from './handlers/CubeCamera_h.js';
 import { TextHandlers } from './handlers/Text_h.js';
 import { AnimationPlayerHandlers } from './handlers/AnimationPlayer_h.js';
+import { InspectorHandlers } from './handlers/Inspector_h.js';
+
+import { Registry } from './lib/Registry/Registry.js';
 
 (function (Scratch) {
     "use strict";
@@ -46,20 +50,22 @@ import { AnimationPlayerHandlers } from './handlers/AnimationPlayer_h.js';
 
     class Vapor3DExtension {
         constructor() {
-            this.engineHandlers = new EngineHandlers(Scratch);
-            this.sceneHandlers = new SceneHandlers(this.engineHandlers);
-            this.loaderHandlers = new LoaderHandlers(this.engineHandlers, this.sceneHandlers);
+            const registry = new Registry();
+            this.engineHandlers = new EngineHandlers(Scratch, registry);
+            this.sceneHandlers = new SceneHandlers(this.engineHandlers, registry);
+            this.inspectorHandlers = new InspectorHandlers(this.engineHandlers, this.sceneHandlers, registry);
+            this.loaderHandlers = new LoaderHandlers(this.engineHandlers, this.sceneHandlers, registry);
             this.mathHandlers = new Math3DHandlers();
             this.cubeCameraHandlers = new CubeCameraHandlers();
-            this.testHandlers = new TextHandlers(this.engineHandlers, Cast);
-            this.animationPlayerHandlers = new AnimationPlayerHandlers(this.engineHandlers, this.sceneHandlers);
+            this.textHandlers = new TextHandlers(this.engineHandlers, Cast);
+            this.animationPlayerHandlers = new AnimationPlayerHandlers(this.engineHandlers, this.sceneHandlers, registry);
 
 
 
             runtime.on('PROJECT_STOP_ALL', () => {
                 console.log("Vapor3D: Project stopped. releasing all resources...");
 
-                this.sceneHandlers.Scene_Clear();
+                this.sceneHandlers.Scene_ClearAll();
                 this.engineHandlers.gl_ResetResources();
 
                 /*
@@ -84,9 +90,10 @@ import { AnimationPlayerHandlers } from './handlers/AnimationPlayer_h.js';
             bindMethods(this.engineHandlers);
             bindMethods(this.sceneHandlers);
             bindMethods(this.loaderHandlers);
+            bindMethods(this.inspectorHandlers);
             bindMethods(this.mathHandlers);
             bindMethods(this.cubeCameraHandlers);
-            bindMethods(this.testHandlers);
+            bindMethods(this.textHandlers);
             bindMethods(this.animationPlayerHandlers);
         }
 
@@ -97,6 +104,8 @@ import { AnimationPlayerHandlers } from './handlers/AnimationPlayer_h.js';
                 color1: "#2f2f36",
                 hideFromPalette: true,
                 blocks: [
+                    ...InspectorBlocks,
+                    "---",
                     ...EngineBlocks,
                     "---",
                     ...SceneBlocks,
@@ -138,13 +147,14 @@ import { AnimationPlayerHandlers } from './handlers/AnimationPlayer_h.js';
 
             // 定义子类别映射
             const groupDefinitions = [
+                { name: "Inspector", data: InspectorBlocks, color: "#2f2f36" },
                 { name: "Engine", data: EngineBlocks, color: "#2f2f36" },
-                { name: "Scene", data: SceneBlocks, color: "#36363d" },
-                { name: "AnimPlayer", data: AnimationPlayerBlocks, color: "#3d3d45" },
-                { name: "Loader", data: LoaderBlocks, color: "#45454d" },
-                { name: "CubeCamera", data: CubeCameraBlocks, color: "#4d4d55" },
-                { name: "Math", data: Math3DBlocks, color: "#54545c" },
-                { name: "Text", data: TextBlocks, color: "#5a5a63" }
+                { name: "Scene", data: SceneBlocks, color: "#2f2f36" },
+                { name: "AnimPlayer", data: AnimationPlayerBlocks, color: "#2f2f36" },
+                { name: "Loader", data: LoaderBlocks, color: "#2f2f36" },
+                { name: "CubeCamera", data: CubeCameraBlocks, color: "#2f2f36" },
+                { name: "Math", data: Math3DBlocks, color: "#2f2f36" },
+                { name: "Text", data: TextBlocks, color: "#2f2f36" }
             ];
 
             // 构建每个子类别的 XML

@@ -6,6 +6,10 @@ class Node {
         this.name = name;
         this.parent = null;
         this.children = [];
+
+        this.registryIndex = -1;
+
+        this.sceneIndex = -1;
     }
 
     addChild(child) {
