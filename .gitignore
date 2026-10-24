@@ -4,7 +4,6 @@
 /vapor3d-sdk/node_modules
 /vapor3d-sdk/pbr v3.sb3
 /vapor3d-sdk/Exported_ReflectionProbe/
-/vapor3d-sdk/dist
 /vapor3d-sdk/src/upload
 
 /example/pbr/pbr_ccw.sb3

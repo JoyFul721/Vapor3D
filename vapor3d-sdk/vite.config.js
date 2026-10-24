@@ -7,16 +7,16 @@ export default defineConfig({
     cors: true
   },
   build: {
-    minify: false,
+    minify: true,
 
     lib: {
       entry: resolve(__dirname, 'src/index.js'),
       name: 'Vapor3D',
-      fileName: 'vapor3d',
+      fileName: () => 'vapor3d.js',
       formats: ['iife']
     },
     outDir: 'dist',
 
-    sourcemap: true
+    sourcemap: false
   }
 });
