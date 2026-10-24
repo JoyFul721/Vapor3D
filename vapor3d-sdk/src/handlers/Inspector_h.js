@@ -1,7 +1,8 @@
 export class InspectorHandlers {
-    constructor(engineHandlers, sceneHandlers, registry) {
+    constructor(engineHandlers, sceneHandlers, timelineHandler, registry) {
         this.engine = engineHandlers;
         this.sceneHandler = sceneHandlers;
+        this.timelineHandler = timelineHandler;
         this.registry = registry ?? engineHandlers.registry;
     }
 
@@ -35,7 +36,8 @@ export class InspectorHandlers {
             texture: this.engine.texturesMap,
             stencil: this.engine.stencilBuffersMap,
             scene: this.sceneHandler.scenesMap,
-            container: this.sceneHandler.containersMap
+            container: this.sceneHandler.containersMap,
+            timeline: this.timelineHandler.timelinesMap
         };
 
         return this._find(maps[type], name);

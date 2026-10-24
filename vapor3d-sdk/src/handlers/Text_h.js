@@ -1,28 +1,31 @@
 import { Text } from "../lib/Text/Text";
 
 export class TextHandlers {
-    constructor(engine, Cast) {
+    constructor(engine, Cast, registry) {
         this.engine = engine;
         this.Cast = Cast;
+        this.registry = registry;
     }
 
-    Text_Create({ NAME, TEXT, FONT, COLOR, BORDER_SIZE, BORDER_COLOR }, util) {
-        const colorObj = this.Cast.toRgbColorObject(COLOR);
-        const borderColorObj = this.Cast.toRgbColorObject(BORDER_COLOR);
+    Text_Create({ NAME, TEXT, FONT, COLOR, B_COLOR, SIZE }) {
+        const color = this.Cast.toRgbColorObject(COLOR);
+        const borderColor = this.Cast.toRgbColorObject(B_COLOR);
 
-        const colorStr = `rgba(${colorObj.r},${colorObj.g},${colorObj.b},${(colorObj.a ?? 255) / 255})`;
-        const bColorStr = `rgba(${borderColorObj.r},${borderColorObj.g},${borderColorObj.b},${(borderColorObj.a ?? 255) / 255})`;
-
+        const colorStr = `rgba(${color.r},${color.g},${color.b},${(color.a ?? 255) / 255})`;
+        const borderColorStr = `rgba(${borderColor.r},${borderColor.g},${borderColor.b},${(borderColor.a ?? 255) / 255})`;
+        
         const tex = Text.createFromText(
             this.engine.core.gl,
             this.Cast.toString(TEXT),
             this.Cast.toString(FONT),
-            colorStr,
-            this.Cast.toNumber(BORDER_SIZE),
-            bColorStr
+            colorStr, this.Cast.toNumber(SIZE),
+            borderColorStr
         );
 
-        this.engine.textures.set(this.Cast.toString(NAME), tex);
+        const index = this.registry.allocate('textures', tex);
+        this.engine.texturesMap.set(this.Cast.toString(NAME), index);
+
+        return index;
     }
 
     Text_GetWidth({ TEXT, FONT, BORDER_SIZE }, util) {

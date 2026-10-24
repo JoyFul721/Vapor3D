@@ -75,7 +75,8 @@ export const EngineMenus = {
                 { text: "stencil", value: "stencil" },
                 { text: "scene", value: "scene" },
                 { text: "node", value: "node" },
-                { text: "container", value: "container" }
+                { text: "container", value: "container" },
+                { text: "timeline", value: "timeline" }
         ],
         Inspector_SceneType: [
                 { text: "container", value: "container" },
@@ -94,7 +95,18 @@ export const EngineMenus = {
         ],
         Inspector_MeshType: [
                 { text: "material", value: "material" }
-        ]
+        ],
+        targetTypeMenu: [
+                { text: 'Skeleton', value: 'skeleton' },
+                { text: 'Container', value: 'container' }
+        ],
+        clipMode: {
+                acceptReporters: true,
+                items: [
+                        { text: "normal", value: "normal" },
+                        { text: "additive", value: "additive" }
+                ]
+        }
 };
 
 

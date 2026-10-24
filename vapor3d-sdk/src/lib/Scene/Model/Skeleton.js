@@ -22,8 +22,6 @@ export class Skeleton {
         this.inverseBindMatrices = ibms; // Float32Array
         this.numJoints = joints.length;
 
-        this.timeline = new Timeline();
-
         this.registryIndex = -1;
 
         this.sceneIndex = -1;

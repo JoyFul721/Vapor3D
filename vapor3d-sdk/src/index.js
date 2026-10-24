@@ -4,7 +4,7 @@ import { LoaderBlocks } from './blocks/Loader_b.js';
 import { Math3DBlocks } from './blocks/Math3D_b.js';
 import { CubeCameraBlocks } from './blocks/CubeCamera_b.js';
 import { TextBlocks } from './blocks/Text_b.js';
-import { AnimationPlayerBlocks } from './blocks/AnimationPlayer_b.js';
+import { TimelineBlocks } from './blocks/Timeline_b.js';
 import { InspectorBlocks } from './blocks/Inspector_b.js';
 
 import { EngineHandlers } from './handlers/Engine_h.js';
@@ -13,7 +13,7 @@ import { LoaderHandlers } from './handlers/Loader_h.js';
 import { Math3DHandlers } from './handlers/Math3D_h.js';
 import { CubeCameraHandlers } from './handlers/CubeCamera_h.js';
 import { TextHandlers } from './handlers/Text_h.js';
-import { AnimationPlayerHandlers } from './handlers/AnimationPlayer_h.js';
+import { TimelineHandlers } from './handlers/Timeline_h.js';
 import { InspectorHandlers } from './handlers/Inspector_h.js';
 
 import { Registry } from './lib/Registry/Registry.js';
@@ -53,12 +53,12 @@ import { Registry } from './lib/Registry/Registry.js';
             const registry = new Registry();
             this.engineHandlers = new EngineHandlers(Scratch, registry);
             this.sceneHandlers = new SceneHandlers(this.engineHandlers, registry);
-            this.inspectorHandlers = new InspectorHandlers(this.engineHandlers, this.sceneHandlers, registry);
             this.loaderHandlers = new LoaderHandlers(this.engineHandlers, this.sceneHandlers, registry);
             this.mathHandlers = new Math3DHandlers();
             this.cubeCameraHandlers = new CubeCameraHandlers();
-            this.textHandlers = new TextHandlers(this.engineHandlers, Cast);
-            this.animationPlayerHandlers = new AnimationPlayerHandlers(this.engineHandlers, this.sceneHandlers, registry);
+            this.textHandlers = new TextHandlers(this.engineHandlers, Cast, registry);
+            this.timelineHandlers = new TimelineHandlers(registry);
+            this.inspectorHandlers = new InspectorHandlers(this.engineHandlers, this.sceneHandlers, this.timelineHandlers, registry);
 
 
 
@@ -94,7 +94,7 @@ import { Registry } from './lib/Registry/Registry.js';
             bindMethods(this.mathHandlers);
             bindMethods(this.cubeCameraHandlers);
             bindMethods(this.textHandlers);
-            bindMethods(this.animationPlayerHandlers);
+            bindMethods(this.timelineHandlers);
         }
 
         getInfo() {
@@ -110,7 +110,7 @@ import { Registry } from './lib/Registry/Registry.js';
                     "---",
                     ...SceneBlocks,
                     "---",
-                    ...AnimationPlayerBlocks,
+                    ...TimelineBlocks,
                     "---",
                     ...LoaderBlocks,
                     "---",
@@ -150,7 +150,7 @@ import { Registry } from './lib/Registry/Registry.js';
                 { name: "Inspector", data: InspectorBlocks, color: "#2f2f36" },
                 { name: "Engine", data: EngineBlocks, color: "#2f2f36" },
                 { name: "Scene", data: SceneBlocks, color: "#2f2f36" },
-                { name: "AnimPlayer", data: AnimationPlayerBlocks, color: "#2f2f36" },
+                { name: "Timeline", data: TimelineBlocks, color: "#2f2f36" },
                 { name: "Loader", data: LoaderBlocks, color: "#2f2f36" },
                 { name: "CubeCamera", data: CubeCameraBlocks, color: "#2f2f36" },
                 { name: "Math", data: Math3DBlocks, color: "#2f2f36" },

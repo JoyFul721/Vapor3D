@@ -15,7 +15,6 @@ export class AssetContainer {
         this.meshes = [];         // 扁平 MeshNode 引用
         this.skeletons = [];      // 扁平 Skeleton 引用
         this.animations = new Map();
-        this.timeline = new Timeline(); 
 
         this.registryIndex = -1;
     }
