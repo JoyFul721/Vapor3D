@@ -1,0 +1,48 @@
+name: Node.js Build
+
+on:
+  push:
+    branches: ["main"]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./vapor3d-sdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: vapor3d-sdk/package-lock.json
+      - run: npm ci
+        name: Install dependencies
+      - run: npm run build
+        name: Build
+      - name: Create timestamp
+        id: timestamp
+        if: ${{ github.event_name != 'release' }}
+        run: echo "value=$(date -u '+%Y-%m-%d-%H-%M-%S')" >> "$GITHUB_OUTPUT"
+      - name: Upload to Release
+        if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+        uses: softprops/action-gh-release@v3
+        with:
+          files: vapor3d-sdk/dist/vapor3d.js
+      - name: Publish Snapshot
+        if: ${{ github.event_name != 'release' }}
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: snapshot-${{ steps.timestamp.outputs.value }}
+          target_commitish: ${{ github.sha }}
+          name: Snapshot ${{ steps.timestamp.outputs.value }}
+          body: Automated build from commit ${{ github.sha }}
+          prerelease: true
+          files: vapor3d-sdk/dist/vapor3d.js
