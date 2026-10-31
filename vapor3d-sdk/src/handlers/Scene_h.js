@@ -233,6 +233,7 @@ export class SceneHandlers {
 
     Scene_GetContainerMeshCount({ Index }) {
         const container = this._get("containers", Index);
+        if (!container) return -2;
         return container.meshes?.length ?? -1;
     }
 

@@ -122,15 +122,18 @@ export const EngineBlocks = [
         { opcode: "FBO_DetachStencil", blockType: "command", text: "FBO [Index] .detachStencil", arguments: { Index: { type: "number" } } },
 
         { blockType: "label", text: "Vertex Array Object" },
+        { opcode: "VAO_CreateEmpty", blockType: "reporter", text: "new VAO [NAME]", arguments: { NAME: { type: "string" } } },
         { opcode: "VAO_CreateScreenQuad", blockType: "reporter", text: "new VAO [NAME] .setupQuad", arguments: { NAME: { type: "string", defaultValue: "screenQuad" } } },
         { opcode: "VAO_CreateCube", blockType: "reporter", text: "new VAO [NAME] .setupCube", arguments: { NAME: { type: "string", defaultValue: "cube" } } },
         { opcode: "VAO_CreateSphere", blockType: "reporter", text: "new VAO [NAME] .setupSphere [LAT] [LON]", arguments: { NAME: { type: "string", defaultValue: "Sphere" }, LAT: { type: "number", defaultValue: 16 }, LON: { type: "number", defaultValue: 16 } } },
+        { opcode: "VAO_AddBuffer", blockType: "command", text: "VAO [Index] .addBuffer data [LIST] size [SIZE] loctaion [LOC]", arguments: { Index: { type: "number" }, LOC: { type: "number", defaultValue: 0 }, SIZE: { type: "number", defaultValue: 3 }, LIST: { type: "string", menu: "listMenu" } } },
         { opcode: "VAO_Draw", blockType: "command", text: "VAO [Index] .draw count [COUNT] mode [MODE]", arguments: { Index: { type: "number" }, COUNT: { type: "number", defaultValue: -1 }, MODE: { type: "string", menu: "drawMode" } } },
         { opcode: "VAO_Destroy", blockType: "command", text: "VAO [Index] .destroy", arguments: { Index: { type: "number" } } },
 
         { blockType: "label", text: "Texture" },
         { opcode: "Texture_CreateEmpty", blockType: "reporter", text: "new Texture2D [NAME] [W] [H] [FORMAT]", arguments: { NAME: { type: "string", defaultValue: "texture2D" }, W: { type: "number", defaultValue: 256 }, H: { type: "number", defaultValue: 256 }, FORMAT: { type: "string", menu: "texTypeMenu", defaultValue: "RGBA8" } } },
         { opcode: "Texture_CreateEmptyCubemap", blockType: "reporter", text: "new TextureCube [NAME] [SIZE] [FORMAT]", arguments: { NAME: { type: "string", defaultValue: "cubemap" }, SIZE: { type: "number", defaultValue: 256 }, FORMAT: { type: "string", menu: "texTypeMenu", defaultValue: "RGBA8" } } },
+        { opcode: "Texture_UpdateFromList", blockType: "command", text: "Texture [Index] .updateFromList [LIST] format [TYPE]", arguments: { Index: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, TYPE: { type: "string", menu: "texTypeMenu", defaultValue: "RGBA8" } } },
         { opcode: "Texture_Bind", blockType: "command", text: "Texture [Index] .bind [UNIT]", arguments: { Index: { type: "number" }, UNIT: { type: "number" } } },
         { opcode: "Texture_BindCube", blockType: "command", text: "TextureCube [Index] .bind [UNIT]", arguments: { Index: { type: "number" }, UNIT: { type: "number" } } },
         { opcode: "Texture_SetFilter", blockType: "command", text: "Texture [Index] .setFilter [MIN_MODE] [MAG_MODE]", arguments: { Index: { type: "number" }, MIN_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" }, MAG_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" } } },

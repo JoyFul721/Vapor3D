@@ -51,6 +51,14 @@ export class EngineHandlers {
             return ["NONE"];
         }
     }
+    getListData(name) {
+        // 还是无法获取私有列表数据
+        const stage = this.vm.runtime.getTargetForStage();
+        const target = this.vm.editingTarget;
+        const list = Object.values(target?.variables || {}).find(v => v.type === 'list' && v.name === name)
+            || Object.values(stage?.variables || {}).find(v => v.type === 'list' && v.name === name);
+        return list?.value ?? null;
+    }
 
 
     gl_Init() {
@@ -149,6 +157,23 @@ export class EngineHandlers {
     }
 
     // VAO
+    VAO_CreateEmpty({ NAME }) {
+        const index = this.registry.allocate('vaos', new VAO(this.core.gl));
+        this.vaosMap.set(NAME, index);
+        return index;
+    }
+    VAO_AddBuffer({ Index, LIST, LOC, SIZE }) {
+        const vao = this.registry.get('vaos', Index);
+        if (!vao) return console.warn(`Vapor3D: VAO ${Index} not found`);
+
+        const listData = this.getListData(LIST);
+        if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
+        if (!Number.isInteger(SIZE) || SIZE < 1) return console.error(`Vapor3D: Invalid SIZE=${SIZE}`);
+        if (listData.length % SIZE !== 0) return console.error(`Vapor3D: ${listData.length} items cannot be divided evenly by SIZE=${SIZE}`);
+        const dataArray = new Float32Array(listData.map(Number));
+        if (dataArray.some(v => !Number.isFinite(v))) return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
+        vao.addBuffer(dataArray, LOC, SIZE);
+    }
     VAO_CreateScreenQuad({ NAME }) {
         const index = this.registry.allocate('vaos', VAO.createScreenQuad(this.core.gl));
         this.vaosMap.set(NAME, index);
@@ -161,11 +186,6 @@ export class EngineHandlers {
     }
     VAO_CreateSphere({ NAME, LAT, LON }) {
         const index = this.registry.allocate('vaos', VAO.createSphere(this.core.gl, LAT, LON));
-        this.vaosMap.set(NAME, index);
-        return index;
-    }
-    VAO_CreateEmpty({ NAME }) {
-        const index = this.registry.allocate('vaos', new VAO(this.core.gl));
         this.vaosMap.set(NAME, index);
         return index;
     }
@@ -195,6 +215,13 @@ export class EngineHandlers {
         const index = this.registry.allocate('textures', tex);
         this.texturesMap.set(NAME, index);
         return index;
+    }
+    Texture_UpdateFromList({ Index, LIST, TYPE }) {
+        const texture = this.registry.get('textures', Index);
+        if (!texture) return console.warn(`Vapor3D: Texture ${Index} not found`);
+        const list = this.getListData(LIST);
+        if (!list) return console.warn(`Vapor3D: List "${LIST}" not found`);
+        texture.updateFromList(list, TYPE);
     }
     Texture_Bind({ Index, UNIT }) { this.registry.get('textures', Index)?.bind(UNIT); }
     Texture_BindCube({ Index, UNIT }) { this.registry.get('textures', Index)?.bind(UNIT); }
