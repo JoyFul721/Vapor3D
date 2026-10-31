@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="98.25462341308594px" height="44px" viewBox="10 6926 98.25462341308594 44"><defs>
+              <ref id="titleColor" param="color" default="#000"/>
+            </defs><style type="text/css">
+            
+              .blocklyText{fill: #fff;box-sizing: border-box;}
+              .blocklyDraggable{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;}
+              .blocklyFlyoutLabelText{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;fill: #828997;}
+              .blocklyDraggable .blocklyText{fill: #fff;}
+              .blocklyEditableText .blocklyText{fill: #000;}
+              .blocklyDropdownText.blocklyText{fill: #fff;}
+              .blocklyFlyoutLabelBackground{opacity: 0;}
+              .blocklyFlyoutButton {fill: #eaeaea;}
+              .blocklyFlyoutButtonBackground {stroke: #c6c6c6;}
+              .blocklyFlyoutButton .blocklyText {fill: #000;}
+              .blocklyFlyoutButtonShadow{fill: transparent;}
+            
+            </style><g data-id="vapor3D_m4_Identity" class="blocklyDraggable" data-shapes="reporter round" data-category="Vapor 3D" transform="translate(12,6928)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#2f2f36" fill-opacity="1" d="m 0,0 m 20,0 H 74.25463104248047 a 20 20 0 0 1 0 40 H 20 a 20 20 0 0 1 0 -40 z"/><text class="blocklyText" y="2" text-anchor="middle" dominant-baseline="middle" dy="0" x="35.127315521240234" transform="translate(12, 20) ">glm::mat4</text></g></svg>

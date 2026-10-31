@@ -2,7 +2,7 @@
 
 高性能、可编程的 WebGL2 3D 框架。
 
-![Version](https://img.shields.io/badge/version-4.0.2-007a1f?style=flat&logo=github&labelColor=24292e)
+![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FJoyFul721%2FVapor3D%2Fmain%2Fvapor3d-sdk%2Fpackage.json&query=%24.version&label=version&color=007a1f&style=flat&logo=github&labelColor=24292e)
 
 ---
 

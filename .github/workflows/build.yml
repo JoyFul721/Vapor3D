@@ -1,8 +1,6 @@
 name: Node.js Build
 
 on:
-  push:
-    branches: ["main"]
   release:
     types: [published]
   workflow_dispatch:

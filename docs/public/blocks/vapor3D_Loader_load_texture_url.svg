@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="424.23614501953125px" height="44px" viewBox="10 6150 424.23614501953125 44"><defs>
+              <ref id="titleColor" param="color" default="#000"/>
+            </defs><style type="text/css">
+            
+              .blocklyText{fill: #fff;box-sizing: border-box;}
+              .blocklyDraggable{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;}
+              .blocklyFlyoutLabelText{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;fill: #828997;}
+              .blocklyDraggable .blocklyText{fill: #fff;}
+              .blocklyEditableText .blocklyText{fill: #000;}
+              .blocklyDropdownText.blocklyText{fill: #fff;}
+              .blocklyFlyoutLabelBackground{opacity: 0;}
+              .blocklyFlyoutButton {fill: #eaeaea;}
+              .blocklyFlyoutButtonBackground {stroke: #c6c6c6;}
+              .blocklyFlyoutButton .blocklyText {fill: #000;}
+              .blocklyFlyoutButtonShadow{fill: transparent;}
+            
+            </style><g data-id="vapor3D_Loader_load_texture_url" class="blocklyDraggable" data-shapes="reporter round" data-category="Vapor 3D" transform="translate(12,6152)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#2f2f36" fill-opacity="1" d="m 0,0 m 20,0 H 400.2361068725586 a 20 20 0 0 1 0 40 H 20 a 20 20 0 0 1 0 -40 z"/><g data-id="omda^!{(seIvBE1`y#h@" data-argument-type="text" data-shapes="argument round" transform="translate(156.11111450195312,4)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#FFFFFF" fill-opacity="1" d="m 0,0 m 16,0 H 151.85647583007812 a 16 16 0 0 1 0 32 H 16 a 16 16 0 0 1 0 -32 z"/><g class="blocklyEditableText" transform="translate(8, 0) " style="cursor: text;"><text class="blocklyText" x="75.92823791503906" y="18" dominant-baseline="middle" dy="0" text-anchor="middle">https://example.co…</text></g></g><g data-id="Ym5l$ax28TLo.WN[-JP!" data-argument-type="text" data-shapes="argument round" transform="translate(331.96759033203125,4)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#FFFFFF" fill-opacity="1" d="m 0,0 m 16,0 H 68.26851654052734 a 16 16 0 0 1 0 32 H 16 a 16 16 0 0 1 0 -32 z"/><g class="blocklyEditableText" transform="translate(8, 0) " style="cursor: text;"><text class="blocklyText" x="34.13425827026367" y="18" dominant-baseline="middle" dy="0" text-anchor="middle">texURL1</text></g></g><text class="blocklyText" y="2" text-anchor="middle" dominant-baseline="middle" dy="0" x="68.05555725097656" transform="translate(12, 20) ">Loader.loadTexture</text><path class="blocklyPath" style="visibility: hidden" d="" fill="#26262b"/><path class="blocklyPath" style="visibility: hidden" d="" fill="#26262b"/></g></svg>

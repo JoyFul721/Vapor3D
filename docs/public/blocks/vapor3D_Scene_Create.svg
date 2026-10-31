@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="163.86573791503906px" height="44px" viewBox="10 3946 163.86573791503906 44"><defs>
+              <ref id="titleColor" param="color" default="#000"/>
+            </defs><style type="text/css">
+            
+              .blocklyText{fill: #fff;box-sizing: border-box;}
+              .blocklyDraggable{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;}
+              .blocklyFlyoutLabelText{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;fill: #828997;}
+              .blocklyDraggable .blocklyText{fill: #fff;}
+              .blocklyEditableText .blocklyText{fill: #000;}
+              .blocklyDropdownText.blocklyText{fill: #fff;}
+              .blocklyFlyoutLabelBackground{opacity: 0;}
+              .blocklyFlyoutButton {fill: #eaeaea;}
+              .blocklyFlyoutButtonBackground {stroke: #c6c6c6;}
+              .blocklyFlyoutButton .blocklyText {fill: #000;}
+              .blocklyFlyoutButtonShadow{fill: transparent;}
+            
+            </style><g data-id="vapor3D_Scene_Create" class="blocklyDraggable" data-shapes="reporter round" data-category="Vapor 3D" transform="translate(12,3948)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#2f2f36" fill-opacity="1" d="m 0,0 m 20,0 H 139.86573791503906 a 20 20 0 0 1 0 40 H 20 a 20 20 0 0 1 0 -40 z"/><g data-id="J]Vczf):W70LMKhk=X!9" data-argument-type="text" data-shapes="argument round" transform="translate(99.16666412353516,4)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#FFFFFF" fill-opacity="1" d="m 0,0 m 16,0 H 40.699073791503906 a 16 16 0 0 1 0 32 H 16 a 16 16 0 0 1 0 -32 z"/><g class="blocklyEditableText" transform="translate(8, 0) " style="cursor: text;"><text class="blocklyText" x="20.349536895751953" y="18" dominant-baseline="middle" dy="0" text-anchor="middle">Main</text></g></g><text class="blocklyText" y="2" text-anchor="middle" dominant-baseline="middle" dy="0" x="39.58333206176758" transform="translate(12, 20) ">new Scene</text><path class="blocklyPath" style="visibility: hidden" d="" fill="#26262b"/></g></svg>

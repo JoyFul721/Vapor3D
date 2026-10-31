@@ -1,3 +1,5 @@
+node_modules/
+
 /model/
 /build/
 /legacy/
@@ -12,6 +14,10 @@
 /example/pbr/ignore/
 /example/pbr/Exported_ReflectionProbe
 /test/
+
+docs/.vitepress/cache/
+docs/.vitepress/temp/
+docs/.vitepress/dist/
 
 *.zip
 *.blend1

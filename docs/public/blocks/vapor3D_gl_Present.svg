@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="148.1018524169922px" height="60px" viewBox="10 694 148.1018524169922 60"><defs>
+              <ref id="titleColor" param="color" default="#000"/>
+            </defs><style type="text/css">
+            
+              .blocklyText{fill: #fff;box-sizing: border-box;}
+              .blocklyDraggable{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;}
+              .blocklyFlyoutLabelText{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;fill: #828997;}
+              .blocklyDraggable .blocklyText{fill: #fff;}
+              .blocklyEditableText .blocklyText{fill: #000;}
+              .blocklyDropdownText.blocklyText{fill: #fff;}
+              .blocklyFlyoutLabelBackground{opacity: 0;}
+              .blocklyFlyoutButton {fill: #eaeaea;}
+              .blocklyFlyoutButtonBackground {stroke: #c6c6c6;}
+              .blocklyFlyoutButton .blocklyText {fill: #000;}
+              .blocklyFlyoutButtonShadow{fill: transparent;}
+            
+            </style><g data-id="vapor3D_gl_Present" class="blocklyDraggable" data-shapes="stack" data-category="Vapor 3D" transform="translate(12,696)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#2f2f36" fill-opacity="1" d="m 0,4 A 4,4 0 0,1 4,0 H 12 c 2,0 3,1 4,2 l 4,4 c 1,1 2,2 4,2 h 12 c 2,0 3,-1 4,-2 l 4,-4 c 1,-1 2,-2 4,-2 H 140.1018524169922 a 4,4 0 0,1 4,4 v 40  a 4,4 0 0,1 -4,4 H 48   c -2,0 -3,1 -4,2 l -4,4 c -1,1 -2,2 -4,2 h -12 c -2,0 -3,-1 -4,-2 l -4,-4 c -1,-1 -2,-2 -4,-2 H 4 a 4,4 0 0,1 -4,-4 z"/><text class="blocklyText" y="2" text-anchor="middle" dominant-baseline="middle" dy="0" x="64.0509262084961" transform="translate(8, 24) ">Core.updateLayer</text></g></svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="406.45831298828125px" height="44px" viewBox="10 6254 406.45831298828125 44"><defs>
+              <ref id="titleColor" param="color" default="#000"/>
+            </defs><style type="text/css">
+            
+              .blocklyText{fill: #fff;box-sizing: border-box;}
+              .blocklyDraggable{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;}
+              .blocklyFlyoutLabelText{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;fill: #828997;}
+              .blocklyDraggable .blocklyText{fill: #fff;}
+              .blocklyEditableText .blocklyText{fill: #000;}
+              .blocklyDropdownText.blocklyText{fill: #fff;}
+              .blocklyFlyoutLabelBackground{opacity: 0;}
+              .blocklyFlyoutButton {fill: #eaeaea;}
+              .blocklyFlyoutButtonBackground {stroke: #c6c6c6;}
+              .blocklyFlyoutButton .blocklyText {fill: #000;}
+              .blocklyFlyoutButtonShadow{fill: transparent;}
+            
+            </style><g data-id="vapor3D_Loader_load_ktx_url" class="blocklyDraggable" data-shapes="reporter round" data-category="Vapor 3D" transform="translate(12,6256)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#2f2f36" fill-opacity="1" d="m 0,0 m 20,0 H 382.4583282470703 a 20 20 0 0 1 0 40 H 20 a 20 20 0 0 1 0 -40 z"/><g data-id="ASzmw2SzCMqD5^SL2k%H" data-argument-type="text" data-shapes="argument round" transform="translate(134.76851654052734,4)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#FFFFFF" fill-opacity="1" d="m 0,0 m 16,0 H 151.85647583007812 a 16 16 0 0 1 0 32 H 16 a 16 16 0 0 1 0 -32 z"/><g class="blocklyEditableText" transform="translate(8, 0) " style="cursor: text;"><text class="blocklyText" x="75.92823791503906" y="18" dominant-baseline="middle" dy="0" text-anchor="middle">https://example.co…</text></g></g><g data-id="Qi2jxNXKfNG@C{spV`.N" data-argument-type="text" data-shapes="argument round" transform="translate(310.62499237060547,4)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#FFFFFF" fill-opacity="1" d="m 0,0 m 16,0 H 71.83333587646484 a 16 16 0 0 1 0 32 H 16 a 16 16 0 0 1 0 -32 z"/><g class="blocklyEditableText" transform="translate(8, 0) " style="cursor: text;"><text class="blocklyText" x="35.91666793823242" y="18" dominant-baseline="middle" dy="0" text-anchor="middle">envMap1</text></g></g><text class="blocklyText" y="2" text-anchor="middle" dominant-baseline="middle" dy="0" x="57.38425827026367" transform="translate(12, 20) ">Loader.loadKTX</text><path class="blocklyPath" style="visibility: hidden" d="" fill="#26262b"/><path class="blocklyPath" style="visibility: hidden" d="" fill="#26262b"/></g></svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="314.3287048339844px" height="44px" viewBox="10 4322 314.3287048339844 44"><defs>
+              <ref id="titleColor" param="color" default="#000"/>
+            </defs><style type="text/css">
+            
+              .blocklyText{fill: #fff;box-sizing: border-box;}
+              .blocklyDraggable{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;}
+              .blocklyFlyoutLabelText{font-family: "Helvetica Neue", Helvetica, sans-serif;font-size: 12pt;font-weight: 500;fill: #828997;}
+              .blocklyDraggable .blocklyText{fill: #fff;}
+              .blocklyEditableText .blocklyText{fill: #000;}
+              .blocklyDropdownText.blocklyText{fill: #fff;}
+              .blocklyFlyoutLabelBackground{opacity: 0;}
+              .blocklyFlyoutButton {fill: #eaeaea;}
+              .blocklyFlyoutButtonBackground {stroke: #c6c6c6;}
+              .blocklyFlyoutButton .blocklyText {fill: #000;}
+              .blocklyFlyoutButtonShadow{fill: transparent;}
+            
+            </style><g data-id="vapor3D_Scene_GetNodeMatrix" class="blocklyDraggable" data-shapes="reporter round" data-category="Vapor 3D" transform="translate(12,4324)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#2f2f36" fill-opacity="1" d="m 0,0 m 20,0 H 290.3287010192871 a 20 20 0 0 1 0 40 H 20 a 20 20 0 0 1 0 -40 z"/><g data-id=".inuxR$[CC%wYx7ts/D|" data-argument-type="text number" data-shapes="argument round" transform="translate(65.37036895751953,4)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#FFFFFF" fill-opacity="1" d="m 0,0 m 16,0 H 24 a 16 16 0 0 1 0 32 H 16 a 16 16 0 0 1 0 -32 z"/><g class="blocklyEditableText" transform="translate(8, 0) " style="cursor: text;"><text class="blocklyText" x="12" y="18" dominant-baseline="middle" dy="0" text-anchor="middle">0</text></g></g><g data-id="77h_;G]0j/M+4cDdB_xG" data-argument-type="text number" data-shapes="argument round" transform="translate(164.0787010192871,4)"><path class="blocklyPath blocklyBlockBackground" stroke="#26262b" fill="#FFFFFF" fill-opacity="1" d="m 0,0 m 16,0 H 24 a 16 16 0 0 1 0 32 H 16 a 16 16 0 0 1 0 -32 z"/><g class="blocklyEditableText" transform="translate(8, 0) " style="cursor: text;"><text class="blocklyText" x="12" y="18" dominant-baseline="middle" dy="0" text-anchor="middle">0</text></g></g><text class="blocklyText" y="2" text-anchor="middle" dominant-baseline="middle" dy="0" x="22.685184478759766" transform="translate(12, 20) ">Scene</text><path class="blocklyPath" style="visibility: hidden" d="" fill="#26262b"/><text class="blocklyText" y="2" text-anchor="middle" dominant-baseline="middle" dy="0" x="21.35416603088379" transform="translate(113.37036895751953, 20) ">.Node</text><path class="blocklyPath" style="visibility: hidden" d="" fill="#26262b"/><text class="blocklyText" y="2" text-anchor="middle" dominant-baseline="middle" dy="0" x="43.125" transform="translate(212.0787010192871, 20) ">world matrix</text></g></svg>

@@ -1,0 +1,32 @@
+{
+  "name": "vapor3d",
+  "version": "1.0.0",
+  "description": "高性能、可编程的 WebGL2 3D 框架。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "example",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoyFul721/Vapor3D.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/JoyFul721/Vapor3D/issues"
+  },
+  "homepage": "https://github.com/JoyFul721/Vapor3D#readme",
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
+}

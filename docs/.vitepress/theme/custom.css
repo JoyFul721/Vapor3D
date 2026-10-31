@@ -1,0 +1,14 @@
+.dark {
+    --vp-c-bg: #000;
+    --vp-c-bg-alt: #080808;
+    --vp-c-bg-elv: #0c0c0c;
+    --vp-c-bg-soft: #111;
+    --vp-c-divider: #292929;
+    --vp-c-text-1: #fff;
+    --vp-c-text-2: #aaa;
+    --vp-c-text-3: #666;
+    --vp-c-brand-1: #fff;
+    --vp-c-brand-2: #ccc;
+    --vp-c-brand-3: #999;
+    --vp-c-brand-soft: #222;
+}
