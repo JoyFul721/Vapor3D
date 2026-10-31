@@ -1,0 +1,9 @@
+site_name: Vapor3D Documentation
+site_url: https://joyful721.github.io/Vapor3D/
+repo_url: https://github.com/JoyFul721/Vapor3D
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.top
+    - content.code.copy

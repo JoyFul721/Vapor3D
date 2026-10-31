@@ -182,6 +182,7 @@ export class SceneHandlers {
 
     Scene_GetContainerRootIndex({ Index }) {
         const container = this._get("containers", Index);
+        if (!container) return -2;
         return container.rootNode?.worldMatrixIndex ?? -1;
     }
 
