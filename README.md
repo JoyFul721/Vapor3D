@@ -4,6 +4,8 @@
 
 ![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FJoyFul721%2FVapor3D%2Fmain%2Fvapor3d-sdk%2Fpackage.json&query=%24.version&label=version&color=007a1f&style=flat&logo=github&labelColor=24292e)
 
+[文档](https://joyful721.github.io/Vapor3D/) · [GitHub](https://github.com/JoyFul721/Vapor3D)
+
 ---
 
 > **TODO**: 扩展处于测试阶段，遇到问题欢迎向我反馈。文档目前仅为大纲，将来有时间会来完善。

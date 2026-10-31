@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Vapor3D Doc',
   description: 'WebGL2 3D Rendering Extension for TurboWarp',
-  base: '/',
+  base: '/Vapor3D/',
   appearance: 'dark',
   themeConfig: {
     nav: [
