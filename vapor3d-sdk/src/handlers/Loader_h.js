@@ -19,17 +19,18 @@ export class LoaderHandlers {
     async Loader_load_glb({ SCENE_INDEX, NAME, U }) {
         const loader = this._getLoader();
         const targetScene = this.registry.get('scenes', SCENE_INDEX);
-        if (!loader || !targetScene) return;
-
+        if (!loader || !targetScene) return -2;
+        
         try {
             const container = await loader.loadGLB(U, targetScene, NAME);
-            if (!container?.rootNode) return;
+            if (!container?.rootNode) return -1;
 
             targetScene.addContainer(container.registryIndex);
-
             console.log(`Vapor3D: AssetContainer "${NAME}" plugged into Scene ${SCENE_INDEX}:`, container);
+            return container.registryIndex;
         } catch (e) {
             console.error("Vapor3D: GLB Load Error:", e);
+            return -1;
         }
     }
 

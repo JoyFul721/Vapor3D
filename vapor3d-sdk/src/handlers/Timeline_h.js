@@ -44,7 +44,7 @@ export class TimelineHandlers {
         }
     }
 
-    Timeline_SetClipBoneWeight({ INDEX, CLIP_NAME, BONE_NAME, WEIGHT, RECURSIVE }) {
+    Timeline_SetClipJointWeight({ INDEX, CLIP_NAME, JOINT_NAME, WEIGHT, RECURSIVE }) {
         const timeline = this.registry.get('timelines', INDEX);
         const clip = timeline?.clips.get(CLIP_NAME);
         if (!timeline || !clip) return;
@@ -52,10 +52,10 @@ export class TimelineHandlers {
         // 如果是 Skeleton 直接找，如果是 Container 则遍历内部所有 Skeleton
         let targetJoint = null;
         if (timeline.type === 'skeleton') {
-            targetJoint = timeline.target.joints.find(j => j.name === BONE_NAME);
+            targetJoint = timeline.target.joints.find(j => j.name === JOINT_NAME);
         } else {
             for (const skel of timeline.target.skeletons) {
-                targetJoint = skel.joints.find(j => j.name === BONE_NAME);
+                targetJoint = skel.joints.find(j => j.name === JOINT_NAME);
                 if (targetJoint) break;
             }
         }

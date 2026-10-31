@@ -2,30 +2,32 @@ import { Math3D } from '../lib/Tools/Math3D.js';
 import { Utils } from '../lib/Tools/Utils.js';
 
 export class Math3DHandlers {
-    constructor(coreState) {
-        this.vectors = new Map();
+    constructor() {
     }
 
-    v3_Init({ ID, X, Y, Z }) {
-        this.vectors.set(ID, [Number(X), Number(Y), Number(Z)]);
+    v3_Init({ X, Y, Z }) {
+        return JSON.stringify([Number(X), Number(Y), Number(Z)]);
     }
-    v3_Modify({ ID, OP, OTHER }) {
-        const a = this.vectors.get(ID);
-        const b = this.vectors.get(OTHER);
-        if (!a || !b) return;
 
-        if (OP === "+") this.vectors.set(ID, Math3D.v3_add(a, b));
-        else if (OP === "-") this.vectors.set(ID, Math3D.v3_sub(a, b));
-        else if (OP === "mul") this.vectors.set(ID, Math3D.v3_mul(a, b));
+    v3_Modify({ V, OP, OTHER }, util) {
+        const a = Utils.parseInput(V, util) || [0, 0, 0];
+        const b = Utils.parseInput(OTHER, util) || [0, 0, 0];
+
+        if (OP === "+") return JSON.stringify(Math3D.v3_add(a, b));
+        if (OP === "-") return JSON.stringify(Math3D.v3_sub(a, b));
+        if (OP === "mul") return JSON.stringify(Math3D.v3_mul(a, b));
     }
-    v3_ApplyMatrix({ ID, M }, util) {
-        const v = this.vectors.get(ID);
+
+    v3_ApplyMatrix({ V, M }, util) {
+        const v = Utils.parseInput(V, util) || [0, 0, 0];
         const mat = Utils.parseInput(M, util) || Math3D.mat4_identity();
-        if (v) this.vectors.set(ID, Math3D.v3_transform(v, mat));
+        return JSON.stringify(Math3D.v3_transform(v, mat));
     }
-    v3_Get({ ID, COMP }) {
-        const v = this.vectors.get(ID);
-        return v ? (v[{ X: 0, Y: 1, Z: 2 }[COMP.toUpperCase()]] ?? 0) : 0;
+
+    v3_Get({ V, COMP }, util) {
+        const v = Utils.parseInput(V, util) || [0, 0, 0];
+        const map = { X: 0, Y: 1, Z: 2 };
+        return v[map[COMP]] ?? 0;
     }
 
     m4_Identity() {
@@ -48,11 +50,10 @@ export class Math3DHandlers {
     m4_Rotate({ M, AXIS, DEG }, util) {
         const mat = Utils.parseInput(M, util) || Math3D.mat4_identity();
         const rad = DEG * Math.PI / 180;
-        const axis = AXIS.toUpperCase();
 
         let result;
-        if (axis === "X") result = Math3D.mat4_rotateX(mat, rad);
-        else if (axis === "Y") result = Math3D.mat4_rotateY(mat, rad);
+        if (AXIS === "X") result = Math3D.mat4_rotateX(mat, rad);
+        else if (AXIS === "Y") result = Math3D.mat4_rotateY(mat, rad);
         else result = Math3D.mat4_rotateZ(mat, rad);
 
         return JSON.stringify(result);
@@ -72,13 +73,9 @@ export class Math3DHandlers {
     m4_Inverse({ M }, util) {
         const baseMat = Utils.parseInput(M, util) || Math3D.mat4_identity();
         const mat = Math3D.mat4_inverse(baseMat);
-
-        if (!mat) {
-            console.warn("Vapor3D: Invalid mat");
-            return JSON.stringify(Math3D.mat4_identity());
-        }
-        return JSON.stringify(mat);
+        return JSON.stringify(mat || Math3D.mat4_identity());
     }
+
 
     TRS_Create(args) {
         return Math3D.TRS_create(

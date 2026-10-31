@@ -243,10 +243,9 @@ export class SceneHandlers {
         return skeleton?.numJoints ?? skeleton?.joints?.length ?? -1;
     }
 
-    Scene_SkeletonSetJointTRS({ Index, JOINT_IDX, TRS }) {
+    Scene_SkeletonSetJointTRS({ Index, NAME, TRS }) {
         const skeleton = this._get("skeletons", Index);
-        const joint = skeleton?.joints?.[Number(JOINT_IDX)];
-
+        const joint = skeleton?.joints?.find(j => j.name === NAME);
         if (!joint) return;
         this._applyTRS(joint, TRS);
     }

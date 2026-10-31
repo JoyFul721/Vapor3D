@@ -2,7 +2,7 @@ export const CubeCameraBlocks = [
     {
         opcode: "CubeCam_GetViewMatrix",
         blockType: "reporter",
-        text: "CubeCam.viewMatrix([X] [Y] [Z], [FACE])",
+        text: "CubeCam.viewMatrix [X] [Y] [Z] face [FACE]",
         arguments: {
             X: { type: "number", defaultValue: 0 },
             Y: { type: "number", defaultValue: 0 },
@@ -13,7 +13,7 @@ export const CubeCameraBlocks = [
     {
         opcode: "CubeCam_GetProjection",
         blockType: "reporter",
-        text: "CubeCam.projectionMatrix()"
+        text: "CubeCam.projectionMatrix"
     },
     
     "---", "---",

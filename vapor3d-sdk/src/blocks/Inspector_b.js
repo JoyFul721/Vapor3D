@@ -2,7 +2,7 @@ export const InspectorBlocks = [
     {
         opcode: "Inspector_Find",
         blockType: "reporter",
-        text: "find ([TYPE], [NAME])",
+        text: "find [TYPE] [NAME]",
         arguments: {
             TYPE: { type: "string", menu: "Inspector_GlobalType" },
             NAME: { type: "string", defaultValue: "" }
@@ -11,7 +11,7 @@ export const InspectorBlocks = [
     {
         opcode: "Inspector_SceneFind",
         blockType: "reporter",
-        text: "scene [SCENE_INDEX] .find ([TYPE], [NAME])",
+        text: "Scene [SCENE_INDEX] .find [TYPE] [NAME]",
         arguments: {
             SCENE_INDEX: { type: "number", defaultValue: 0 },
             TYPE: { type: "string", menu: "Inspector_SceneType" },
@@ -21,7 +21,7 @@ export const InspectorBlocks = [
     {
         opcode: "Inspector_ContainerFind",
         blockType: "reporter",
-        text: "container [CONTAINER_INDEX] .find ([TYPE], [NAME])",
+        text: "Container [CONTAINER_INDEX] .find [TYPE] [NAME]",
         arguments: {
             CONTAINER_INDEX: { type: "number", defaultValue: 0 },
             TYPE: { type: "string", menu: "Inspector_ContainerType" },
@@ -31,7 +31,7 @@ export const InspectorBlocks = [
     {
         opcode: "Inspector_ContainerGet",
         blockType: "reporter",
-        text: "Container [CONTAINER_INDEX] get [TYPE] index [RESOURCE_INDEX]",
+        text: "Container [CONTAINER_INDEX] .get [TYPE] index [RESOURCE_INDEX]",
         arguments: {
             CONTAINER_INDEX: { type: "string", defaultValue: "0" },
             TYPE: { type: "string", menu: "Inspector_ContainerArrayType" },
@@ -41,7 +41,7 @@ export const InspectorBlocks = [
     {
         opcode: "Inspector_MeshFind",
         blockType: "reporter",
-        text: "mesh [CONTAINER_INDEX] .find ([TYPE], [NAME])",
+        text: "MeshNode [CONTAINER_INDEX] .find [TYPE] [NAME]",
         arguments: {
             CONTAINER_INDEX: { type: "number", defaultValue: 0 },
             TYPE: { type: "string", menu: "Inspector_MeshType" },
@@ -51,9 +51,8 @@ export const InspectorBlocks = [
     {
         opcode: "Inspector_ConsolePrint",
         blockType: "command",
-        text: "print to console",
-        arguments: {
-        }
+        text: "print to console"
     },
-    "---", "---"
+    "---",
+    "---"
 ];

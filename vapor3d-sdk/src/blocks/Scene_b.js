@@ -2,7 +2,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_Create",
         blockType: "reporter",
-        text: "new Scene ([NAME])",
+        text: "new Scene [NAME]",
         arguments: {
             NAME: { type: "string", defaultValue: "Main" }
         }
@@ -10,7 +10,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_Destroy",
         blockType: "command",
-        text: "Scene [Index] .destroy()",
+        text: "Scene [Index] .destroy",
         arguments: {
             Index: { type: "number", defaultValue: 0 }
         }
@@ -18,7 +18,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_Clear",
         blockType: "command",
-        text: "Scene [Index] .clear()",
+        text: "Scene [Index] .clear",
         arguments: {
             Index: { type: "number", defaultValue: 0 }
         }
@@ -29,7 +29,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetTRS",
         blockType: "command",
-        text: "Scene [Index] Node [NODE_IDX] set TRS [TRS]",
+        text: "Scene [Index] .Node [NODE_IDX] set TRS [TRS]",
         arguments: {
             Index: { type: "number", defaultValue: 0 },
             NODE_IDX: { type: "number", defaultValue: 0 },
@@ -39,7 +39,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetParent",
         blockType: "command",
-        text: "Scene [Index] Node [CHILD_NODE_IDX] parent [PARENT_NODE_IDX]",
+        text: "Scene [Index] .Node [CHILD_NODE_IDX] parent [PARENT_NODE_IDX]",
         arguments: {
             Index: { type: "number", defaultValue: 0 },
             CHILD_NODE_IDX: { type: "number", defaultValue: 0 },
@@ -49,7 +49,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetNodeMatrix",
         blockType: "reporter",
-        text: "Scene [Index] Node [NODE_IDX] world matrix",
+        text: "Scene [Index] .Node [NODE_IDX] world matrix",
         arguments: {
             Index: { type: "number", defaultValue: 0 },
             NODE_IDX: { type: "number", defaultValue: 0 }
@@ -58,7 +58,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetNodeTRS",
         blockType: "reporter",
-        text: "Scene [Index] Node [NODE_IDX] TRS",
+        text: "Scene [Index] .Node [NODE_IDX] TRS",
         arguments: {
             Index: { type: "number", defaultValue: 0 },
             NODE_IDX: { type: "number", defaultValue: 0 }
@@ -67,7 +67,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_UpdateWorldMatrix",
         blockType: "command",
-        text: "Scene [Index] .update()",
+        text: "Scene [Index] .update",
         arguments: {
             Index: { type: "number", defaultValue: 0 }
         }
@@ -122,17 +122,17 @@ export const SceneBlocks = [
     {
         opcode: "Scene_SkeletonSetJointTRS",
         blockType: "command",
-        text: "Skeleton [Index] .joint [JOINT_IDX] .setTRS [TRS]",
+        text: "Skeleton [Index] .Joint [NAME] .setTRS [TRS]",
         arguments: {
             Index: { type: "number", defaultValue: 0 },
-            JOINT_IDX: { type: "number", defaultValue: 0 },
+            NAME: { type: "string", defaultValue: "spine" },
             TRS: { type: "string", defaultValue: "[0,0,0,0,0,0,1,1,1,1]" }
         }
     },
     {
         opcode: "Scene_SkeletonBindTexture",
         blockType: "command",
-        text: "Skeleton [Index] .bindTextureUnit [UNIT]",
+        text: "Skeleton [Index] .texture.bind [UNIT]",
         arguments: {
             Index: { type: "number", defaultValue: 0 },
             UNIT: { type: "number", defaultValue: 0 }
@@ -143,7 +143,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_MeshDraw",
         blockType: "command",
-        text: "Mesh [Index] draw [MODE]",
+        text: "MeshNode [Index] draw [MODE]",
         arguments: {
             Index: { type: "number", defaultValue: 0 },
             MODE: { type: "string", menu: "drawMode" }
@@ -164,10 +164,11 @@ export const SceneBlocks = [
         text: "MeshNode [Index] .getMaterial [PARAM]",
         arguments: {
             Index: { type: "number", defaultValue: 0 },
-            PARAM: { 
-                type: "string", 
+            PARAM: {
+                type: "string",
                 menu: "pbrTexMenu",
-                defaultValue: "baseColor" }
+                defaultValue: "baseColor"
+            }
         }
     },
     {
