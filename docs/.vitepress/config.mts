@@ -26,11 +26,17 @@ export default defineConfig({
       { text: 'Scene', items: [
         { text: 'Scene', link: '/scene/scene' },
         { text: 'Node', link: '/scene/node' },
-        { text: 'Loader', link: '/scene/loader' }
+        { text: 'Container', link: '/scene/container' },
+        { text: 'MeshNode', link: '/scene/mesh' },
+        { text: 'Skeleton', link: '/scene/skeleton' }
       ]},
+       { text: 'Loader', items: [
+        { text: 'GLB Loader', link: '/loader/glbLoader' },
+        { text: 'Texture Loader', link: '/loader/texLoader' },
+        { text: 'Other Loader', link: '/loader/otherLoader' },
+       ]},
       { text: 'Animation', items: [
         { text: 'Timeline', link: '/animation/timeline' },
-        { text: 'Mixer', link: '/animation/mixer' }
       ]},
       { text: 'Math3D', link: '/math3d' },
       { text: 'Inspector', link: '/inspector' }

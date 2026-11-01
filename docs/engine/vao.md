@@ -2,13 +2,13 @@
 
 ## 创建空 VAO
 
-![创建空 VAO](/blocks/vapor3D_VAO_CreateEmpty.svg)
+![创建 VAO](/blocks/vapor3D_VAO_CreateEmpty.svg)
 
 创建一个空 VAO
 
 | 参数 | 说明 |
 |---|---|
-| 名称（NAME） | VAO 的名称，用于 Inspector 查找 |
+| NAME | VAO 的名称，用于 Inspector 查找 |
 
 ## 创建屏幕四边形
 
@@ -18,7 +18,7 @@
 
 | 参数 | 说明 |
 |---|---|
-| 名称（NAME） | VAO 的名称，用于 Inspector 查找 |
+| NAME | VAO 的名称，用于 Inspector 查找 |
 
 ## 创建立方体
 
@@ -28,7 +28,7 @@
 
 | 参数 | 说明 |
 |---|---|
-| 名称（NAME） | VAO 的名称，用于 Inspector 查找 |
+| NAME | VAO 的名称，用于 Inspector 查找 |
 
 ## 创建球体
 
@@ -38,7 +38,7 @@
 
 | 参数 | 说明 |
 |---|---|
-| 名称（NAME） | VAO 的名称，用于 Inspector 查找 |
+| NAME | VAO 的名称，用于 Inspector 查找 |
 | 纬度分段（LAT） | 球体纬度细分数 |
 | 经度分段（LON） | 球体经度细分数 |
 
@@ -55,7 +55,7 @@
 | 参数 | 说明 |
 |---|---|
 | Index | VAO 在 Registry 中的索引 |
-| LIST | 数据来源 |
+| LIST | 数据来源列表 |
 | SIZE | 每个顶点属性包含的分量数量 |
 | LOC | 顶点属性的 Location |
 
