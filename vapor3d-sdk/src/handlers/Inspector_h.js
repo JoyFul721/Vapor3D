@@ -136,7 +136,8 @@ export class InspectorHandlers {
         return -1;
     }
 
-    Inspector_MeshFind({ CONTAINER_INDEX, TYPE, NAME }) {
+    Inspector_MeshFind({ MESHNODE_INDEX, TYPE, NAME }) {
+        // 以后加 marerial
         return -1;
     }
 }
