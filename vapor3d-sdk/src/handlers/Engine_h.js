@@ -97,22 +97,22 @@ export class EngineHandlers {
         this.shadersMap.set(NAME, index);
         return index;
     }
-    Shader_Use({ Index }) {
-        const shader = this.registry.get('shaders', Index);
+    Shader_Use({ INDEX }) {
+        const shader = this.registry.get('shaders', INDEX);
         if (shader) { shader.use(); this.activeShader = shader; }
     }
-    Shader_SetMat4({ Index, NAME, VAL }, util) {
-        const shader = this.registry.get('shaders', Index);
+    Shader_SetMat4({ INDEX, NAME, VAL }, util) {
+        const shader = this.registry.get('shaders', INDEX);
         if (!shader) return;
         const mat = Utils.parseInput(VAL, util);
         if (mat) shader.setMat4(NAME, ArrayBuffer.isView(mat) ? mat : new Float32Array(mat));
     }
-    Shader_SetVec4({ Index, NAME, X, Y, Z, W }) { this.registry.get('shaders', Index)?.setVec4(NAME, X, Y, Z, W); }
-    Shader_SetVec3({ Index, NAME, X, Y, Z }) { this.registry.get('shaders', Index)?.setVec3(NAME, X, Y, Z); }
-    Shader_SetVec2({ Index, NAME, X, Y }) { this.registry.get('shaders', Index)?.setVec2(NAME, X, Y); }
-    Shader_SetFloat({ Index, NAME, V }) { this.registry.get('shaders', Index)?.setFloat(NAME, V); }
-    Shader_SetInt({ Index, NAME, V }) { this.registry.get('shaders', Index)?.setInt(NAME, V); }
-    Shader_SetBool({ Index, NAME, V }) { this.registry.get('shaders', Index)?.setInt(NAME, Boolean(Number(V)) ? 1 : 0); }
+    Shader_SetVec4({ INDEX, NAME, X, Y, Z, W }) { this.registry.get('shaders', INDEX)?.setVec4(NAME, X, Y, Z, W); }
+    Shader_SetVec3({ INDEX, NAME, X, Y, Z }) { this.registry.get('shaders', INDEX)?.setVec3(NAME, X, Y, Z); }
+    Shader_SetVec2({ INDEX, NAME, X, Y }) { this.registry.get('shaders', INDEX)?.setVec2(NAME, X, Y); }
+    Shader_SetFloat({ INDEX, NAME, V }) { this.registry.get('shaders', INDEX)?.setFloat(NAME, V); }
+    Shader_SetInt({ INDEX, NAME, V }) { this.registry.get('shaders', INDEX)?.setInt(NAME, V); }
+    Shader_SetBool({ INDEX, NAME, V }) { this.registry.get('shaders', INDEX)?.setInt(NAME, Boolean(Number(V)) ? 1 : 0); }
 
     // Framebuffer
     FBO_Create({ NAME }) {
@@ -121,17 +121,17 @@ export class EngineHandlers {
         this.fbosMap.set(NAME, index);
         return index;
     }
-    FBO_AttachTexture({ Index, TEX, SLOT }) {
-        const fbo = this.registry.get('fbos', Index);
+    FBO_AttachTexture({ INDEX, TEX, SLOT }) {
+        const fbo = this.registry.get('fbos', INDEX);
         const tex = this.registry.get('textures', TEX);
         if (fbo && tex) fbo.attachTexture(tex, SLOT);
     }
-    FBO_AttachCubeTexture({ Index, TEX, FACE_INDEX, SLOT }) {
-        const fbo = this.registry.get('fbos', Index);
+    FBO_AttachCubeTexture({ INDEX, TEX, FACE_INDEX, SLOT }) {
+        const fbo = this.registry.get('fbos', INDEX);
         const tex = this.registry.get('textures', TEX);
         if (fbo && tex instanceof TextureCube) fbo.attachCubeFace(tex, FACE_INDEX, SLOT);
     }
-    FBO_Detach({ Index, SLOT }) { this.registry.get('fbos', Index)?.detach(SLOT); }
+    FBO_Detach({ INDEX, SLOT }) { this.registry.get('fbos', INDEX)?.detach(SLOT); }
 
     Stencil_Create({ NAME, W, H }) {
         const gl = this.core.gl;
@@ -144,14 +144,14 @@ export class EngineHandlers {
         this.stencilBuffersMap.set(NAME, index);
         return index;
     }
-    FBO_AttachStencil({ Index, STENCIL_INDEX }) {
-        const fbo = this.registry.get('fbos', Index);
+    FBO_AttachStencil({ INDEX, STENCIL_INDEX }) {
+        const fbo = this.registry.get('fbos', INDEX);
         const stencil = this.registry.get('stencilBuffers', STENCIL_INDEX);
         if (fbo && stencil) fbo.attachStencilBuffer(stencil);
     }
-    FBO_DetachStencil({ Index }) { this.registry.get('fbos', Index)?.detachStencilBuffer(); }
-    FBO_Bind({ Index }) {
-        const fbo = this.registry.get('fbos', Index);
+    FBO_DetachStencil({ INDEX }) { this.registry.get('fbos', INDEX)?.detachStencilBuffer(); }
+    FBO_Bind({ INDEX }) {
+        const fbo = this.registry.get('fbos', INDEX);
         if (fbo) fbo.bind(this.core.canvas.width, this.core.canvas.height);
         else Framebuffer.bindScreen(this.core.gl, this.core.canvas.width, this.core.canvas.height);
     }
@@ -162,9 +162,9 @@ export class EngineHandlers {
         this.vaosMap.set(NAME, index);
         return index;
     }
-    VAO_AddBuffer({ Index, LIST, LOC, SIZE }) {
-        const vao = this.registry.get('vaos', Index);
-        if (!vao) return console.warn(`Vapor3D: VAO ${Index} not found`);
+    VAO_AddBuffer({ INDEX, LIST, LOC, SIZE }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return console.warn(`Vapor3D: VAO ${INDEX} not found`);
 
         const listData = this.getListData(LIST);
         if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
@@ -189,13 +189,13 @@ export class EngineHandlers {
         this.vaosMap.set(NAME, index);
         return index;
     }
-    VAO_Draw({ Index, COUNT, MODE }) { this.registry.get('vaos', Index)?.draw(MODE, COUNT); }
-    VAO_Destroy({ Index }) {
-        const vao = this.registry.get('vaos', Index);
+    VAO_Draw({ INDEX, COUNT, MODE }) { this.registry.get('vaos', INDEX)?.draw(MODE, COUNT); }
+    VAO_Destroy({ INDEX }) {
+        const vao = this.registry.get('vaos', INDEX);
         if (!vao) return;
         vao.destroy?.();
-        this.registry.vaos[Number(Index)] = null;
-        for (const [name, value] of this.vaosMap) if (value === Number(Index)) this.vaosMap.delete(name);
+        this.registry.vaos[Number(INDEX)] = null;
+        for (const [name, value] of this.vaosMap) if (value === Number(INDEX)) this.vaosMap.delete(name);
     }
 
     // Texture
@@ -216,21 +216,21 @@ export class EngineHandlers {
         this.texturesMap.set(NAME, index);
         return index;
     }
-    Texture_UpdateFromList({ Index, LIST, TYPE }) {
-        const texture = this.registry.get('textures', Index);
-        if (!texture) return console.warn(`Vapor3D: Texture ${Index} not found`);
+    Texture_UpdateFromList({ INDEX, LIST, TYPE }) {
+        const texture = this.registry.get('textures', INDEX);
+        if (!texture) return console.warn(`Vapor3D: Texture ${INDEX} not found`);
         const list = this.getListData(LIST);
         if (!list) return console.warn(`Vapor3D: List "${LIST}" not found`);
         texture.updateFromList(list, TYPE);
     }
-    Texture_Bind({ Index, UNIT }) { this.registry.get('textures', Index)?.bind(UNIT); }
-    Texture_BindCube({ Index, UNIT }) { this.registry.get('textures', Index)?.bind(UNIT); }
-    Texture_SetFilter({ Index, MIN_MODE, MAG_MODE }) { this.registry.get('textures', Index)?.setFilter(MIN_MODE, MAG_MODE); }
-    Texture_SetWrap({ Index, MODE }) {
-        const tex = this.registry.get('textures', Index);
+    Texture_Bind({ INDEX, UNIT }) { this.registry.get('textures', INDEX)?.bind(UNIT); }
+    Texture_BindCube({ INDEX, UNIT }) { this.registry.get('textures', INDEX)?.bind(UNIT); }
+    Texture_SetFilter({ INDEX, MIN_MODE, MAG_MODE }) { this.registry.get('textures', INDEX)?.setFilter(MIN_MODE, MAG_MODE); }
+    Texture_SetWrap({ INDEX, MODE }) {
+        const tex = this.registry.get('textures', INDEX);
         if (tex) { tex.setWrap('S', MODE); tex.setWrap('T', MODE); }
     }
-    Texture_GenerateMipmap({ Index }) { this.registry.get('textures', Index)?.generateMipmap(); }
+    Texture_GenerateMipmap({ INDEX }) { this.registry.get('textures', INDEX)?.generateMipmap(); }
 
     // GL state
     gl_Clear({ BIT }) { this.core?.clear(BIT); }
