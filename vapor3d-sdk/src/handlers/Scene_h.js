@@ -74,7 +74,7 @@ export class SceneHandlers {
         for (const [name, index] of [...this.scenesMap]) {
             const scene = this._getScene(index);
             if (scene) {
-                this.Scene_Clear({ Index: index });
+                this.Scene_Clear({ INDEX: index });
                 await scene.destroy();
             }
             this.registry.dispose("scenes", index);
@@ -82,29 +82,29 @@ export class SceneHandlers {
         }
     }
 
-    async Scene_Destroy({ Index }) {
-        const scene = this._getScene(Index);
+    async Scene_Destroy({ INDEX }) {
+        const scene = this._getScene(INDEX);
         if (!scene) return;
 
         await scene.destroy();
 
-        this._release("scenes", Index);
+        this._release("scenes", INDEX);
 
-        for (const [name, index] of this.scenesMap) {
-            if (index === Number(Index)) {
+        for (const [name, value] of this.scenesMap) {
+            if (value === Number(INDEX)) {
                 this.scenesMap.delete(name);
                 break;
             }
         }
     }
 
-    Scene_Clear({ Index }) {
-        const scene = this._getScene(Index);
+    Scene_Clear({ INDEX }) {
+        const scene = this._getScene(INDEX);
         if (!scene) return;
 
         for (const containerIndex of [...scene.containerIndices]) {
             this.Scene_RemoveContainer({
-                Index,
+                INDEX,
                 CONTAINER_IDX: containerIndex
             });
         }
@@ -112,8 +112,8 @@ export class SceneHandlers {
 
     // ====================== Node Transform ======================
 
-    Scene_NodeSetTRS({ Index, NODE_IDX, TRS }) {
-        const scene = this._getScene(Index);
+    Scene_NodeSetTRS({ INDEX, NODE_IDX, TRS }) {
+        const scene = this._getScene(INDEX);
         const node = scene?.getNodeByIndex(NODE_IDX);
         if (!node) return;
 
@@ -121,11 +121,11 @@ export class SceneHandlers {
     }
 
     Scene_NodeSetParent({
-        Index,
+        INDEX,
         CHILD_NODE_IDX,
         PARENT_NODE_IDX
     }) {
-        const scene = this._getScene(Index);
+        const scene = this._getScene(INDEX);
         if (!scene) return;
 
         const child = scene.getNodeByIndex(CHILD_NODE_IDX);
@@ -155,8 +155,8 @@ export class SceneHandlers {
         child.setDirty();
     }
 
-    Scene_GetNodeMatrix({ Index, NODE_IDX }) {
-        const scene = this._getScene(Index);
+    Scene_GetNodeMatrix({ INDEX, NODE_IDX }) {
+        const scene = this._getScene(INDEX);
         const node = scene?.getNodeByIndex(NODE_IDX);
 
         if (!node || node.worldMatrixIndex === -1) return "[]";
@@ -167,27 +167,27 @@ export class SceneHandlers {
         return JSON.stringify(Array.from(matrix));
     }
 
-    Scene_GetNodeTRS({ Index, NODE_IDX }) {
-        const scene = this._getScene(Index);
+    Scene_GetNodeTRS({ INDEX, NODE_IDX }) {
+        const scene = this._getScene(INDEX);
         const node = scene?.getNodeByIndex(NODE_IDX);
 
         return node ? JSON.stringify(this._getTRS(node)) : "[]";
     }
 
-    Scene_UpdateWorldMatrix({ Index }) {
-        this._getScene(Index)?.update();
+    Scene_UpdateWorldMatrix({ INDEX }) {
+        this._getScene(INDEX)?.update();
     }
 
     // ====================== Container ======================
 
-    Scene_GetContainerRootIndex({ Index }) {
-        const container = this._get("containers", Index);
+    Scene_GetContainerRootIndex({ INDEX }) {
+        const container = this._get("containers", INDEX);
         if (!container) return -2;
         return container.rootNode?.worldMatrixIndex ?? -1;
     }
 
-    Scene_AddContainer({ Index, CONTAINER_IDX }) {
-        const sceneIndex = Number(Index);
+    Scene_AddContainer({ INDEX, CONTAINER_IDX }) {
+        const sceneIndex = Number(INDEX);
         const containerIndex = Number(CONTAINER_IDX);
         const scene = this._getScene(sceneIndex);
         const container = this._get("containers", containerIndex);
@@ -209,8 +209,8 @@ export class SceneHandlers {
         });
     }
 
-    Scene_RemoveContainer({ Index, CONTAINER_IDX }) {
-        const sceneIndex = Number(Index);
+    Scene_RemoveContainer({ INDEX, CONTAINER_IDX }) {
+        const sceneIndex = Number(INDEX);
         const containerIndex = Number(CONTAINER_IDX);
         const scene = this._getScene(sceneIndex);
 
@@ -232,28 +232,28 @@ export class SceneHandlers {
         this._release("containers", containerIndex);
     }
 
-    Scene_GetContainerMeshCount({ Index }) {
-        const container = this._get("containers", Index);
+    Scene_GetContainerMeshCount({ INDEX }) {
+        const container = this._get("containers", INDEX);
         if (!container) return -2;
         return container.meshes?.length ?? -1;
     }
 
     // ====================== Skeleton ======================
 
-    Scene_SkeletonGetJointCount({ Index }) {
-        const skeleton = this._get("skeletons", Index);
+    Scene_SkeletonGetJointCount({ INDEX }) {
+        const skeleton = this._get("skeletons", INDEX);
         return skeleton?.numJoints ?? skeleton?.joints?.length ?? -1;
     }
 
-    Scene_SkeletonSetJointTRS({ Index, NAME, TRS }) {
-        const skeleton = this._get("skeletons", Index);
+    Scene_SkeletonSetJointTRS({ INDEX, NAME, TRS }) {
+        const skeleton = this._get("skeletons", INDEX);
         const joint = skeleton?.joints?.find(j => j.name === NAME);
         if (!joint) return;
         this._applyTRS(joint, TRS);
     }
 
-    Scene_SkeletonBindTexture({ Index, UNIT }) {
-        const skeleton = this._get("skeletons", Index);
+    Scene_SkeletonBindTexture({ INDEX, UNIT }) {
+        const skeleton = this._get("skeletons", INDEX);
         const gl = this.engine.core.gl;
 
         gl.activeTexture(gl.TEXTURE0 + Number(UNIT));
@@ -262,8 +262,8 @@ export class SceneHandlers {
 
     // ====================== MeshNode ======================
 
-    Scene_MeshDraw({ Index, MODE } = {}) {
-        const node = this._get("nodes", Index);
+    Scene_MeshDraw({ INDEX, MODE } = {}) {
+        const node = this._get("nodes", INDEX);
         if (!node || !node.visible || !node.vao || typeof node.draw !== "function" || node.worldMatrixIndex < 0) return;
         const scene = this._getScene(node.sceneIndex);
         const shader = this.engine.activeShader;
@@ -275,14 +275,14 @@ export class SceneHandlers {
         node.draw(MODE);
     }
 
-    Scene_MeshGetTexture({ Index, TEX_TYPE }) {
-        const node = this._get("nodes", Index);
+    Scene_MeshGetTexture({ INDEX, TEX_TYPE }) {
+        const node = this._get("nodes", INDEX);
         const tex = node?.material?.[TEX_TYPE];
         return tex?.registryIndex ?? -1;
     }
 
-    Scene_MeshGetParam({ Index, PARAM }) {
-        const node = this._get("nodes", Index);
+    Scene_MeshGetParam({ INDEX, PARAM }) {
+        const node = this._get("nodes", INDEX);
         if (!node) return "";
 
         const value = node.material?.[PARAM];
@@ -293,8 +293,8 @@ export class SceneHandlers {
             : value;
     }
 
-    Scene_MeshGetLightmapParam({ Index, PARAM }) {
-        const node = this._get("nodes", Index);
+    Scene_MeshGetLightmapParam({ INDEX, PARAM }) {
+        const node = this._get("nodes", INDEX);
 
         if (!node) {
             return PARAM === "hasLightmap" ? "0" : -1;
@@ -310,8 +310,8 @@ export class SceneHandlers {
         }
     }
 
-    Scene_MeshGetLightmapScaleOffsetComp({ Index, COMP }) {
-        const node = this._get("nodes", Index);
+    Scene_MeshGetLightmapScaleOffsetComp({ INDEX, COMP }) {
+        const node = this._get("nodes", INDEX);
         const scaleOffset = node?.lightmapScaleOffset ?? [0, 0, 0, 0];
 
         switch (String(COMP).toUpperCase()) {
