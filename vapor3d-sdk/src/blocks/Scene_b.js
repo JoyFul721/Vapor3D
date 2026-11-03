@@ -10,17 +10,17 @@ export const SceneBlocks = [
     {
         opcode: "Scene_Destroy",
         blockType: "command",
-        text: "Scene [Index] .destroy",
+        text: "Scene [INDEX] .destroy",
         arguments: {
-            Index: { type: "number", defaultValue: 0 }
+            INDEX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Scene_Clear",
         blockType: "command",
-        text: "Scene [Index] .clear",
+        text: "Scene [INDEX] .clear",
         arguments: {
-            Index: { type: "number", defaultValue: 0 }
+            INDEX: { type: "number", defaultValue: 0 }
         }
     },
 
@@ -29,9 +29,9 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetTRS",
         blockType: "command",
-        text: "Scene [Index] .Node [NODE_IDX] set TRS [TRS]",
+        text: "Scene [INDEX] .Node [NODE_IDX] set TRS [TRS]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             NODE_IDX: { type: "number", defaultValue: 0 },
             TRS: { type: "string", defaultValue: "[0,0,0,0,0,0,1,1,1,1]" }
         }
@@ -39,9 +39,9 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetParent",
         blockType: "command",
-        text: "Scene [Index] .Node [CHILD_NODE_IDX] parent [PARENT_NODE_IDX]",
+        text: "Scene [INDEX] .Node [CHILD_NODE_IDX] parent [PARENT_NODE_IDX]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             CHILD_NODE_IDX: { type: "number", defaultValue: 0 },
             PARENT_NODE_IDX: { type: "number", defaultValue: -1 }
         }
@@ -49,27 +49,27 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetNodeMatrix",
         blockType: "reporter",
-        text: "Scene [Index] .Node [NODE_IDX] world matrix",
+        text: "Scene [INDEX] .Node [NODE_IDX] world matrix",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             NODE_IDX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Scene_GetNodeTRS",
         blockType: "reporter",
-        text: "Scene [Index] .Node [NODE_IDX] TRS",
+        text: "Scene [INDEX] .Node [NODE_IDX] TRS",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             NODE_IDX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Scene_UpdateWorldMatrix",
         blockType: "command",
-        text: "Scene [Index] .update",
+        text: "Scene [INDEX] .update",
         arguments: {
-            Index: { type: "number", defaultValue: 0 }
+            INDEX: { type: "number", defaultValue: 0 }
         }
     },
 
@@ -77,34 +77,34 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetContainerRootIndex",
         blockType: "reporter",
-        text: "Container [Index] .rootNodeIndex",
+        text: "Container [INDEX] .rootNodeIndex",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
         }
     },
     {
         opcode: "Scene_GetContainerMeshCount",
         blockType: "reporter",
-        text: "Container [Index] .meshCount",
+        text: "Container [INDEX] .meshCount",
         arguments: {
-            Index: { type: "number", defaultValue: 0 }
+            INDEX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Scene_AddContainer",
         blockType: "command",
-        text: "Scene [Index] .addContainer [CONTAINER_IDX]",
+        text: "Scene [INDEX] .addContainer [CONTAINER_IDX]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             CONTAINER_IDX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Scene_RemoveContainer",
         blockType: "command",
-        text: "Scene [Index] .removeContainer [CONTAINER_IDX]",
+        text: "Scene [INDEX] .removeContainer [CONTAINER_IDX]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             CONTAINER_IDX: { type: "number", defaultValue: 0 }
         }
     },
@@ -114,17 +114,17 @@ export const SceneBlocks = [
     {
         opcode: "Scene_SkeletonGetJointCount",
         blockType: "reporter",
-        text: "Skeleton [Index] .jointCount",
+        text: "Skeleton [INDEX] .jointCount",
         arguments: {
-            Index: { type: "number", defaultValue: 0 }
+            INDEX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Scene_SkeletonSetJointTRS",
         blockType: "command",
-        text: "Skeleton [Index] .Joint [NAME] .setTRS [TRS]",
+        text: "Skeleton [INDEX] .Joint [NAME] .setTRS [TRS]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             NAME: { type: "string", defaultValue: "spine" },
             TRS: { type: "string", defaultValue: "[0,0,0,0,0,0,1,1,1,1]" }
         }
@@ -132,9 +132,9 @@ export const SceneBlocks = [
     {
         opcode: "Scene_SkeletonBindTexture",
         blockType: "command",
-        text: "Skeleton [Index] .texture.bind [UNIT]",
+        text: "Skeleton [INDEX] .texture.bind [UNIT]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             UNIT: { type: "number", defaultValue: 0 }
         }
     },
@@ -143,27 +143,27 @@ export const SceneBlocks = [
     {
         opcode: "Scene_MeshDraw",
         blockType: "command",
-        text: "MeshNode [Index] draw [MODE]",
+        text: "MeshNode [INDEX] draw [MODE]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             MODE: { type: "string", menu: "drawMode" }
         }
     },
     {
         opcode: "Scene_MeshGetTexture",
         blockType: "reporter",
-        text: "MeshNode [Index] .getTexture [TEX_TYPE]",
+        text: "MeshNode [INDEX] .getTexture [TEX_TYPE]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             TEX_TYPE: { type: "string", menu: "pbrTexMenu" }
         }
     },
     {
         opcode: "Scene_MeshGetParam",
         blockType: "reporter",
-        text: "MeshNode [Index] .getMaterial [PARAM]",
+        text: "MeshNode [INDEX] .getMaterial [PARAM]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             PARAM: {
                 type: "string",
                 menu: "pbrTexMenu",
@@ -174,9 +174,9 @@ export const SceneBlocks = [
     {
         opcode: "Scene_MeshGetLightmapParam",
         blockType: "reporter",
-        text: "MeshNode [Index] .lightmap.parameter [PARAM]",
+        text: "MeshNode [INDEX] .lightmap.parameter [PARAM]",
         arguments: {
-            Index: { type: "string", defaultValue: "0" },
+            INDEX: { type: "string", defaultValue: "0" },
             PARAM: {
                 type: "string",
                 menu: "lightmapParamMenu",
@@ -187,9 +187,9 @@ export const SceneBlocks = [
     {
         opcode: "Scene_MeshGetLightmapScaleOffsetComp",
         blockType: "reporter",
-        text: "MeshNode [Index] .lightmap.scaleOffset [COMP]",
+        text: "MeshNode [INDEX] .lightmap.scaleOffset [COMP]",
         arguments: {
-            Index: { type: "number", defaultValue: 0 },
+            INDEX: { type: "number", defaultValue: 0 },
             COMP: {
                 type: "string",
                 menu: "v4CompMenu",
