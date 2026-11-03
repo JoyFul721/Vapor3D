@@ -11,7 +11,6 @@ export const EngineMenus = {
         
         faceMenu: ["FRONT", "BACK", "FRONT_AND_BACK"],
         clearMenu: ["COLOR_BUFFER_BIT", "DEPTH_BUFFER_BIT", "STENCIL_BUFFER_BIT", "ALL"],
-        drawMode: ["TRIANGLES", "TRIANGLE_STRIP", "LINES", "POINTS"],
         capMenu: ["DEPTH_TEST", "STENCIL_TEST", "BLEND", "CULL_FACE"],      
         costumeMenu: { acceptReporters: true, items: "tex_getCostumes" },
         listMenu: { acceptReporters: true, items: "getAllLists" },
@@ -28,8 +27,7 @@ export const EngineMenus = {
         // wrapAxis: ["S", "T"],
         wrapMode: ["REPEAT", "CLAMP_TO_EDGE", "MIRRORED_REPEAT"],
         funcMenu: ["NEVER", "LESS", "EQUAL", "LEQUAL", "GREATER", "NOTEQUAL", "GEQUAL", "ALWAYS"],
-        opMenu: { acceptReporters: true, items: [{ text: "KEEP", value: "KEEP" }, { text: "ZERO", value: "ZERO" }, { text: "REPLACE", value: "REPLACE" }, { text: "INCR", value: "INCR" }, { text: "DECR", value: "DECR" }, { text: "INVERT", value: "INVERT" }, { text: "INCR_WRAP", value: "INCR_WRAP" }, { text: "DECR_WRAP", value: "DECR_WRAP" }] },
-        faceMenu: { acceptReporters: true, items: [{ text: "FRONT", value: "FRONT" }, { text: "BACK", value: "BACK" }, { text: "FRONT_AND_BACK", value: "FRONT_AND_BACK" }] },
+        opMenu: ["KEEP", "ZERO", "REPLACE", "INCR", "DECR", "INVERT", "INCR_WRAP", "DECR_WRAP"],
         blendMenu: ["ZERO", "ONE", "SRC_COLOR", "ONE_MINUS_SRC_COLOR", "DST_COLOR", "ONE_MINUS_DST_COLOR", "SRC_ALPHA", "ONE_MINUS_SRC_ALPHA", "DST_ALPHA", "ONE_MINUS_DST_ALPHA", "CONSTANT_COLOR", "ONE_MINUS_CONSTANT_COLOR"],
         attrMenu: [
                 { text: 'position', value: 'position' },
@@ -38,23 +36,10 @@ export const EngineMenus = {
                 { text: 'tangent', value: 'tangent' },
                 { text: 'color', value: 'color' }
         ],
-        TRSTypeMenu: { acceptReporters: true, items: [ { text: 'position', value: 'Pos' }, { text: 'rotation', value: 'Rot' }, { text: 'scale', value: 'Scale' } ] },
-        playModeMenu: {
-                acceptReporters: true,
-                items: ['loop', 'play once']
-        },
-        animInfoMenu: {
-                acceptReporters: true,
-                items: ['current animation name', 'current time', 'duration', 'is playing', 'animation names']
-        },
-        clipPropMenu: {
-                acceptReporters: true,
-                items: [
-                        { text: "start time", value: "startTime" },
-                        { text: "duration", value: "duration" },
-                        { text: "mix weight", value: "weight" }
-                ]
-        },
+        TRSTypeMenu: ["Pos", "Rot", "Scale"],
+        playModeMenu: ['loop', 'play once'],
+        animInfoMenu: ['current animation name', 'current time', 'duration', 'is playing', 'animation names'],
+        clipPropMenu: ["startTime", "duration", "weight"],
         clipMode: ["normal", "additive"],
         targetTypeMenu: [
                 { text: 'Skeleton', value: 'skeleton' },
@@ -63,33 +48,33 @@ export const EngineMenus = {
         lightmapParamMenu: ["hasLightmap", "lightmapIndex"],
 
         Inspector_GlobalType: [
-                { text: "shader", value: "shader" },
-                { text: "vao", value: "vao" },
-                { text: "fbo", value: "fbo" },
-                { text: "texture", value: "texture" },
-                { text: "stencil", value: "stencil" },
-                { text: "scene", value: "scene" },
-                { text: "node", value: "node" },
-                { text: "container", value: "container" },
-                { text: "timeline", value: "timeline" }
+                { text: "Shader", value: "shader" },
+                { text: "Vao", value: "vao" },
+                { text: "Fbo", value: "fbo" },
+                { text: "Texture", value: "texture" },
+                { text: "Stencil", value: "stencil" },
+                { text: "Scene", value: "scene" },
+                { text: "Node", value: "node" },
+                { text: "Container", value: "container" },
+                { text: "Timeline", value: "timeline" }
         ],
         Inspector_SceneType: [
-                { text: "container", value: "container" },
-                { text: "skeleton", value: "skeleton" },
-                { text: "animation", value: "animation" },
-                { text: "mesh", value: "mesh" }
+                { text: "Container", value: "container" },
+                { text: "Skeleton", value: "skeleton" },
+                { text: "Animation", value: "animation" },
+                { text: "Mesh", value: "mesh" }
         ],
         Inspector_ContainerType: [
-                { text: "mesh", value: "mesh" },
-                { text: "skeleton", value: "skeleton" },
-                { text: "animation", value: "animation" }
+                { text: "Mesh", value: "mesh" },
+                { text: "Skeleton", value: "skeleton" },
+                { text: "Animation", value: "animation" }
         ],
         Inspector_ContainerArrayType: [
-                { text: "mesh", value: "mesh" },
-                { text: "skeleton", value: "skeleton" }
+                { text: "Mesh", value: "mesh" },
+                { text: "Skeleton", value: "skeleton" }
         ],
         Inspector_MeshType: [
-                { text: "material", value: "material" }
+                { text: "Material", value: "material" }
         ],
 };
 
