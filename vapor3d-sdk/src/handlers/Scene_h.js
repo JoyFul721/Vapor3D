@@ -62,6 +62,7 @@ export class SceneHandlers {
     // ====================== Scene Management ======================
 
     Scene_Create({ NAME }) {
+        if (!this.engine.core) return -1;
         const scene = new Scene(NAME || "Main", 8192, this.registry);
         const index = this.registry.allocate("scenes", scene);
         
@@ -253,6 +254,7 @@ export class SceneHandlers {
     }
 
     Scene_SkeletonBindTexture({ INDEX, UNIT }) {
+        if (!this.engine.core) return;
         const skeleton = this._get("skeletons", INDEX);
         const gl = this.engine.core.gl;
 
@@ -263,6 +265,7 @@ export class SceneHandlers {
     // ====================== MeshNode ======================
 
     Scene_MeshDraw({ INDEX, MODE } = {}) {
+        if (!this.engine.core) return;
         const node = this._get("nodes", INDEX);
         if (!node || !node.visible || !node.vao || typeof node.draw !== "function" || node.worldMatrixIndex < 0) return;
         const scene = this._getScene(node.sceneIndex);
