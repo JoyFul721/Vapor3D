@@ -9,6 +9,7 @@ export class TimelineHandlers {
     }
 
     Timeline_Create({ NAME, TYPE, TARGET_INDEX }) {
+        if (!this.registry) return -1;
         const target = this.registry.get(TYPE === 'skeleton' ? 'skeletons' : 'containers', TARGET_INDEX);
         if (!target) return -1;
         const timeline = new Timeline(TYPE, target);
@@ -20,6 +21,7 @@ export class TimelineHandlers {
 
     Timeline_Destroy({ INDEX }) {
         const index = Number(INDEX);
+        if (!Number.isInteger(index) || index < 0) return;
         this.registry.dispose('timelines', index);
         // 清理映射
         for (const [name, idx] of this.timelinesMap) {
@@ -33,15 +35,15 @@ export class TimelineHandlers {
     Timeline_AddClip({ INDEX, CLIP_NAME, ANIMATION_INDEX, MODE }) {
         const timeline = this.registry.get('timelines', INDEX);
         const animation = this.registry.get('animations', ANIMATION_INDEX);
-        if (timeline && animation) timeline.addClip(CLIP_NAME, animation, MODE);
+        if (!timeline || !animation) return;
+        timeline.addClip(CLIP_NAME, animation, MODE);
     }
 
     Timeline_SetClipProperty({ INDEX, CLIP_NAME, PROP, VALUE }) {
         const timeline = this.registry.get('timelines', INDEX);
         const clip = timeline?.clips.get(CLIP_NAME);
-        if (clip && PROP in clip) {
-            clip[PROP] = Number(VALUE);
-        }
+        if (!clip || !(PROP in clip)) return;
+        clip[PROP] = Number(VALUE);
     }
 
     Timeline_SetClipJointWeight({ INDEX, CLIP_NAME, JOINT_NAME, WEIGHT, RECURSIVE }) {
@@ -85,7 +87,10 @@ export class TimelineHandlers {
     Timeline_ApplyAt({ INDEX, TIME }) {
         const timeline = this.registry.get('timelines', INDEX);
         if (!timeline) return;
-        const root = timeline.type === 'skeleton' ? timeline.target.joints[0].parent : timeline.target.rootNode;
+        const root = timeline.type === 'skeleton'
+            ? (timeline.target.joints[0]?.parent ?? null)
+            : timeline.target.rootNode;
+        if (!root) return;
         timeline.applyAt(Number(TIME), root);
     }
 }
