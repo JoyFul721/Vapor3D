@@ -85,10 +85,13 @@ export class InspectorHandlers {
         const container = this._get("containers", CONTAINER_INDEX);
         if (!container) return -1;
 
+        const i = Number(RESOURCE_INDEX);
+        if (!Number.isInteger(i) || i < 0) return -1;
+
         const obj = TYPE === "mesh"
-            ? container.meshes?.[RESOURCE_INDEX]
+            ? container.meshes?.[i]
             : TYPE === "skeleton"
-                ? container.skeletons?.[RESOURCE_INDEX]
+                ? container.skeletons?.[i]
                 : null;
 
         return obj?.registryIndex >= 0 ? obj.registryIndex : -1;
