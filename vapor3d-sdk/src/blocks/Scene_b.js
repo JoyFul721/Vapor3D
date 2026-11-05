@@ -29,9 +29,8 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetTRS",
         blockType: "command",
-        text: "Scene [INDEX] .Node [NODE_IDX] set TRS [TRS]",
+        text: "Node [NODE_IDX] set TRS [TRS]",
         arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
             NODE_IDX: { type: "number", defaultValue: 0 },
             TRS: { type: "string", defaultValue: "[0,0,0,0,0,0,1,1,1,1]" }
         }
@@ -39,9 +38,8 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetParent",
         blockType: "command",
-        text: "Scene [INDEX] .Node [CHILD_NODE_IDX] parent [PARENT_NODE_IDX]",
+        text: "Node [CHILD_NODE_IDX] parent [PARENT_NODE_IDX]",
         arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
             CHILD_NODE_IDX: { type: "number", defaultValue: 0 },
             PARENT_NODE_IDX: { type: "number", defaultValue: -1 }
         }
@@ -49,18 +47,16 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetNodeMatrix",
         blockType: "reporter",
-        text: "Scene [INDEX] .Node [NODE_IDX] world matrix",
+        text: "Node [NODE_IDX] world matrix",
         arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
             NODE_IDX: { type: "number", defaultValue: 0 }
         }
     },
     {
         opcode: "Scene_GetNodeTRS",
         blockType: "reporter",
-        text: "Scene [INDEX] .Node [NODE_IDX] TRS",
+        text: "Node [NODE_IDX] TRS",
         arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
             NODE_IDX: { type: "number", defaultValue: 0 }
         }
     },
@@ -72,6 +68,7 @@ export const SceneBlocks = [
             INDEX: { type: "number", defaultValue: 0 }
         }
     },
+    
 
     { blockType: "label", text: "Container" },
     {
