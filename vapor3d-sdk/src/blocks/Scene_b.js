@@ -29,7 +29,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetTRS",
         blockType: "command",
-        text: "Node [NODE_IDX] set TRS [TRS]",
+        text: "Node [NODE_IDX] .setTRS [TRS]",
         arguments: {
             NODE_IDX: { type: "number", defaultValue: 0 },
             TRS: { type: "string", defaultValue: "[0,0,0,0,0,0,1,1,1,1]" }
@@ -38,7 +38,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_NodeSetParent",
         blockType: "command",
-        text: "Node [CHILD_NODE_IDX] parent [PARENT_NODE_IDX]",
+        text: "Node [CHILD_NODE_IDX] .setParent [PARENT_NODE_IDX]",
         arguments: {
             CHILD_NODE_IDX: { type: "number", defaultValue: 0 },
             PARENT_NODE_IDX: { type: "number", defaultValue: -1 }
@@ -47,7 +47,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetNodeMatrix",
         blockType: "reporter",
-        text: "Node [NODE_IDX] world matrix",
+        text: "Node [NODE_IDX] .worldMatrix",
         arguments: {
             NODE_IDX: { type: "number", defaultValue: 0 }
         }
@@ -55,7 +55,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_GetNodeTRS",
         blockType: "reporter",
-        text: "Node [NODE_IDX] TRS",
+        text: "Node [NODE_IDX] .TRS",
         arguments: {
             NODE_IDX: { type: "number", defaultValue: 0 }
         }
