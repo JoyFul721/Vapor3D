@@ -113,31 +113,25 @@ export class SceneHandlers {
 
     // ====================== Node Transform ======================
 
-    Scene_NodeSetTRS({ INDEX, NODE_IDX, TRS }) {
-        const scene = this._getScene(INDEX);
-        const node = scene?.getNodeByIndex(NODE_IDX);
+    Scene_NodeSetTRS({ NODE_IDX, TRS }) {
+        const node = this._get("nodes", NODE_IDX);
         if (!node) return;
-
         this._applyTRS(node, TRS);
     }
 
-    Scene_NodeSetParent({
-        INDEX,
-        CHILD_NODE_IDX,
-        PARENT_NODE_IDX
-    }) {
-        const scene = this._getScene(INDEX);
+    Scene_NodeSetParent({ CHILD_NODE_IDX, PARENT_NODE_IDX }) {
+        const child = this._get("nodes", CHILD_NODE_IDX);
+        if (!child) return;
+
+        const scene = this._getScene(child.sceneIndex);
         if (!scene) return;
 
-        const child = scene.getNodeByIndex(CHILD_NODE_IDX);
         const parentIndex = Number(PARENT_NODE_IDX);
         const parent = parentIndex === -1
             ? scene.root
-            : scene.getNodeByIndex(parentIndex);
+            : this._get("nodes", parentIndex);
 
-        if (!child || !parent || child === scene.root || child === parent) {
-            return;
-        }
+        if (!parent || child === scene.root || child === parent) return;
 
         // Prevent creating a parent-child cycle.
         let ancestor = parent;
@@ -149,18 +143,22 @@ export class SceneHandlers {
         child.parent?.removeChild(child);
         parent.addChild(child);
 
-        if (child.worldMatrixIndex === -1) {
-            scene.registerNode(child);
-        }
+        // Register any unregistered nodes in the moved subtree
+        this._walkNodes(child, node => {
+            if (node.worldMatrixIndex === -1) {
+                scene.registerNode(node);
+            }
+        });
 
         child.setDirty();
     }
 
-    Scene_GetNodeMatrix({ INDEX, NODE_IDX }) {
-        const scene = this._getScene(INDEX);
-        const node = scene?.getNodeByIndex(NODE_IDX);
-
+    Scene_GetNodeMatrix({ NODE_IDX }) {
+        const node = this._get("nodes", NODE_IDX);
         if (!node || node.worldMatrixIndex === -1) return "[]";
+
+        const scene = this._getScene(node.sceneIndex);
+        if (!scene) return "[]";
 
         const offset = node.worldMatrixIndex * 16;
         const matrix = scene.worldMatrixBuffer.subarray(offset, offset + 16);
@@ -168,10 +166,8 @@ export class SceneHandlers {
         return JSON.stringify(Array.from(matrix));
     }
 
-    Scene_GetNodeTRS({ INDEX, NODE_IDX }) {
-        const scene = this._getScene(INDEX);
-        const node = scene?.getNodeByIndex(NODE_IDX);
-
+    Scene_GetNodeTRS({ NODE_IDX }) {
+        const node = this._get("nodes", NODE_IDX);
         return node ? JSON.stringify(this._getTRS(node)) : "[]";
     }
 
