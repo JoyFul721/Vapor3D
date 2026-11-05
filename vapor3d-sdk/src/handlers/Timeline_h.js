@@ -83,14 +83,10 @@ export class TimelineHandlers {
             TIME >= c.startTime && TIME < (c.startTime + c.duration)
         );
     }
-
+    
     Timeline_ApplyAt({ INDEX, TIME }) {
         const timeline = this.registry.get('timelines', INDEX);
         if (!timeline) return;
-        const root = timeline.type === 'skeleton'
-            ? (timeline.target.joints[0]?.parent ?? null)
-            : timeline.target.rootNode;
-        if (!root) return;
-        timeline.applyAt(Number(TIME), root);
+        timeline.applyAt(Number(TIME));
     }
 }
