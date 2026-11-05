@@ -166,7 +166,7 @@ export const SceneBlocks = [
             INDEX: { type: "number", defaultValue: 0 },
             PARAM: {
                 type: "string",
-                menu: "pbrTexMenu",
+                menu: "pbrParamMenu",
                 defaultValue: "baseColor"
             }
         }
