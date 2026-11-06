@@ -185,17 +185,6 @@ export class Math3D {
     }
 
     // ==========================================
-    //                 vec3
-    // ==========================================
-
-    static v3_add(a, b) { return this.vec3_add(a, b); }
-    static v3_sub(a, b) { return this.vec3_sub(a, b); }
-    static v3_mul(a, b) { return this.vec3_mul(a, b); }
-    static v3_normalize(v) { return this.vec3_normalize(v); }
-    static v3_transform(v, m) { return this.vec3_transform(v, m); }
-
-
-    // ==========================================
     //                 TRS
     // ==========================================
     static TRS_create(px, py, pz, rx, ry, rz, sx, sy, sz) {
