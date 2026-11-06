@@ -228,6 +228,28 @@ export class EngineHandlers {
         const dataArray = new typeInfo.ArrayType(values);
         vao.addBuffer(dataArray, LOC, SIZE, typeInfo.glType);
     }
+    VAO_SetIndices({ INDEX, LIST, TYPE = "GL_UNSIGNED_SHORT" }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return console.warn(`Vapor3D: VAO ${INDEX} not found`);
+
+        const listData = this.getListData(LIST);
+        if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
+
+        const typeInfo = Utils.getGLTypeConfig(vao.gl, TYPE);
+        if (!typeInfo) return console.error(`Vapor3D: Invalid TYPE="${TYPE}"`);
+
+        const numbers = listData.map(Number);
+        if (numbers.some(v => !Number.isFinite(v))) return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
+
+        if (typeInfo.integer) {
+            const bad = numbers.find(v => v < typeInfo.min || v > typeInfo.max);
+            if (bad !== undefined) return console.error(`Vapor3D: Value ${bad} out of range for ${TYPE} (${typeInfo.min}..${typeInfo.max})`);
+        }
+
+        const values = numbers.map(v => Math.trunc(v));
+        const dataArray = new typeInfo.ArrayType(values);
+        vao.setIndices(dataArray, typeInfo.glType);
+    }
     VAO_CreateScreenQuad({ NAME }) {
         if (!this.core) return -1;
         const index = this.registry.allocate('vaos', VAO.createScreenQuad(this.core.gl));
