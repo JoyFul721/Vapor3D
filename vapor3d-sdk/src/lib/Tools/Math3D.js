@@ -11,6 +11,14 @@ export class Math3D {
     static vec3_add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
     static vec3_sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
     static vec3_mul(a, b) { return [a[0] * b[0], a[1] * b[1], a[2] * b[2]]; }
+    static vec3_dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+    static vec3_cross(a, b) {
+        return [
+            a[1] * b[2] - a[2] * b[1],
+            a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0]
+        ];
+    }
     static vec3_normalize(v) {
         const l = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
         return l > 0 ? [v[0] / l, v[1] / l, v[2] / l] : [0, 0, 0];
