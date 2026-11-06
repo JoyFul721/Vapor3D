@@ -13,9 +13,9 @@ export class Math3DHandlers {
         const a = Utils.parseInput(V, util) || [0, 0, 0];
         const b = Utils.parseInput(OTHER, util) || [0, 0, 0];
 
-        if (OP === "+") return JSON.stringify(Math3D.vec3_add(a, b));    // ← v3_add → vec3_add
-        if (OP === "-") return JSON.stringify(Math3D.vec3_sub(a, b));    // ← v3_sub → vec3_sub
-        if (OP === "mul") return JSON.stringify(Math3D.vec3_mul(a, b));  // ← v3_mul → vec3_mul
+        if (OP === "+") return JSON.stringify(Math3D.vec3_add(a, b));
+        if (OP === "-") return JSON.stringify(Math3D.vec3_sub(a, b));
+        if (OP === "mul") return JSON.stringify(Math3D.vec3_mul(a, b));
     }
 
     v3_Dot({ V, OTHER }, util) {
@@ -33,7 +33,7 @@ export class Math3DHandlers {
     v3_ApplyMatrix({ V, M }, util) {
         const v = Utils.parseInput(V, util) || [0, 0, 0];
         const mat = Utils.parseInput(M, util) || Math3D.mat4_identity();
-        return JSON.stringify(Math3D.vec3_transform(v, mat));            // ← v3_transform → vec3_transform
+        return JSON.stringify(Math3D.vec3_transform(v, mat));
     }
 
     v3_Get({ V, COMP }, util) {
