@@ -202,9 +202,9 @@ export class EngineHandlers {
         this.vaosMap.set(NAME, index);
         return index;
     }
-    VAO_AddBuffer({ Index, LIST, LOC, SIZE, TYPE = "GL_FLOAT" }) {
-        const vao = this.registry.get('vaos', Index);
-        if (!vao) return console.warn(`Vapor3D: VAO ${Index} not found`);
+    VAO_AddBuffer({ INDEX, LIST, LOC, SIZE, TYPE = "GL_FLOAT" }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return console.warn(`Vapor3D: VAO ${INDEX} not found`);
 
         const listData = this.getListData(LIST);
         if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
