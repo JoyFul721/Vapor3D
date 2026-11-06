@@ -22,27 +22,43 @@ export class Utils {
     }
 
 
+    static getGLTypeConfig(gl, typeStr) {
+        if (!gl) return null;
+        const key = String(typeStr).toUpperCase().trim().replace(/^GL_/, "");
+        const map = {
+            "FLOAT":          { glType: gl.FLOAT,          ArrayType: Float32Array, min: -Infinity, max: Infinity, integer: false },
+            "BYTE":           { glType: gl.BYTE,           ArrayType: Int8Array,    min: -128,     max: 127,       integer: true  },
+            "SHORT":          { glType: gl.SHORT,          ArrayType: Int16Array,   min: -32768,   max: 32767,     integer: true  },
+            "UNSIGNED_BYTE":  { glType: gl.UNSIGNED_BYTE,  ArrayType: Uint8Array,   min: 0,        max: 255,       integer: true  },
+            "UNSIGNED_SHORT": { glType: gl.UNSIGNED_SHORT, ArrayType: Uint16Array,  min: 0,        max: 65535,     integer: true  },
+            "INT":            { glType: gl.INT,            ArrayType: Int32Array,   min: -2147483648, max: 2147483647, integer: true },
+            "UNSIGNED_INT":   { glType: gl.UNSIGNED_INT,   ArrayType: Uint32Array,  min: 0,        max: 4294967295, integer: true }
+        };
+        return map[key] || null;
+    }
+
     static getFormatConfig(gl, formatStr) {
         if (!gl) return null;
         const key = String(formatStr).toUpperCase().trim();
         const map = {
-            "RGB8": { internal: gl.RGB8, format: gl.RGB, type: gl.UNSIGNED_BYTE },
-            "RGBA8": { internal: gl.RGBA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE },
+            "RGB8":  { internal: gl.RGB8,  format: gl.RGB,  type: gl.UNSIGNED_BYTE, arrayType: Uint8Array },
+            "RGBA8": { internal: gl.RGBA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE, arrayType: Uint8Array },
 
-            "R16F": { internal: gl.R16F, format: gl.RED, type: gl.HALF_FLOAT },
-            "RG16F": { internal: gl.RG16F, format: gl.RG, type: gl.HALF_FLOAT },
-            "RGB16F": { internal: gl.RGB16F, format: gl.RGB, type: gl.HALF_FLOAT },
-            "RGBA16F": { internal: gl.RGBA16F, format: gl.RGBA, type: gl.HALF_FLOAT },
+            "R16F":    { internal: gl.R16F,    format: gl.RED, type: gl.HALF_FLOAT, arrayType: Uint16Array },
+            "RG16F":   { internal: gl.RG16F,   format: gl.RG,  type: gl.HALF_FLOAT, arrayType: Uint16Array },
+            "RGB16F":  { internal: gl.RGB16F,  format: gl.RGB, type: gl.HALF_FLOAT, arrayType: Uint16Array },
+            "RGBA16F": { internal: gl.RGBA16F, format: gl.RGBA,type: gl.HALF_FLOAT, arrayType: Uint16Array },
 
-            "R32F": { internal: gl.R32F, format: gl.RED, type: gl.FLOAT },
-            "RGB32F": { internal: gl.RGB32F, format: gl.RGB, type: gl.FLOAT },
+            "R32F":    { internal: gl.R32F,    format: gl.RED, type: gl.FLOAT, arrayType: Float32Array },
+            "RGB32F":  { internal: gl.RGB32F,  format: gl.RGB, type: gl.FLOAT, arrayType: Float32Array },
+            "RGBA32F": { internal: gl.RGBA32F, format: gl.RGBA,type: gl.FLOAT, arrayType: Float32Array },
 
-            "R11G11B10F": { internal: gl.R11F_G11F_B10F, format: gl.RGB, type: gl.UNSIGNED_INT_10F_11F_11F_REV },
+            "R11G11B10F": { internal: gl.R11F_G11F_B10F, format: gl.RGB, type: gl.UNSIGNED_INT_10F_11F_11F_REV, arrayType: Uint32Array },
 
-            "DEPTH_COMPONENT24": { internal: gl.DEPTH_COMPONENT24, format: gl.DEPTH_COMPONENT, type: gl.UNSIGNED_INT },
-            "DEPTH24_STENCIL8": { internal: gl.DEPTH24_STENCIL8, format: gl.DEPTH_STENCIL, type: gl.UNSIGNED_INT_24_8 }
+            "DEPTH_COMPONENT24": { internal: gl.DEPTH_COMPONENT24, format: gl.DEPTH_COMPONENT, type: gl.UNSIGNED_INT, arrayType: Uint32Array },
+            "DEPTH24_STENCIL8":  { internal: gl.DEPTH24_STENCIL8,  format: gl.DEPTH_STENCIL,  type: gl.UNSIGNED_INT_24_8, arrayType: null }
         };
-        return map[key] || map["RGBA8"];
+        return map[key] || null;
     }
 
 
