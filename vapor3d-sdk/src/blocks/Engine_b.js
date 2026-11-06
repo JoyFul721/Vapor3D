@@ -27,6 +27,11 @@ export const EngineMenus = {
                 "GL_UNSIGNED_SHORT", "GL_SHORT",
                 "GL_UNSIGNED_INT", "GL_INT"
         ],
+        IndexTypeMenu: [
+                "GL_UNSIGNED_BYTE",
+                "GL_UNSIGNED_SHORT",
+                "GL_UNSIGNED_INT"
+        ],
         fboSlotMenu: ["COLOR_ATTACHMENT0", "COLOR_ATTACHMENT1", "COLOR_ATTACHMENT2", "COLOR_ATTACHMENT3", "COLOR_ATTACHMENT4", "COLOR_ATTACHMENT5", "DEPTH_STENCIL_ATTACHMENT", "DEPTH_ATTACHMENT"],
         depthMenu: ["RBO", "TEXTURE", "NONE"],
         filterMode: ["NEAREST", "LINEAR", "NEAREST_MIPMAP_NEAREST", "LINEAR_MIPMAP_NEAREST", "NEAREST_MIPMAP_LINEAR", "LINEAR_MIPMAP_LINEAR"],
