@@ -202,17 +202,31 @@ export class EngineHandlers {
         this.vaosMap.set(NAME, index);
         return index;
     }
-    VAO_AddBuffer({ INDEX, LIST, LOC, SIZE }) {
-        const vao = this.registry.get('vaos', INDEX);
-        if (!vao) return console.warn(`Vapor3D: VAO ${INDEX} not found`);
+    VAO_AddBuffer({ Index, LIST, LOC, SIZE, TYPE = "GL_FLOAT" }) {
+        const vao = this.registry.get('vaos', Index);
+        if (!vao) return console.warn(`Vapor3D: VAO ${Index} not found`);
 
         const listData = this.getListData(LIST);
         if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
         if (!Number.isInteger(SIZE) || SIZE < 1) return console.error(`Vapor3D: Invalid SIZE=${SIZE}`);
         if (listData.length % SIZE !== 0) return console.error(`Vapor3D: ${listData.length} items cannot be divided evenly by SIZE=${SIZE}`);
-        const dataArray = new Float32Array(listData.map(Number));
-        if (dataArray.some(v => !Number.isFinite(v))) return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
-        vao.addBuffer(dataArray, LOC, SIZE);
+
+        const typeInfo = Utils.getGLTypeConfig(vao.gl, TYPE);
+        if (!typeInfo) return console.error(`Vapor3D: Invalid TYPE="${TYPE}"`);
+
+        const numbers = listData.map(Number);
+        if (numbers.some(v => !Number.isFinite(v))) return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
+
+        // 范围检查
+        if (typeInfo.integer) {
+            const bad = numbers.find(v => v < typeInfo.min || v > typeInfo.max);
+            if (bad !== undefined) return console.error(`Vapor3D: Value ${bad} out of range for ${TYPE} (${typeInfo.min}..${typeInfo.max})`);
+        }
+
+        // 整数类型截断小数
+        const values = typeInfo.integer ? numbers.map(v => Math.trunc(v)) : numbers;
+        const dataArray = new typeInfo.ArrayType(values);
+        vao.addBuffer(dataArray, LOC, SIZE, typeInfo.glType);
     }
     VAO_CreateScreenQuad({ NAME }) {
         if (!this.core) return -1;
