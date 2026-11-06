@@ -20,6 +20,24 @@ export const Math3DBlocks = [
             OTHER: { type: "string", defaultValue: "[0,0,0]" }
         }
     },
+    { 
+        opcode: "v3_Dot", 
+        blockType: "reporter", 
+        text: "v3 [V] dot [OTHER]", 
+        arguments: { 
+            V: { type: "string", menu: "listMenu" }, 
+            OTHER: { type: "string", menu: "listMenu" } 
+        } 
+    },
+    { 
+        opcode: "v3_Cross", 
+        blockType: "reporter", 
+        text: "v3 [V] cross [OTHER]", 
+        arguments: { 
+            V: { type: "string", menu: "listMenu" }, 
+            OTHER: { type: "string", menu: "listMenu" } 
+        } 
+    },
     {
         opcode: "v3_ApplyMatrix",
         blockType: "reporter",
