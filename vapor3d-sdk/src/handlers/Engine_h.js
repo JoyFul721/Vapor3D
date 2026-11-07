@@ -303,10 +303,44 @@ export class EngineHandlers {
     }
     Texture_UpdateFromList({ INDEX, LIST, TYPE }) {
         const texture = this.registry.get('textures', INDEX);
-        if (!texture) return;
-        const list = this.getListData(LIST);
-        if (!list) return;
-        texture.updateFromList(list, TYPE);
+        if (!texture) return console.warn(`Vapor3D: Texture ${INDEX} not found`);
+
+        const listData = this.getListData(LIST);
+        if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
+
+        const formatInfo = Utils.getFormatConfig(texture.gl, TYPE);
+        if (!formatInfo) return console.error(`Vapor3D: Invalid TYPE="${TYPE}"`);
+
+        if (!texture.id || !texture.width || !texture.height)
+            return console.error("Vapor3D: Texture is not initialized");
+        if (texture.internalFormat !== formatInfo.internal)
+            return console.error(`Vapor3D: Texture format mismatch, expected ${TYPE}`);
+
+        const gl = texture.gl;
+        const channels = formatInfo.format === gl.RED ? 1
+            : formatInfo.format === gl.RG ? 2
+            : formatInfo.format === gl.RGB ? 3
+            : 4; // RGBA
+
+        const expectedLength = texture.width * texture.height * channels;
+        if (listData.length !== expectedLength)
+            return console.error(`Vapor3D: Invalid list length, expected ${expectedLength}, got ${listData.length}`);
+
+        const numbers = listData.map(Number);
+        if (numbers.some(v => !Number.isFinite(v)))
+            return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
+
+        // 无符号字节范围检查
+        if (formatInfo.arrayType === Uint8Array) {
+            const bad = numbers.find(v => !Number.isInteger(v) || v < 0 || v > 255);
+            if (bad !== undefined) return console.error(`Vapor3D: Value ${bad} out of range for ${TYPE} (0..255)`);
+        }
+
+        // 整数类型截断
+        const values = formatInfo.arrayType === Uint8Array ? numbers.map(v => Math.trunc(v)) : numbers;
+        const dataArray = new formatInfo.arrayType(values);
+
+        texture.updateFromList(dataArray, TYPE);
     }
     Texture_Bind({ INDEX, UNIT }) {
         const tex = this.registry.get('textures', INDEX);
