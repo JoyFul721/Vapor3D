@@ -1,31 +1,4 @@
-// ============================================================================
-// Copyright (c) 2026 Joy_Ful
-//
-// Project: Vapor3D Engine Pipeline
-// Module: ReflectionProbeExporter.cs
-// Author: Joy_Ful
-// Acknowledgments: Developed with the assistance of Gemini AI. 借助 Google Gemini Ai 辅助开发
-//
-// License: MIT License
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// ============================================================================
+// License: MIT
 using UnityEngine;
 using UnityEditor;
 using System.IO;
@@ -59,51 +32,45 @@ public class ReflectionProbeExporter : Editor
             importer.textureShape = TextureImporterShape.Texture2D;
             importer.isReadable = true;
             importer.sRGBTexture = false;
+            importer.maxTextureSize = 4096;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.SaveAndReimport();
-
-            AssetDatabase.Refresh();
-
+            
             Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
             if (tex != null)
             {
                 string outPath = Path.Combine(exportDir, Path.GetFileNameWithoutExtension(assetPath) + ".ktx");
-
                 if (SaveTextureAsKTX(tex, outPath))
                     Debug.Log($"[DEBUG] Export success: {Path.GetFileName(outPath)}");
             }
 
-            // 恢复并清理内存
+            Debug.Log($"EXR: {assetPath}\nTexture2D: {tex.width}x{tex.height}\nImporter MaxSize: {importer.maxTextureSize}\nCompression: {importer.textureCompression}\nFormat: {tex.format}\nShape: {importer.textureShape}");
+
             importer.textureType = originalType;
             importer.textureShape = originalShape;
             importer.isReadable = originalRead;
             importer.sRGBTexture = originalSRGB;
             importer.SaveAndReimport();
-            
+
             Resources.UnloadUnusedAssets();
         }
 
         AssetDatabase.Refresh();
-        Debug.Log("<color=green>[Vapor3D] All handled successfully. Path: Assets/Exported_ReflectionProbe/ </color>");
+        Debug.Log("<color=green>[Vapor3D] All handled successfully. Path: Assets/OutdoorsScene/ExportReflectionProbe/ </color>");
     }
 
     static bool SaveTextureAsKTX(Texture2D srcTex, string outputPath)
     {
         int width = srcTex.width;
         int height = srcTex.height;
-        int faceSize = width < height ? width : height;
-        bool isVertical = width < height;
+        int faceSize = height;
 
-        RenderTexture rt = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
-        Graphics.Blit(srcTex, rt);
-        RenderTexture previous = RenderTexture.active;
-        RenderTexture.active = rt;
-        
-        Texture2D readableTex = new Texture2D(width, height, TextureFormat.RGBAHalf, false, true);
-        readableTex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-        readableTex.Apply();
-        
-        RenderTexture.active = previous;
-        RenderTexture.ReleaseTemporary(rt);
+        if (width != faceSize * 6)
+        {
+            Debug.LogError($"Invalid cubemap layout: {width}x{height}, expected 6:1.");
+            return false;
+        }
 
         try
         {
@@ -130,13 +97,8 @@ public class ReflectionProbeExporter : Editor
 
                 for (int i = 0; i < 6; i++)
                 {
-                    int srcX = isVertical ? 0 : i * faceSize;
-                    int srcY = isVertical ? (5 - i) * faceSize : 0;
-
-                    if (srcX + faceSize > width)  srcX = width - faceSize;
-                    if (srcY + faceSize > height) srcY = height - height;
-
-                    Color[] facePixels = readableTex.GetPixels(srcX, srcY, faceSize, faceSize);
+                    int srcX = i * faceSize;
+                    Color[] facePixels = srcTex.GetPixels(srcX, 0, faceSize, faceSize);
                     byte[] faceData = new byte[bytesPerFace];
                     int dataIndex = 0;
 
@@ -150,12 +112,17 @@ public class ReflectionProbeExporter : Editor
                             ushort hB = Mathf.FloatToHalf(c.b);
                             ushort hA = Mathf.FloatToHalf(Mathf.Clamp01(c.a));
 
-                            faceData[dataIndex++] = (byte)(hR & 0xFF); faceData[dataIndex++] = (byte)((hR >> 8) & 0xFF);
-                            faceData[dataIndex++] = (byte)(hG & 0xFF); faceData[dataIndex++] = (byte)((hG >> 8) & 0xFF);
-                            faceData[dataIndex++] = (byte)(hB & 0xFF); faceData[dataIndex++] = (byte)((hB >> 8) & 0xFF);
-                            faceData[dataIndex++] = (byte)(hA & 0xFF); faceData[dataIndex++] = (byte)((hA >> 8) & 0xFF);
+                            faceData[dataIndex++] = (byte)(hR & 0xFF);
+                            faceData[dataIndex++] = (byte)(hR >> 8);
+                            faceData[dataIndex++] = (byte)(hG & 0xFF);
+                            faceData[dataIndex++] = (byte)(hG >> 8);
+                            faceData[dataIndex++] = (byte)(hB & 0xFF);
+                            faceData[dataIndex++] = (byte)(hB >> 8);
+                            faceData[dataIndex++] = (byte)(hA & 0xFF);
+                            faceData[dataIndex++] = (byte)(hA >> 8);
                         }
                     }
+
                     writer.Write(faceData);
                 }
             }
@@ -165,10 +132,7 @@ public class ReflectionProbeExporter : Editor
             Debug.LogError($"KTX write error: {e.Message}");
             return false;
         }
-        finally
-        {
-            Object.DestroyImmediate(readableTex);
-        }
+
         return true;
     }
 }

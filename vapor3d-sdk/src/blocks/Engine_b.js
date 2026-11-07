@@ -11,7 +11,6 @@ export const EngineMenus = {
         
         faceMenu: ["FRONT", "BACK", "FRONT_AND_BACK"],
         clearMenu: ["COLOR_BUFFER_BIT", "DEPTH_BUFFER_BIT", "STENCIL_BUFFER_BIT", "ALL"],
-        drawMode: ["TRIANGLES", "TRIANGLE_STRIP", "LINES", "POINTS"],
         capMenu: ["DEPTH_TEST", "STENCIL_TEST", "BLEND", "CULL_FACE"],      
         costumeMenu: { acceptReporters: true, items: "tex_getCostumes" },
         listMenu: { acceptReporters: true, items: "getAllLists" },
@@ -22,14 +21,30 @@ export const EngineMenus = {
                 "R11G11B10F",
                 "DEPTH_COMPONENT24", "DEPTH24_STENCIL8"
         ],
+        texUploadTypeMenu: [
+                "RGB8", "RGBA8",
+                "R16F", "RG16F", "RGB16F", "RGBA16F",
+                "R32F", "RG32F", "RGB32F", "RGBA32F",
+                "R11G11B10F"
+        ],
+        GLTypeMenu: [
+                "GL_FLOAT",
+                "GL_UNSIGNED_BYTE", "GL_BYTE",
+                "GL_UNSIGNED_SHORT", "GL_SHORT",
+                "GL_UNSIGNED_INT", "GL_INT"
+        ],
+        IndexTypeMenu: [
+                "GL_UNSIGNED_BYTE",
+                "GL_UNSIGNED_SHORT",
+                "GL_UNSIGNED_INT"
+        ],
         fboSlotMenu: ["COLOR_ATTACHMENT0", "COLOR_ATTACHMENT1", "COLOR_ATTACHMENT2", "COLOR_ATTACHMENT3", "COLOR_ATTACHMENT4", "COLOR_ATTACHMENT5", "DEPTH_STENCIL_ATTACHMENT", "DEPTH_ATTACHMENT"],
         depthMenu: ["RBO", "TEXTURE", "NONE"],
         filterMode: ["NEAREST", "LINEAR", "NEAREST_MIPMAP_NEAREST", "LINEAR_MIPMAP_NEAREST", "NEAREST_MIPMAP_LINEAR", "LINEAR_MIPMAP_LINEAR"],
         // wrapAxis: ["S", "T"],
         wrapMode: ["REPEAT", "CLAMP_TO_EDGE", "MIRRORED_REPEAT"],
         funcMenu: ["NEVER", "LESS", "EQUAL", "LEQUAL", "GREATER", "NOTEQUAL", "GEQUAL", "ALWAYS"],
-        opMenu: { acceptReporters: true, items: [{ text: "KEEP", value: "KEEP" }, { text: "ZERO", value: "ZERO" }, { text: "REPLACE", value: "REPLACE" }, { text: "INCR", value: "INCR" }, { text: "DECR", value: "DECR" }, { text: "INVERT", value: "INVERT" }, { text: "INCR_WRAP", value: "INCR_WRAP" }, { text: "DECR_WRAP", value: "DECR_WRAP" }] },
-        faceMenu: { acceptReporters: true, items: [{ text: "FRONT", value: "FRONT" }, { text: "BACK", value: "BACK" }, { text: "FRONT_AND_BACK", value: "FRONT_AND_BACK" }] },
+        opMenu: ["KEEP", "ZERO", "REPLACE", "INCR", "DECR", "INVERT", "INCR_WRAP", "DECR_WRAP"],
         blendMenu: ["ZERO", "ONE", "SRC_COLOR", "ONE_MINUS_SRC_COLOR", "DST_COLOR", "ONE_MINUS_DST_COLOR", "SRC_ALPHA", "ONE_MINUS_SRC_ALPHA", "DST_ALPHA", "ONE_MINUS_DST_ALPHA", "CONSTANT_COLOR", "ONE_MINUS_CONSTANT_COLOR"],
         attrMenu: [
                 { text: 'position', value: 'position' },
@@ -38,23 +53,10 @@ export const EngineMenus = {
                 { text: 'tangent', value: 'tangent' },
                 { text: 'color', value: 'color' }
         ],
-        TRSTypeMenu: { acceptReporters: true, items: [ { text: 'position', value: 'Pos' }, { text: 'rotation', value: 'Rot' }, { text: 'scale', value: 'Scale' } ] },
-        playModeMenu: {
-                acceptReporters: true,
-                items: ['loop', 'play once']
-        },
-        animInfoMenu: {
-                acceptReporters: true,
-                items: ['current animation name', 'current time', 'duration', 'is playing', 'animation names']
-        },
-        clipPropMenu: {
-                acceptReporters: true,
-                items: [
-                        { text: "start time", value: "startTime" },
-                        { text: "duration", value: "duration" },
-                        { text: "mix weight", value: "weight" }
-                ]
-        },
+        TRSTypeMenu: ["Pos", "Rot", "Scale"],
+        playModeMenu: ['loop', 'play once'],
+        animInfoMenu: ['current animation name', 'current time', 'duration', 'is playing', 'animation names'],
+        clipPropMenu: ["startTime", "duration", "weight"],
         clipMode: ["normal", "additive"],
         targetTypeMenu: [
                 { text: 'Skeleton', value: 'skeleton' },
@@ -63,33 +65,33 @@ export const EngineMenus = {
         lightmapParamMenu: ["hasLightmap", "lightmapIndex"],
 
         Inspector_GlobalType: [
-                { text: "shader", value: "shader" },
-                { text: "vao", value: "vao" },
-                { text: "fbo", value: "fbo" },
-                { text: "texture", value: "texture" },
-                { text: "stencil", value: "stencil" },
-                { text: "scene", value: "scene" },
-                { text: "node", value: "node" },
-                { text: "container", value: "container" },
-                { text: "timeline", value: "timeline" }
+                { text: "Shader", value: "shader" },
+                { text: "Vao", value: "vao" },
+                { text: "Fbo", value: "fbo" },
+                { text: "Texture", value: "texture" },
+                { text: "Stencil", value: "stencil" },
+                { text: "Scene", value: "scene" },
+                { text: "Node", value: "node" },
+                { text: "Container", value: "container" },
+                { text: "Timeline", value: "timeline" }
         ],
         Inspector_SceneType: [
-                { text: "container", value: "container" },
-                { text: "skeleton", value: "skeleton" },
-                { text: "animation", value: "animation" },
-                { text: "mesh", value: "mesh" }
+                { text: "Container", value: "container" },
+                { text: "Skeleton", value: "skeleton" },
+                { text: "Animation", value: "animation" },
+                { text: "Mesh", value: "mesh" }
         ],
         Inspector_ContainerType: [
-                { text: "mesh", value: "mesh" },
-                { text: "skeleton", value: "skeleton" },
-                { text: "animation", value: "animation" }
+                { text: "Mesh", value: "mesh" },
+                { text: "Skeleton", value: "skeleton" },
+                { text: "Animation", value: "animation" }
         ],
         Inspector_ContainerArrayType: [
-                { text: "mesh", value: "mesh" },
-                { text: "skeleton", value: "skeleton" }
+                { text: "Mesh", value: "mesh" },
+                { text: "Skeleton", value: "skeleton" }
         ],
         Inspector_MeshType: [
-                { text: "material", value: "material" }
+                { text: "Material", value: "material" }
         ],
 };
 
@@ -102,43 +104,44 @@ export const EngineBlocks = [
 
         { blockType: "label", text: "Shader" },
         { opcode: "Shader_Create", blockType: "reporter", text: "new Shader [NAME] [VS] [FS]", arguments: { NAME: { type: "string" }, VS: { type: "string" }, FS: { type: "string" } } },
-        { opcode: "Shader_Use", blockType: "command", text: "Shader [Index] .use", arguments: { Index: { type: "number" } } },
-        { opcode: "Shader_SetVec2", blockType: "command", text: "Shader [Index] .setVec2 [NAME] [X] [Y]", arguments: { Index: { type: "number" }, NAME: { type: "string" }, X: { type: "number" }, Y: { type: "number" } } },
-        { opcode: "Shader_SetVec3", blockType: "command", text: "Shader [Index] .setVec3 [NAME] [X] [Y] [Z]", arguments: { Index: { type: "number" }, NAME: { type: "string" }, X: { type: "number" }, Y: { type: "number" }, Z: { type: "number" } } },
-        { opcode: "Shader_SetVec4", blockType: "command", text: "Shader [Index] .setVec4 [NAME] [X] [Y] [Z] [W]", arguments: { Index: { type: "number" }, NAME: { type: "string" }, X: { type: "number", defaultValue: 0 }, Y: { type: "number", defaultValue: 0 }, Z: { type: "number", defaultValue: 0 }, W: { type: "number", defaultValue: 0 } } },
-        { opcode: "Shader_SetMat4", blockType: "command", text: "Shader [Index] .setMat4 [NAME] [VAL]", arguments: { Index: { type: "number" }, NAME: { type: "string" }, VAL: { type: "string" } } },
-        { opcode: "Shader_SetFloat", blockType: "command", text: "Shader [Index] .setFloat [NAME] [V]", arguments: { Index: { type: "number" }, NAME: { type: "string" }, V: { type: "number" } } },
-        { opcode: "Shader_SetInt", blockType: "command", text: "Shader [Index] .setInt [NAME] [V]", arguments: { Index: { type: "number" }, NAME: { type: "string" }, V: { type: "number" } } },
-        { opcode: "Shader_SetBool", blockType: "command", text: "Shader [Index] .setBool [NAME] [V]", arguments: { Index: { type: "number" }, NAME: { type: "string" }, V: { type: "number", defaultValue: 0 } } },
+        { opcode: "Shader_Use", blockType: "command", text: "Shader [INDEX] .use", arguments: { INDEX: { type: "number" } } },
+        { opcode: "Shader_SetVec2", blockType: "command", text: "Shader [INDEX] .setVec2 [NAME] [X] [Y]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, X: { type: "number" }, Y: { type: "number" } } },
+        { opcode: "Shader_SetVec3", blockType: "command", text: "Shader [INDEX] .setVec3 [NAME] [X] [Y] [Z]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, X: { type: "number" }, Y: { type: "number" }, Z: { type: "number" } } },
+        { opcode: "Shader_SetVec4", blockType: "command", text: "Shader [INDEX] .setVec4 [NAME] [X] [Y] [Z] [W]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, X: { type: "number", defaultValue: 0 }, Y: { type: "number", defaultValue: 0 }, Z: { type: "number", defaultValue: 0 }, W: { type: "number", defaultValue: 0 } } },
+        { opcode: "Shader_SetMat4", blockType: "command", text: "Shader [INDEX] .setMat4 [NAME] [VAL]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, VAL: { type: "string" } } },
+        { opcode: "Shader_SetFloat", blockType: "command", text: "Shader [INDEX] .setFloat [NAME] [V]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, V: { type: "number" } } },
+        { opcode: "Shader_SetInt", blockType: "command", text: "Shader [INDEX] .setInt [NAME] [V]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, V: { type: "number" } } },
+        { opcode: "Shader_SetBool", blockType: "command", text: "Shader [INDEX] .setBool [NAME] [V]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, V: { type: "number", defaultValue: 0 } } },
 
         { blockType: "label", text: "Framebuffer" },
         { opcode: "FBO_Create", blockType: "reporter", text: "new FBO [NAME]", arguments: { NAME: { type: "string" } } },
-        { opcode: "FBO_Bind", blockType: "command", text: "FBO [Index] .bind", arguments: { Index: { type: "number", defaultValue: -1 } } },
-        { opcode: "FBO_AttachTexture", blockType: "command", text: "FBO [Index] .attachTexture [TEX] [SLOT]", arguments: { Index: { type: "number" }, TEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
-        { opcode: "FBO_AttachCubeTexture", blockType: "command", text: "FBO [Index] .attachCubemap [TEX] Face [FACE_INDEX] [SLOT]", arguments: { Index: { type: "number" }, TEX: { type: "number" }, FACE_INDEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
-        { opcode: "FBO_Detach", blockType: "command", text: "FBO [Index] .detach [SLOT]", arguments: { Index: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
+        { opcode: "FBO_Bind", blockType: "command", text: "FBO [INDEX] .bind", arguments: { INDEX: { type: "number", defaultValue: -1 } } },
+        { opcode: "FBO_AttachTexture", blockType: "command", text: "FBO [INDEX] .attachTexture [TEX] [SLOT]", arguments: { INDEX: { type: "number" }, TEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
+        { opcode: "FBO_AttachCubeTexture", blockType: "command", text: "FBO [INDEX] .attachCubemap [TEX] Face [FACE_INDEX] [SLOT]", arguments: { INDEX: { type: "number" }, TEX: { type: "number" }, FACE_INDEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
+        { opcode: "FBO_Detach", blockType: "command", text: "FBO [INDEX] .detach [SLOT]", arguments: { INDEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
         { opcode: "Stencil_Create", blockType: "reporter", text: "new StencilBuffer [NAME] [W] [H]", arguments: { NAME: { type: "string" }, W: { type: "number" }, H: { type: "number" } } },
-        { opcode: "FBO_AttachStencil", blockType: "command", text: "FBO [Index] .attachStencil [STENCIL_INDEX]", arguments: { Index: { type: "number" }, STENCIL_INDEX: { type: "number" } } },
-        { opcode: "FBO_DetachStencil", blockType: "command", text: "FBO [Index] .detachStencil", arguments: { Index: { type: "number" } } },
+        { opcode: "FBO_AttachStencil", blockType: "command", text: "FBO [INDEX] .attachStencil [STENCIL_INDEX]", arguments: { INDEX: { type: "number" }, STENCIL_INDEX: { type: "number" } } },
+        { opcode: "FBO_DetachStencil", blockType: "command", text: "FBO [INDEX] .detachStencil", arguments: { INDEX: { type: "number" } } },
 
         { blockType: "label", text: "Vertex Array Object" },
         { opcode: "VAO_CreateEmpty", blockType: "reporter", text: "new VAO [NAME]", arguments: { NAME: { type: "string" } } },
         { opcode: "VAO_CreateScreenQuad", blockType: "reporter", text: "new VAO [NAME] .setupQuad", arguments: { NAME: { type: "string", defaultValue: "screenQuad" } } },
         { opcode: "VAO_CreateCube", blockType: "reporter", text: "new VAO [NAME] .setupCube", arguments: { NAME: { type: "string", defaultValue: "cube" } } },
         { opcode: "VAO_CreateSphere", blockType: "reporter", text: "new VAO [NAME] .setupSphere [LAT] [LON]", arguments: { NAME: { type: "string", defaultValue: "Sphere" }, LAT: { type: "number", defaultValue: 16 }, LON: { type: "number", defaultValue: 16 } } },
-        { opcode: "VAO_AddBuffer", blockType: "command", text: "VAO [Index] .addBuffer data [LIST] size [SIZE] loctaion [LOC]", arguments: { Index: { type: "number" }, LOC: { type: "number", defaultValue: 0 }, SIZE: { type: "number", defaultValue: 3 }, LIST: { type: "string", menu: "listMenu" } } },
-        { opcode: "VAO_Draw", blockType: "command", text: "VAO [Index] .draw count [COUNT] mode [MODE]", arguments: { Index: { type: "number" }, COUNT: { type: "number", defaultValue: -1 }, MODE: { type: "string", menu: "drawMode" } } },
-        { opcode: "VAO_Destroy", blockType: "command", text: "VAO [Index] .destroy", arguments: { Index: { type: "number" } } },
+        { opcode: "VAO_AddBuffer", blockType: "command", text: "VAO [INDEX] .addBuffer data [LIST] loc [LOC] size [SIZE] type [TYPE]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, LOC: { type: "number", defaultValue: 0 }, SIZE: { type: "number", defaultValue: 3 }, TYPE: { type: "string", defaultValue: "GL_FLOAT", menu: "GLTypeMenu" } } },
+        { opcode: "VAO_SetIndices", blockType: "command", text: "VAO [INDEX] .setIndices data [LIST] type [TYPE]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, TYPE: { type: "string", defaultValue: "GL_UNSIGNED_SHORT", menu: "IndexTypeMenu" } } },
+        { opcode: "VAO_Draw", blockType: "command", text: "VAO [INDEX] .draw count [COUNT] mode [MODE]", arguments: { INDEX: { type: "number" }, COUNT: { type: "number", defaultValue: -1 }, MODE: { type: "string", menu: "drawMode" } } },
+        { opcode: "VAO_Destroy", blockType: "command", text: "VAO [INDEX] .destroy", arguments: { INDEX: { type: "number" } } },
 
         { blockType: "label", text: "Texture" },
         { opcode: "Texture_CreateEmpty", blockType: "reporter", text: "new Texture2D [NAME] [W] [H] [FORMAT]", arguments: { NAME: { type: "string", defaultValue: "texture2D" }, W: { type: "number", defaultValue: 256 }, H: { type: "number", defaultValue: 256 }, FORMAT: { type: "string", menu: "texTypeMenu", defaultValue: "RGBA8" } } },
         { opcode: "Texture_CreateEmptyCubemap", blockType: "reporter", text: "new TextureCube [NAME] [SIZE] [FORMAT]", arguments: { NAME: { type: "string", defaultValue: "cubemap" }, SIZE: { type: "number", defaultValue: 256 }, FORMAT: { type: "string", menu: "texTypeMenu", defaultValue: "RGBA8" } } },
-        { opcode: "Texture_UpdateFromList", blockType: "command", text: "Texture [Index] .updateFromList [LIST] format [TYPE]", arguments: { Index: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, TYPE: { type: "string", menu: "texTypeMenu", defaultValue: "RGBA8" } } },
-        { opcode: "Texture_Bind", blockType: "command", text: "Texture [Index] .bind [UNIT]", arguments: { Index: { type: "number" }, UNIT: { type: "number" } } },
-        { opcode: "Texture_BindCube", blockType: "command", text: "TextureCube [Index] .bind [UNIT]", arguments: { Index: { type: "number" }, UNIT: { type: "number" } } },
-        { opcode: "Texture_SetFilter", blockType: "command", text: "Texture [Index] .setFilter [MIN_MODE] [MAG_MODE]", arguments: { Index: { type: "number" }, MIN_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" }, MAG_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" } } },
-        { opcode: "Texture_SetWrap", blockType: "command", text: "Texture [Index] .setWrap [MODE]", arguments: { Index: { type: "number" }, MODE: { type: "string", menu: "wrapMode", defaultValue: "REPEAT" } } },
-        { opcode: "Texture_GenerateMipmap", blockType: "command", text: "Texture [Index] .generateMipmap", arguments: { Index: { type: "number" } } },
+        { opcode: "Texture_UpdateFromList", blockType: "command", text: "Texture [INDEX] .updateFromList data [LIST] format [TYPE]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, TYPE: { type: "string", menu: "texUploadTypeMenu", defaultValue: "RGBA8" } } },
+        { opcode: "Texture_Bind", blockType: "command", text: "Texture [INDEX] .bind [UNIT]", arguments: { INDEX: { type: "number" }, UNIT: { type: "number" } } },
+        { opcode: "Texture_BindCube", blockType: "command", text: "TextureCube [INDEX] .bind [UNIT]", arguments: { INDEX: { type: "number" }, UNIT: { type: "number" } } },
+        { opcode: "Texture_SetFilter", blockType: "command", text: "Texture [INDEX] .setFilter [MIN_MODE] [MAG_MODE]", arguments: { INDEX: { type: "number" }, MIN_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" }, MAG_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" } } },
+        { opcode: "Texture_SetWrap", blockType: "command", text: "Texture [INDEX] .setWrap [MODE]", arguments: { INDEX: { type: "number" }, MODE: { type: "string", menu: "wrapMode", defaultValue: "REPEAT" } } },
+        { opcode: "Texture_GenerateMipmap", blockType: "command", text: "Texture [INDEX] .generateMipmap", arguments: { INDEX: { type: "number" } } },
 
         { blockType: "label", text: "GL States" },
         { opcode: "gl_Clear", blockType: "command", text: "gl.clear [BIT]", arguments: { BIT: { type: "string", menu: "clearMenu" } } },

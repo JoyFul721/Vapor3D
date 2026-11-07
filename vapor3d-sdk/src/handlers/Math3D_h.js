@@ -13,15 +13,27 @@ export class Math3DHandlers {
         const a = Utils.parseInput(V, util) || [0, 0, 0];
         const b = Utils.parseInput(OTHER, util) || [0, 0, 0];
 
-        if (OP === "+") return JSON.stringify(Math3D.v3_add(a, b));
-        if (OP === "-") return JSON.stringify(Math3D.v3_sub(a, b));
-        if (OP === "mul") return JSON.stringify(Math3D.v3_mul(a, b));
+        if (OP === "+") return JSON.stringify(Math3D.vec3_add(a, b));
+        if (OP === "-") return JSON.stringify(Math3D.vec3_sub(a, b));
+        if (OP === "mul") return JSON.stringify(Math3D.vec3_mul(a, b));
+    }
+
+    v3_Dot({ V, OTHER }, util) {
+        const a = Utils.parseInput(V, util) || [0, 0, 0];
+        const b = Utils.parseInput(OTHER, util) || [0, 0, 0];
+        return Math3D.vec3_dot(a, b);
+    }
+
+    v3_Cross({ V, OTHER }, util) {
+        const a = Utils.parseInput(V, util) || [0, 0, 0];
+        const b = Utils.parseInput(OTHER, util) || [0, 0, 0];
+        return JSON.stringify(Math3D.vec3_cross(a, b));
     }
 
     v3_ApplyMatrix({ V, M }, util) {
         const v = Utils.parseInput(V, util) || [0, 0, 0];
         const mat = Utils.parseInput(M, util) || Math3D.mat4_identity();
-        return JSON.stringify(Math3D.v3_transform(v, mat));
+        return JSON.stringify(Math3D.vec3_transform(v, mat));
     }
 
     v3_Get({ V, COMP }, util) {
@@ -29,6 +41,7 @@ export class Math3DHandlers {
         const map = { X: 0, Y: 1, Z: 2 };
         return v[map[COMP]] ?? 0;
     }
+
 
     m4_Identity() {
         return JSON.stringify(Math3D.mat4_identity());

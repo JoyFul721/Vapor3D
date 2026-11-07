@@ -29,14 +29,14 @@ export class VAO {
         this.unbind();
     }
 
-    setIndices(indicesArray, isUint32 = false) {
+    setIndices(indicesArray, glType = this.gl.UNSIGNED_SHORT) {
         this.bind();
         this.ebo = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.ebo);
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesArray, this.gl.STATIC_DRAW);
         this.hasElements = true;
         this.defaultCount = indicesArray.length;
-        this.elementType = isUint32 ? this.gl.UNSIGNED_INT : this.gl.UNSIGNED_SHORT;
+        this.elementType = glType;
         this.unbind();
     }
 
