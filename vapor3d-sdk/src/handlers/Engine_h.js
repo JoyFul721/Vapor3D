@@ -339,8 +339,7 @@ export class EngineHandlers {
         // 整数类型截断
         const values = formatInfo.arrayType === Uint8Array ? numbers.map(v => Math.trunc(v)) : numbers;
         const dataArray = new formatInfo.arrayType(values);
-
-        texture.updateFromList(dataArray, TYPE);
+        texture.updateFromList(dataArray, formatInfo);
     }
     Texture_Bind({ INDEX, UNIT }) {
         const tex = this.registry.get('textures', INDEX);
