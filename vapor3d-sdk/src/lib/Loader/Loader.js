@@ -207,7 +207,7 @@ export class Loader {
                                 const arr = is32
                                     ? new Uint32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice()
                                     : new Uint16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2).slice();
-                                v.setIndices(arr, is32);
+                                v.setIndices(arr, is32 ? this.gl.UNSIGNED_INT : this.gl.UNSIGNED_SHORT);
                             } else {
                                 v.defaultCount = v.vbos.length > 0 ? (await asset.accessorData(posIdx)).byteLength / 12 : 0;
                             }
@@ -370,6 +370,7 @@ export class Loader {
 
             // 7 - 组装 AssetContainer
             const modelRoot = new TransformNode(modelID);
+            reg('nodes', modelRoot); // 以前忘记注册到 Registry 了
 
             // 组装层级树
             const defaultScene = asset.gltf.scenes[asset.gltf.scene || 0];

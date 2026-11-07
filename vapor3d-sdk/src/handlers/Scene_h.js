@@ -179,8 +179,8 @@ export class SceneHandlers {
 
     Scene_GetContainerRootIndex({ INDEX }) {
         const container = this._get("containers", INDEX);
-        if (!container) return -2;
-        return container.rootNode?.worldMatrixIndex ?? -1;
+        if (!container) return -3;
+        return container.rootNode?.registryIndex ?? -2;
     }
 
     Scene_AddContainer({ INDEX, CONTAINER_IDX }) {
