@@ -1,4 +1,4 @@
-import { Shader, VAO, Texture2D, TextureCube, Framebuffer, Utils } from '../lib/index.js';
+import { Core, Shader, VAO, Texture2D, TextureCube, Framebuffer, Utils } from '../lib/index.js';
 
 export class EngineHandlers {
     constructor(Scratch, registry) {
@@ -60,17 +60,31 @@ export class EngineHandlers {
             || Object.values(stage?.variables || {}).find(v => v.type === 'list' && v.name === name);
         return list?.value ?? null;
     }
-
-
+    
     gl_Init() {
         if (this.core) return;
-        const { Core } = require('../lib/Engine/Core.js');
+        const mainCanvas = this.vm.renderer && this.vm.renderer.canvas;
+        if (!mainCanvas || !mainCanvas.parentElement) return;
+
         this.core = new Core();
-        const mainCanvas = this.vm.renderer.canvas;
-        if (mainCanvas && mainCanvas.parentElement) {
-            mainCanvas.after(this.core.canvas);
-            this.core.resize(mainCanvas.width, mainCanvas.height);
+        mainCanvas.after(this.core.canvas);
+        this.core.resize(mainCanvas.width, mainCanvas.height);
+    }
+    
+    ensureCore() {
+        const mainCanvas = this.vm.renderer && this.vm.renderer.canvas;
+        if (!mainCanvas || !mainCanvas.parentElement) return;
+        
+        // Core 存在且 Vapor3D canvas 还在 DOM 里，不操作
+        if (this.core && this.core.canvas.isConnected) return;
+
+        if (this.core) {）
+            this.gl_ResetResources();
+            // 销毁旧的 WebGL 上下文并移除旧 canvas
+            this.core.destroy();
+            this.core = null;
         }
+        this.gl_Init();
     }
 
     gl_ResetResources() {
@@ -83,6 +97,7 @@ export class EngineHandlers {
     }
 
     gl_Present() {
+        this.ensureCore();
         if (!this.core) return;
         this.core.resize(this.vm.renderer.canvas.width, this.vm.renderer.canvas.height);
     }
