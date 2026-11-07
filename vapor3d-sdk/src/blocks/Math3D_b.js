@@ -20,13 +20,31 @@ export const Math3DBlocks = [
             OTHER: { type: "string", defaultValue: "[0,0,0]" }
         }
     },
+    { 
+        opcode: "v3_Dot", 
+        blockType: "reporter", 
+        text: "v3 [V] dot [OTHER]", 
+        arguments: { 
+            V: { type: "string", defaultValue: "[0,0,0]" }, 
+            OTHER: { type: "string", defaultValue: "[0,0,0]" } 
+        } 
+    },
+    { 
+        opcode: "v3_Cross", 
+        blockType: "reporter", 
+        text: "v3 [V] cross [OTHER]", 
+        arguments: { 
+            V: { type: "string", defaultValue: "[0,0,0]" }, 
+            OTHER: { type: "string", defaultValue: "[0,0,0]" } 
+        } 
+    },
     {
         opcode: "v3_ApplyMatrix",
         blockType: "reporter",
         text: "vec3 [V] .applyMat4 [M]",
         arguments: {
             V: { type: "string", defaultValue: "[0,0,0]" },
-            M: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" }
+            M: { type: "string", defaultValue: "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]" }
         }
     },
     {
@@ -41,20 +59,20 @@ export const Math3DBlocks = [
     
     
     { blockType: "label", text: "Matrix" },
-    { opcode: "m4_Identity", blockType: "reporter", text: "glm::mat4" },
-    { opcode: "m4_Perspective", blockType: "reporter", text: "glm::perspective [F] [A] [N] [F2]", arguments: { F: { type: "number", defaultValue: 45 }, A: { type: "number", defaultValue: 1.33 }, N: { type: "number", defaultValue: 0.1 }, F2: { type: "number", defaultValue: 100 } } },
-    { opcode: "m4_LookAt", blockType: "reporter", text: "glm::lookAt Eye[EX] [EY] [EZ] Target [TX] [TY] [TZ] Up[UX],[UY],[UZ]", arguments: { EX: { type: "number", defaultValue: 0 }, EY: { type: "number", defaultValue: 0 }, EZ: { type: "number", defaultValue: 5 }, TX: { type: "number", defaultValue: 0 }, TY: { type: "number", defaultValue: 0 }, TZ: { type: "number", defaultValue: 0 }, UX: { type: "number", defaultValue: 0 }, UY: { type: "number", defaultValue: 1 }, UZ: { type: "number", defaultValue: 0 } } },
-    { opcode: "m4_Translate", blockType: "reporter", text: "glm::translate [M] [X] [Y] [Z]", arguments: { M: { type: "string" }, X: { type: "number" }, Y: { type: "number" }, Z: { type: "number" } } },
-    { opcode: "m4_Rotate", blockType: "reporter", text: "glm::rotate [M] [AXIS] [DEG]", arguments: { M: { type: "string" }, AXIS: { type: "string", menu: "axisMenu" }, DEG: { type: "number" } } },
-    { opcode: "m4_Scale", blockType: "reporter", text: "glm::scale [M] [X] [Y] [Z]", arguments: { M: { type: "string" }, X: { type: "number", defaultValue: 1 }, Y: { type: "number", defaultValue: 1 }, Z: { type: "number", defaultValue: 1 } } },
-    { opcode: "m4_Multiply", blockType: "reporter", text: "glm:: [A] * [B]", arguments: { A: { type: "string" }, B: { type: "string" } } },
-    { opcode: "m4_Inverse", blockType: "reporter", text: "glm::inverse [M]", arguments: { M: { type: "string" } } },
-    
+    { opcode: "m4_Identity", blockType: "reporter", text: "mat4 identity" },
+    { opcode: "m4_Perspective", blockType: "reporter", text: "mat4 perspective [F] [A] [N] [F2]", arguments: { F: { type: "number", defaultValue: 45 }, A: { type: "number", defaultValue: 1.33 }, N: { type: "number", defaultValue: 0.1 }, F2: { type: "number", defaultValue: 100 } } },
+    { opcode: "m4_LookAt", blockType: "reporter", text: "mat4 lookAt eye[EX] [EY] [EZ] target [TX] [TY] [TZ] up [UX] [UY] [UZ]", arguments: { EX: { type: "number", defaultValue: 0 }, EY: { type: "number", defaultValue: 0 }, EZ: { type: "number", defaultValue: 5 }, TX: { type: "number", defaultValue: 0 }, TY: { type: "number", defaultValue: 0 }, TZ: { type: "number", defaultValue: 0 }, UX: { type: "number", defaultValue: 0 }, UY: { type: "number", defaultValue: 1 }, UZ: { type: "number", defaultValue: 0 } } },
+    { opcode: "m4_Translate", blockType: "reporter", text: "mat4 [M] .translate [X] [Y] [Z]", arguments: { M: { type: "string" }, X: { type: "number", defaultValue: 0 }, Y: { type: "number", defaultValue: 0 }, Z: { type: "number", defaultValue: 0 } } },
+    { opcode: "m4_Rotate", blockType: "reporter", text: "mat4 [M] .rotate [AXIS] [DEG]", arguments: { M: { type: "string" }, AXIS: { type: "string", menu: "axisMenu" }, DEG: { type: "number", defaultValue: 0 } } },
+    { opcode: "m4_Scale", blockType: "reporter", text: "mat4 [M] .scale [X] [Y] [Z]", arguments: { M: { type: "string" }, X: { type: "number", defaultValue: 1 }, Y: { type: "number", defaultValue: 1 }, Z: { type: "number", defaultValue: 1 } } },
+    { opcode: "m4_Multiply", blockType: "reporter", text: "mat4 [A] * [B]", arguments: { A: { type: "string" }, B: { type: "string" } } },
+    { opcode: "m4_Inverse", blockType: "reporter", text: "mat4 [M] .inverse", arguments: { M: { type: "string" } } },
+
     { blockType: "label", text: "TRS" },
     {
         opcode: "TRS_Create",
         blockType: "reporter",
-        text: "TRS Pos[PX][PY][PZ] Rot[RX][RY][RZ] Scale[SX][SY][SZ]",
+        text: "new TRS pos [PX][PY][PZ] rot [RX][RY][RZ] scale [SX][SY][SZ]",
         arguments: {
             PX: { type: "number", defaultValue: 0 },
             PY: { type: "number", defaultValue: 0 },
@@ -70,7 +88,7 @@ export const Math3DBlocks = [
     {
         opcode: "TRS_Decompose",
         blockType: "reporter",
-        text: "decompose [TRS] [TYPE] [AXIS]",
+        text: "decompose TRS [TRS] [TYPE] [AXIS]",
         arguments: {
             TRS: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
             TYPE: { type: "string", menu: "TRSTypeMenu" }, // Pos, Rot, Scale

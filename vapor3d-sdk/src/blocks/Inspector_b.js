@@ -35,15 +35,15 @@ export const InspectorBlocks = [
         arguments: {
             CONTAINER_INDEX: { type: "string", defaultValue: "0" },
             TYPE: { type: "string", menu: "Inspector_ContainerArrayType" },
-            RESOURCE_INDEX: { type: "string", defaultValue: "0" }
+            RESOURCE_INDEX: { type: "number", defaultValue: "0" }
         }
     },
     {
         opcode: "Inspector_MeshFind",
         blockType: "reporter",
-        text: "MeshNode [CONTAINER_INDEX] .find [TYPE] [NAME]",
+        text: "MeshNode [MESHNODE_INDEX] .find [TYPE] [NAME]",
         arguments: {
-            CONTAINER_INDEX: { type: "number", defaultValue: 0 },
+            MESHNODE_INDEX: { type: "number", defaultValue: 0 },
             TYPE: { type: "string", menu: "Inspector_MeshType" },
             NAME: { type: "string", defaultValue: "" }
         }

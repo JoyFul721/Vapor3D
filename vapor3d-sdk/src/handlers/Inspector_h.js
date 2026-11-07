@@ -4,6 +4,17 @@ export class InspectorHandlers {
         this.sceneHandler = sceneHandlers;
         this.timelineHandler = timelineHandler;
         this.registry = registry ?? engineHandlers.registry;
+
+        this._typeMap = {
+            shader: this.engine.shadersMap,
+            vao: this.engine.vaosMap,
+            fbo: this.engine.fbosMap,
+            texture: this.engine.texturesMap,
+            stencil: this.engine.stencilBuffersMap,
+            scene: this.sceneHandler.scenesMap,
+            container: this.sceneHandler.containersMap,
+            timeline: this.timelineHandler.timelinesMap
+        };
     }
 
     _get(type, index) {
@@ -29,27 +40,15 @@ export class InspectorHandlers {
     }
 
     _findGlobal(type, name) {
-        const maps = {
-            shader: this.engine.shadersMap,
-            vao: this.engine.vaosMap,
-            fbo: this.engine.fbosMap,
-            texture: this.engine.texturesMap,
-            stencil: this.engine.stencilBuffersMap,
-            scene: this.sceneHandler.scenesMap,
-            container: this.sceneHandler.containersMap,
-            timeline: this.timelineHandler.timelinesMap
-        };
-
-        return this._find(maps[type], name);
+        return this._find(this._typeMap[type], name);
     }
 
     Inspector_Find({ TYPE, NAME }) {
         return this._findGlobal(TYPE, NAME);
     }
 
-
     Inspector_SceneFind({ SCENE_INDEX, TYPE, NAME }) {
-        const scene = this.registry.scenes[SCENE_INDEX];
+        const scene = this._get("scenes", SCENE_INDEX);
         if (!scene) return -2;
 
         switch (TYPE) {
@@ -67,7 +66,7 @@ export class InspectorHandlers {
     }
 
     Inspector_ContainerFind({ CONTAINER_INDEX, TYPE, NAME }) {
-        const container = this.registry.containers[CONTAINER_INDEX];
+        const container = this._get("containers", CONTAINER_INDEX);
         if (!container) return -1;
 
         switch (TYPE) {
@@ -85,13 +84,20 @@ export class InspectorHandlers {
     Inspector_ContainerGet({ CONTAINER_INDEX, TYPE, RESOURCE_INDEX } = {}) {
         const container = this._get("containers", CONTAINER_INDEX);
         if (!container) return -1;
+
         const i = Number(RESOURCE_INDEX);
         if (!Number.isInteger(i) || i < 0) return -1;
-        const obj = TYPE === "mesh" ? container.meshes?.[i] : TYPE === "skeleton" ? container.skeletons?.[i] : null;
-        return Number.isInteger(obj?.registryIndex) && obj.registryIndex >= 0 ? obj.registryIndex : -1;
+
+        const obj = TYPE === "mesh"
+            ? container.meshes?.[i]
+            : TYPE === "skeleton"
+                ? container.skeletons?.[i]
+                : null;
+
+        return obj?.registryIndex >= 0 ? obj.registryIndex : -1;
     }
 
-    Inspector_ConsolePrint(){
+    Inspector_ConsolePrint() {
         console.log(this);
         // console.log(this.engine.activeShader)
     }
@@ -107,7 +113,7 @@ export class InspectorHandlers {
 
             if (
                 node.name === target &&
-                (!meshOnly || node.isSkinned !== undefined && node.vao !== undefined)
+                (!meshOnly || (node.isSkinned !== undefined && node.vao !== undefined))
             ) {
                 return Number.isInteger(node.registryIndex)
                     ? node.registryIndex
@@ -136,7 +142,8 @@ export class InspectorHandlers {
         return -1;
     }
 
-    Inspector_MeshFind({ CONTAINER_INDEX, TYPE, NAME }) {
+    Inspector_MeshFind({ MESHNODE_INDEX, TYPE, NAME }) {
+        // 以后加 material
         return -1;
     }
 }

@@ -1,4 +1,4 @@
-import { Shader, VAO, Texture2D, TextureCube, Framebuffer, Utils } from '../lib/index.js';
+import { Core, Shader, VAO, Texture2D, TextureCube, Framebuffer, Utils } from '../lib/index.js';
 
 export class EngineHandlers {
     constructor(Scratch, registry) {
@@ -51,25 +51,41 @@ export class EngineHandlers {
             return ["NONE"];
         }
     }
+
     getListData(name) {
         // 还是无法获取私有列表数据
+        const key = String(name);
         const stage = this.vm.runtime.getTargetForStage();
         const target = this.vm.editingTarget;
-        const list = Object.values(target?.variables || {}).find(v => v.type === 'list' && v.name === name)
-            || Object.values(stage?.variables || {}).find(v => v.type === 'list' && v.name === name);
+        const list = Object.values(target?.variables || {}).find(v => v.type === 'list' && (v.name === key || v.id === key))
+            || Object.values(stage?.variables || {}).find(v => v.type === 'list' && (v.name === key || v.id === key));
         return list?.value ?? null;
     }
-
-
+    
     gl_Init() {
         if (this.core) return;
-        const { Core } = require('../lib/Engine/Core.js');
+        const mainCanvas = this.vm.renderer && this.vm.renderer.canvas;
+        if (!mainCanvas || !mainCanvas.parentElement) return;
+
         this.core = new Core();
-        const mainCanvas = this.vm.renderer.canvas;
-        if (mainCanvas && mainCanvas.parentElement) {
-            mainCanvas.after(this.core.canvas);
-            this.core.resize(mainCanvas.width, mainCanvas.height);
+        mainCanvas.after(this.core.canvas);
+        this.core.resize(mainCanvas.width, mainCanvas.height);
+    }
+    
+    ensureCore() {
+        const mainCanvas = this.vm.renderer && this.vm.renderer.canvas;
+        if (!mainCanvas || !mainCanvas.parentElement) return;
+        
+        // Core 存在且 Vapor3D canvas 还在 DOM 里，不操作
+        if (this.core && this.core.canvas.isConnected) return;
+
+        if (this.core) {
+            this.gl_ResetResources();
+            // 销毁旧的 WebGL 上下文并移除旧 canvas
+            this.core.destroy();
+            this.core = null;
         }
+        this.gl_Init();
     }
 
     gl_ResetResources() {
@@ -82,58 +98,91 @@ export class EngineHandlers {
     }
 
     gl_Present() {
+        this.ensureCore();
         if (!this.core) return;
         this.core.resize(this.vm.renderer.canvas.width, this.vm.renderer.canvas.height);
-        // this.vm.runtime.requestRedraw();
-        // return new Promise(r => requestAnimationFrame(r)); // 这个可以蹭到 scratch vm 的锁帧效果
-        // 但是，对于性能不够无法上 60 帧的项目，取消注释后会进入挂起死循环，整个编辑器未响应
     }
 
     // Shader
     Shader_Create({ NAME, VS, FS }) {
+        if (!this.core) return -1;
         const shader = new Shader(this.core.gl, VS, FS);
         if (!shader.program) return -1;
         const index = this.registry.allocate('shaders', shader);
         this.shadersMap.set(NAME, index);
         return index;
     }
-    Shader_Use({ Index }) {
-        const shader = this.registry.get('shaders', Index);
-        if (shader) { shader.use(); this.activeShader = shader; }
+    Shader_Use({ INDEX }) {
+        const shader = this.registry.get('shaders', INDEX);
+        if (!shader) return;
+        shader.use();
+        this.activeShader = shader;
     }
-    Shader_SetMat4({ Index, NAME, VAL }, util) {
-        const shader = this.registry.get('shaders', Index);
+    Shader_SetMat4({ INDEX, NAME, VAL }, util) {
+        const shader = this.registry.get('shaders', INDEX);
         if (!shader) return;
         const mat = Utils.parseInput(VAL, util);
         if (mat) shader.setMat4(NAME, ArrayBuffer.isView(mat) ? mat : new Float32Array(mat));
     }
-    Shader_SetVec4({ Index, NAME, X, Y, Z, W }) { this.registry.get('shaders', Index)?.setVec4(NAME, X, Y, Z, W); }
-    Shader_SetVec3({ Index, NAME, X, Y, Z }) { this.registry.get('shaders', Index)?.setVec3(NAME, X, Y, Z); }
-    Shader_SetVec2({ Index, NAME, X, Y }) { this.registry.get('shaders', Index)?.setVec2(NAME, X, Y); }
-    Shader_SetFloat({ Index, NAME, V }) { this.registry.get('shaders', Index)?.setFloat(NAME, V); }
-    Shader_SetInt({ Index, NAME, V }) { this.registry.get('shaders', Index)?.setInt(NAME, V); }
-    Shader_SetBool({ Index, NAME, V }) { this.registry.get('shaders', Index)?.setInt(NAME, Boolean(Number(V)) ? 1 : 0); }
+    Shader_SetVec4({ INDEX, NAME, X, Y, Z, W }) {
+        const shader = this.registry.get('shaders', INDEX);
+        if (!shader) return;
+        shader.setVec4(NAME, X, Y, Z, W);
+    }
+    Shader_SetVec3({ INDEX, NAME, X, Y, Z }) {
+        const shader = this.registry.get('shaders', INDEX);
+        if (!shader) return;
+        shader.setVec3(NAME, X, Y, Z);
+    }
+    Shader_SetVec2({ INDEX, NAME, X, Y }) {
+        const shader = this.registry.get('shaders', INDEX);
+        if (!shader) return;
+        shader.setVec2(NAME, X, Y);
+    }
+    Shader_SetFloat({ INDEX, NAME, V }) {
+        const shader = this.registry.get('shaders', INDEX);
+        if (!shader) return;
+        shader.setFloat(NAME, V);
+    }
+    Shader_SetInt({ INDEX, NAME, V }) {
+        const shader = this.registry.get('shaders', INDEX);
+        if (!shader) return;
+        shader.setInt(NAME, V);
+    }
+    Shader_SetBool({ INDEX, NAME, V }) {
+        const shader = this.registry.get('shaders', INDEX);
+        if (!shader) return;
+        shader.setInt(NAME, Boolean(Number(V)) ? 1 : 0);
+    }
 
     // Framebuffer
     FBO_Create({ NAME }) {
+        if (!this.core) return -1;
         const fbo = new Framebuffer(this.core.gl);
         const index = this.registry.allocate('fbos', fbo);
         this.fbosMap.set(NAME, index);
         return index;
     }
-    FBO_AttachTexture({ Index, TEX, SLOT }) {
-        const fbo = this.registry.get('fbos', Index);
+    FBO_AttachTexture({ INDEX, TEX, SLOT }) {
+        const fbo = this.registry.get('fbos', INDEX);
         const tex = this.registry.get('textures', TEX);
-        if (fbo && tex) fbo.attachTexture(tex, SLOT);
+        if (!fbo || !tex) return;
+        fbo.attachTexture(tex, SLOT);
     }
-    FBO_AttachCubeTexture({ Index, TEX, FACE_INDEX, SLOT }) {
-        const fbo = this.registry.get('fbos', Index);
+    FBO_AttachCubeTexture({ INDEX, TEX, FACE_INDEX, SLOT }) {
+        const fbo = this.registry.get('fbos', INDEX);
         const tex = this.registry.get('textures', TEX);
-        if (fbo && tex instanceof TextureCube) fbo.attachCubeFace(tex, FACE_INDEX, SLOT);
+        if (!fbo || !(tex instanceof TextureCube)) return;
+        fbo.attachCubeFace(tex, FACE_INDEX, SLOT);
     }
-    FBO_Detach({ Index, SLOT }) { this.registry.get('fbos', Index)?.detach(SLOT); }
+    FBO_Detach({ INDEX, SLOT }) {
+        const fbo = this.registry.get('fbos', INDEX);
+        if (!fbo) return;
+        fbo.detach(SLOT);
+    }
 
     Stencil_Create({ NAME, W, H }) {
+        if (!this.core) return -1;
         const gl = this.core.gl;
         const rb = gl.createRenderbuffer();
         if (!rb) return -1;
@@ -144,63 +193,114 @@ export class EngineHandlers {
         this.stencilBuffersMap.set(NAME, index);
         return index;
     }
-    FBO_AttachStencil({ Index, STENCIL_INDEX }) {
-        const fbo = this.registry.get('fbos', Index);
+    FBO_AttachStencil({ INDEX, STENCIL_INDEX }) {
+        const fbo = this.registry.get('fbos', INDEX);
         const stencil = this.registry.get('stencilBuffers', STENCIL_INDEX);
-        if (fbo && stencil) fbo.attachStencilBuffer(stencil);
+        if (!fbo || !stencil) return;
+        fbo.attachStencilBuffer(stencil);
     }
-    FBO_DetachStencil({ Index }) { this.registry.get('fbos', Index)?.detachStencilBuffer(); }
-    FBO_Bind({ Index }) {
-        const fbo = this.registry.get('fbos', Index);
+    FBO_DetachStencil({ INDEX }) {
+        const fbo = this.registry.get('fbos', INDEX);
+        if (!fbo) return;
+        fbo.detachStencilBuffer();
+    }
+    FBO_Bind({ INDEX }) {
+        if (!this.core) return;
+        const fbo = this.registry.get('fbos', INDEX);
         if (fbo) fbo.bind(this.core.canvas.width, this.core.canvas.height);
         else Framebuffer.bindScreen(this.core.gl, this.core.canvas.width, this.core.canvas.height);
     }
 
     // VAO
     VAO_CreateEmpty({ NAME }) {
+        if (!this.core) return -1;
         const index = this.registry.allocate('vaos', new VAO(this.core.gl));
         this.vaosMap.set(NAME, index);
         return index;
     }
-    VAO_AddBuffer({ Index, LIST, LOC, SIZE }) {
-        const vao = this.registry.get('vaos', Index);
-        if (!vao) return console.warn(`Vapor3D: VAO ${Index} not found`);
+    VAO_AddBuffer({ INDEX, LIST, LOC, SIZE, TYPE = "GL_FLOAT" }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return console.warn(`Vapor3D: VAO ${INDEX} not found`);
 
         const listData = this.getListData(LIST);
         if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
         if (!Number.isInteger(SIZE) || SIZE < 1) return console.error(`Vapor3D: Invalid SIZE=${SIZE}`);
         if (listData.length % SIZE !== 0) return console.error(`Vapor3D: ${listData.length} items cannot be divided evenly by SIZE=${SIZE}`);
-        const dataArray = new Float32Array(listData.map(Number));
-        if (dataArray.some(v => !Number.isFinite(v))) return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
-        vao.addBuffer(dataArray, LOC, SIZE);
+
+        const typeInfo = Utils.getGLTypeConfig(vao.gl, TYPE);
+        if (!typeInfo) return console.error(`Vapor3D: Invalid TYPE="${TYPE}"`);
+
+        const numbers = listData.map(Number);
+        if (numbers.some(v => !Number.isFinite(v))) return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
+
+        // 范围检查
+        if (typeInfo.integer) {
+            const bad = numbers.find(v => v < typeInfo.min || v > typeInfo.max);
+            if (bad !== undefined) return console.error(`Vapor3D: Value ${bad} out of range for ${TYPE} (${typeInfo.min}..${typeInfo.max})`);
+        }
+
+        // 整数类型截断小数
+        const values = typeInfo.integer ? numbers.map(v => Math.trunc(v)) : numbers;
+        const dataArray = new typeInfo.ArrayType(values);
+        vao.addBuffer(dataArray, LOC, SIZE, typeInfo.glType);
+    }
+    VAO_SetIndices({ INDEX, LIST, TYPE = "GL_UNSIGNED_SHORT" }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return console.warn(`Vapor3D: VAO ${INDEX} not found`);
+
+        const listData = this.getListData(LIST);
+        if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
+
+        const typeInfo = Utils.getGLTypeConfig(vao.gl, TYPE);
+        if (!typeInfo) return console.error(`Vapor3D: Invalid TYPE="${TYPE}"`);
+
+        const numbers = listData.map(Number);
+        if (numbers.some(v => !Number.isFinite(v))) return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
+
+        if (typeInfo.integer) {
+            const bad = numbers.find(v => v < typeInfo.min || v > typeInfo.max);
+            if (bad !== undefined) return console.error(`Vapor3D: Value ${bad} out of range for ${TYPE} (${typeInfo.min}..${typeInfo.max})`);
+        }
+
+        const values = numbers.map(v => Math.trunc(v));
+        const dataArray = new typeInfo.ArrayType(values);
+        vao.setIndices(dataArray, typeInfo.glType);
     }
     VAO_CreateScreenQuad({ NAME }) {
+        if (!this.core) return -1;
         const index = this.registry.allocate('vaos', VAO.createScreenQuad(this.core.gl));
         this.vaosMap.set(NAME, index);
         return index;
     }
     VAO_CreateCube({ NAME }) {
+        if (!this.core) return -1;
         const index = this.registry.allocate('vaos', VAO.createCube(this.core.gl));
         this.vaosMap.set(NAME, index);
         return index;
     }
     VAO_CreateSphere({ NAME, LAT, LON }) {
+        if (!this.core) return -1;
         const index = this.registry.allocate('vaos', VAO.createSphere(this.core.gl, LAT, LON));
         this.vaosMap.set(NAME, index);
         return index;
     }
-    VAO_Draw({ Index, COUNT, MODE }) { this.registry.get('vaos', Index)?.draw(MODE, COUNT); }
-    VAO_Destroy({ Index }) {
-        const vao = this.registry.get('vaos', Index);
+    VAO_Draw({ INDEX, COUNT, MODE }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return;
+        vao.draw(MODE, COUNT);
+    }
+    VAO_Destroy({ INDEX }) {
+        const vao = this.registry.get('vaos', INDEX);
         if (!vao) return;
         vao.destroy?.();
-        this.registry.vaos[Number(Index)] = null;
-        for (const [name, value] of this.vaosMap) if (value === Number(Index)) this.vaosMap.delete(name);
+        this.registry.vaos[Number(INDEX)] = null;
+        for (const [name, value] of this.vaosMap) if (value === Number(INDEX)) this.vaosMap.delete(name);
     }
 
     // Texture
     // Scene 中的贴图也可用这类积木
     Texture_CreateEmpty({ NAME, W, H, FORMAT }) {
+        if (!this.core) return -1;
         const conf = Utils.getFormatConfig(this.core.gl, FORMAT);
         const tex = new Texture2D(this.core.gl);
         tex.uploadEmpty(W, H, conf.internal, conf.format, conf.type);
@@ -209,6 +309,7 @@ export class EngineHandlers {
         return index;
     }
     Texture_CreateEmptyCubemap({ NAME, SIZE, FORMAT }) {
+        if (!this.core) return -1;
         const conf = Utils.getFormatConfig(this.core.gl, FORMAT);
         const tex = new TextureCube(this.core.gl);
         tex.uploadEmpty(SIZE, conf.internal, conf.format, conf.type);
@@ -216,36 +317,121 @@ export class EngineHandlers {
         this.texturesMap.set(NAME, index);
         return index;
     }
-    Texture_UpdateFromList({ Index, LIST, TYPE }) {
-        const texture = this.registry.get('textures', Index);
-        if (!texture) return console.warn(`Vapor3D: Texture ${Index} not found`);
-        const list = this.getListData(LIST);
-        if (!list) return console.warn(`Vapor3D: List "${LIST}" not found`);
-        texture.updateFromList(list, TYPE);
+    Texture_UpdateFromList({ INDEX, LIST, TYPE }) {
+        const texture = this.registry.get('textures', INDEX);
+        if (!texture) return console.warn(`Vapor3D: Texture ${INDEX} not found`);
+
+        const listData = this.getListData(LIST);
+        if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
+
+        const formatInfo = Utils.getFormatConfig(texture.gl, TYPE);
+        if (!formatInfo) return console.error(`Vapor3D: Invalid TYPE="${TYPE}"`);
+
+        if (!texture.id || !texture.width || !texture.height)
+            return console.error("Vapor3D: Texture is not initialized");
+        if (texture.internalFormat !== formatInfo.internal)
+            return console.error(`Vapor3D: Texture format mismatch, expected ${TYPE}`);
+
+        const gl = texture.gl;
+        const channels = formatInfo.format === gl.RED ? 1
+            : formatInfo.format === gl.RG ? 2
+            : formatInfo.format === gl.RGB ? 3
+            : 4; // RGBA
+
+        const expectedLength = texture.width * texture.height * channels;
+        if (listData.length !== expectedLength)
+            return console.error(`Vapor3D: Invalid list length, expected ${expectedLength}, got ${listData.length}`);
+
+        const numbers = listData.map(Number);
+        if (numbers.some(v => !Number.isFinite(v)))
+            return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
+
+        // 无符号字节范围检查
+        if (formatInfo.arrayType === Uint8Array) {
+            const bad = numbers.find(v => !Number.isInteger(v) || v < 0 || v > 255);
+            if (bad !== undefined) return console.error(`Vapor3D: Value ${bad} out of range for ${TYPE} (0..255)`);
+        }
+
+        // 整数类型截断
+        const values = formatInfo.arrayType === Uint8Array ? numbers.map(v => Math.trunc(v)) : numbers;
+        const dataArray = new formatInfo.arrayType(values);
+        texture.updateFromList(dataArray, formatInfo);
     }
-    Texture_Bind({ Index, UNIT }) { this.registry.get('textures', Index)?.bind(UNIT); }
-    Texture_BindCube({ Index, UNIT }) { this.registry.get('textures', Index)?.bind(UNIT); }
-    Texture_SetFilter({ Index, MIN_MODE, MAG_MODE }) { this.registry.get('textures', Index)?.setFilter(MIN_MODE, MAG_MODE); }
-    Texture_SetWrap({ Index, MODE }) {
-        const tex = this.registry.get('textures', Index);
-        if (tex) { tex.setWrap('S', MODE); tex.setWrap('T', MODE); }
+    Texture_Bind({ INDEX, UNIT }) {
+        const tex = this.registry.get('textures', INDEX);
+        if (!tex) return;
+        tex.bind(UNIT);
     }
-    Texture_GenerateMipmap({ Index }) { this.registry.get('textures', Index)?.generateMipmap(); }
+    Texture_BindCube({ INDEX, UNIT }) {
+        const tex = this.registry.get('textures', INDEX);
+        if (!tex) return;
+        tex.bind(UNIT);
+    }
+    Texture_SetFilter({ INDEX, MIN_MODE, MAG_MODE }) {
+        const tex = this.registry.get('textures', INDEX);
+        if (!tex) return;
+        tex.setFilter(MIN_MODE, MAG_MODE);
+    }
+    Texture_SetWrap({ INDEX, MODE }) {
+        const tex = this.registry.get('textures', INDEX);
+        if (!tex) return;
+        tex.setWrap('S', MODE);
+        tex.setWrap('T', MODE);
+    }
+    Texture_GenerateMipmap({ INDEX }) {
+        const tex = this.registry.get('textures', INDEX);
+        if (!tex) return;
+        tex.generateMipmap();
+    }
 
     // GL state
-    gl_Clear({ BIT }) { this.core?.clear(BIT); }
-    gl_SetClearColor({ R, G, B, A }) { this.core?.setClearColor(R, G, B, A); }
-    ST_Enable({ CAP }) { this.core?.enable(CAP); }
-    ST_Disable({ CAP }) { this.core?.disable(CAP); }
-    ST_CullFace({ MODE }) { this.core?.cullFace(MODE); }
-    ST_ColorMask({ STATE }) {
-        const b = STATE === 'true';
-        this.core?.colorMask(b, b, b, b);
+    gl_Clear({ BIT }) {
+        if (!this.core) return;
+        this.core.clear(BIT);
     }
-    ST_BlendFuncSeparate({ SRGB, DRGB, SA, DA }) { this.core?.blendFuncSeparate(SRGB, DRGB, SA, DA); }
-    ST_DepthMask({ STATE }) { this.core?.depthMask(STATE === 'true'); }
-    ST_DepthFunc({ FUNC }) { this.core?.depthFunc(FUNC); }
-    ST_StencilMask({ MASK }) { this.core?.stencilMask(parseInt(MASK) || 0xFF); }
-    ST_StencilOp({ FACE, SF, DF, DP }) { this.core?.stencilOp(FACE, SF, DF, DP); }
-    ST_StencilFunc({ FACE, FUNC, REF, MASK }) { this.core?.stencilFunc(FACE, FUNC, parseInt(REF) || 0, parseInt(MASK) || 0xFF); }
+    gl_SetClearColor({ R, G, B, A }) {
+        if (!this.core) return;
+        this.core.setClearColor(R, G, B, A);
+    }
+    ST_Enable({ CAP }) {
+        if (!this.core) return;
+        this.core.enable(CAP);
+    }
+    ST_Disable({ CAP }) {
+        if (!this.core) return;
+        this.core.disable(CAP);
+    }
+    ST_CullFace({ MODE }) {
+        if (!this.core) return;
+        this.core.cullFace(MODE);
+    }
+    ST_ColorMask({ STATE }) {
+        if (!this.core) return;
+        const b = STATE === 'true';
+        this.core.colorMask(b, b, b, b);
+    }
+    ST_BlendFuncSeparate({ SRGB, DRGB, SA, DA }) {
+        if (!this.core) return;
+        this.core.blendFuncSeparate(SRGB, DRGB, SA, DA);
+    }
+    ST_DepthMask({ STATE }) {
+        if (!this.core) return;
+        this.core.depthMask(STATE === 'true');
+    }
+    ST_DepthFunc({ FUNC }) {
+        if (!this.core) return;
+        this.core.depthFunc(FUNC);
+    }
+    ST_StencilMask({ MASK }) {
+        if (!this.core) return;
+        this.core.stencilMask(parseInt(MASK) || 0xFF);
+    }
+    ST_StencilOp({ FACE, SF, DF, DP }) {
+        if (!this.core) return;
+        this.core.stencilOp(FACE, SF, DF, DP);
+    }
+    ST_StencilFunc({ FACE, FUNC, REF, MASK }) {
+        if (!this.core) return;
+        this.core.stencilFunc(FACE, FUNC, parseInt(REF) || 0, parseInt(MASK) || 0xFF);
+    }
 }
