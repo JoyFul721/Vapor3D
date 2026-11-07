@@ -21,6 +21,12 @@ export const EngineMenus = {
                 "R11G11B10F",
                 "DEPTH_COMPONENT24", "DEPTH24_STENCIL8"
         ],
+        texUploadTypeMenu: [
+                "RGB8", "RGBA8",
+                "R16F", "RG16F", "RGB16F", "RGBA16F",
+                "R32F", "RG32F", "RGB32F", "RGBA32F",
+                "R11G11B10F"
+        ],
         GLTypeMenu: [
                 "GL_FLOAT",
                 "GL_UNSIGNED_BYTE", "GL_BYTE",
@@ -130,7 +136,7 @@ export const EngineBlocks = [
         { blockType: "label", text: "Texture" },
         { opcode: "Texture_CreateEmpty", blockType: "reporter", text: "new Texture2D [NAME] [W] [H] [FORMAT]", arguments: { NAME: { type: "string", defaultValue: "texture2D" }, W: { type: "number", defaultValue: 256 }, H: { type: "number", defaultValue: 256 }, FORMAT: { type: "string", menu: "texTypeMenu", defaultValue: "RGBA8" } } },
         { opcode: "Texture_CreateEmptyCubemap", blockType: "reporter", text: "new TextureCube [NAME] [SIZE] [FORMAT]", arguments: { NAME: { type: "string", defaultValue: "cubemap" }, SIZE: { type: "number", defaultValue: 256 }, FORMAT: { type: "string", menu: "texTypeMenu", defaultValue: "RGBA8" } } },
-        { opcode: "Texture_UpdateFromList", blockType: "command", text: "Texture [INDEX] .updateFromList [LIST] format [TYPE]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, TYPE: { type: "string", menu: "texTypeMenu", defaultValue: "RGBA8" } } },
+        { opcode: "Texture_UpdateFromList", blockType: "command", text: "Texture [INDEX] .updateFromList [LIST] format [TYPE]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, TYPE: { type: "string", menu: "texUploadTypeMenu", defaultValue: "RGBA8" } } },
         { opcode: "Texture_Bind", blockType: "command", text: "Texture [INDEX] .bind [UNIT]", arguments: { INDEX: { type: "number" }, UNIT: { type: "number" } } },
         { opcode: "Texture_BindCube", blockType: "command", text: "TextureCube [INDEX] .bind [UNIT]", arguments: { INDEX: { type: "number" }, UNIT: { type: "number" } } },
         { opcode: "Texture_SetFilter", blockType: "command", text: "Texture [INDEX] .setFilter [MIN_MODE] [MAG_MODE]", arguments: { INDEX: { type: "number" }, MIN_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" }, MAG_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" } } },
