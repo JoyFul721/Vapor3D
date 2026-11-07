@@ -78,7 +78,7 @@ export class EngineHandlers {
         // Core 存在且 Vapor3D canvas 还在 DOM 里，不操作
         if (this.core && this.core.canvas.isConnected) return;
 
-        if (this.core) {）
+        if (this.core) {
             this.gl_ResetResources();
             // 销毁旧的 WebGL 上下文并移除旧 canvas
             this.core.destroy();
