@@ -3,13 +3,20 @@
 import { Math3D } from '../index';
 
 export class Mixer {
-    static blendMultiple(activeClips, globalTime) {
+    static blendMultiple(activeClips, globalTime, getSampleTime) {
         const finalPose = new Map();
         const normalClips = activeClips.filter(c => c.mode !== 'additive');
         const additiveClips = activeClips.filter(c => c.mode === 'additive');
 
+        const sampleClip = (clip) => {
+            const t = getSampleTime
+                ? getSampleTime(clip, globalTime)
+                : (globalTime - clip.startTime);
+            return clip.animation.sample(t);
+        };
+
         for (const clip of normalClips) {
-            const pose = clip.animation.sample(globalTime - clip.startTime);
+            const pose = sampleClip(clip);
             for (const [name, trs] of pose) {
                 const bw = clip.boneWeights?.has(name) ? clip.boneWeights.get(name) : 1;
                 const w = clip.weight * bw;
@@ -23,7 +30,12 @@ export class Mixer {
 
                 const p = finalPose.get(name);
                 if (!p) {
-                    finalPose.set(name, { pos: trs.position ? [...trs.position] : [0, 0, 0], quat: trs.quaternion ? [...trs.quaternion] : [0, 0, 0, 1], scale: trs.scale ? [...trs.scale] : [1, 1, 1], weightSum: w });
+                    finalPose.set(name, {
+                        pos: trs.position ? [...trs.position] : [0, 0, 0],
+                        quat: trs.quaternion ? [...trs.quaternion] : [0, 0, 0, 1],
+                        scale: trs.scale ? [...trs.scale] : [1, 1, 1],
+                        weightSum: w
+                    });
                 } else {
                     const a = w / (p.weightSum + w);
                     if (trs.position) p.pos = Math3D.vec3_lerp(p.pos, trs.position, a);
@@ -35,7 +47,7 @@ export class Mixer {
         }
 
         for (const clip of additiveClips) {
-            const pose = clip.animation.sample(globalTime - clip.startTime);
+            const pose = sampleClip(clip);
             for (const [name, trs] of pose) {
                 const bw = clip.boneWeights?.has(name) ? clip.boneWeights.get(name) : 1;
                 const w = clip.weight * bw;
@@ -47,10 +59,16 @@ export class Mixer {
                 if (identity && trs.scale && trs.scale.some(v => Math.abs(v - 1) > 0.001)) identity = false;
                 if (identity) continue;
 
-                const p = finalPose.get(name) ?? { pos: [0, 0, 0], quat: [0, 0, 0, 1], scale: [1, 1, 1], weightSum: 0 };
+                const p = finalPose.get(name)
+                    ?? { pos: [0, 0, 0], quat: [0, 0, 0, 1], scale: [1, 1, 1], weightSum: 0 };
                 if (trs.position) p.pos = Math3D.vec3_add(p.pos, Math3D.vec3_scale(trs.position, w));
-                if (trs.quaternion) p.quat = Math3D.quat_multiply(p.quat, Math3D.quat_slerp([0, 0, 0, 1], trs.quaternion, Math.min(w, 1)));
-                if (trs.scale) p.scale = Math3D.vec3_mul(p.scale, [1 + (trs.scale[0] - 1) * w, 1 + (trs.scale[1] - 1) * w, 1 + (trs.scale[2] - 1) * w]);
+                if (trs.quaternion) p.quat = Math3D.quat_multiply(p.quat,
+                    Math3D.quat_slerp([0, 0, 0, 1], trs.quaternion, Math.min(w, 1)));
+                if (trs.scale) p.scale = Math3D.vec3_mul(p.scale, [
+                    1 + (trs.scale[0] - 1) * w,
+                    1 + (trs.scale[1] - 1) * w,
+                    1 + (trs.scale[2] - 1) * w
+                ]);
                 finalPose.set(name, p);
             }
         }

@@ -54,10 +54,11 @@ export const EngineMenus = {
                 { text: 'color', value: 'color' }
         ],
         TRSTypeMenu: ["Pos", "Rot", "Scale"],
-        playModeMenu: ['loop', 'play once'],
-        animInfoMenu: ['current animation name', 'current time', 'duration', 'is playing', 'animation names'],
-        clipPropMenu: ["startTime", "duration", "weight"],
+        // Timeline
+        playModeMenu: ['hold', 'disappear', 'loop'],
         clipMode: ["normal", "additive"],
+        targetTypeMenu: ['skeleton', 'container'],
+        animInfoMenu: ['current animation name', 'current time', 'duration', 'is playing', 'animation names'],
         targetTypeMenu: [
                 { text: 'Skeleton', value: 'skeleton' },
                 { text: 'Container', value: 'container' }
