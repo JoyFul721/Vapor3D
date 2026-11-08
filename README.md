@@ -21,6 +21,7 @@
 - [X] Scene Graph & Node Tree
 - [X] Skinning Animation via Matrix Stream Texture Upload
 - [X] Multi-animation blend & bone mask
+- [X] Instance Draw
 - [ ] Shadowmap
 - [X] Pre-baked Global Illumination
 - [ ] Bloom
