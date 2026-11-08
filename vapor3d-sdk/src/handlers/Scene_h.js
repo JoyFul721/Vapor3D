@@ -1,6 +1,6 @@
 // /handlers/Scene_h.js
 
-import { Scene } from "../lib/index.js";
+import { Scene, TransformNode, Material } from "../lib/index.js";
 import { Math3D } from "../lib/Tools/Math3D.js";
 
 export class SceneHandlers {
@@ -61,9 +61,9 @@ export class SceneHandlers {
 
     // ====================== Scene Management ======================
 
-    Scene_Create({ NAME }) {
+    Scene_Create({ NAME, MAXNODES }) {
         if (!this.engine.core) return -1;
-        const scene = new Scene(NAME || "Main", 8192, this.registry);
+        const scene = new Scene(NAME || "Main", MAXNODES || 8192, this.registry);
         const index = this.registry.allocate("scenes", scene);
         
         scene.registryIndex = index;
@@ -112,6 +112,46 @@ export class SceneHandlers {
     }
 
     // ====================== Node Transform ======================
+
+    Scene_CreateNode({ NAME, SCENE_IDX, PARENT_NODE_IDX }) {
+        const scene = this._getScene(Number(SCENE_IDX));
+        if (!scene || scene._destroyed) return -1;
+
+        const parentIndex = Number(PARENT_NODE_IDX);
+        const parent = parentIndex === -1
+            ? scene.root
+            : this._get("nodes", parentIndex);
+        if (!parent) return -2;
+
+        if (parent !== scene.root && parent.sceneIndex !== scene.registryIndex) return -1;
+        const node = new TransformNode(NAME || `node_${scene.registryIndex}`);
+
+        if (!scene.attachNode(node, parent)) return -3;
+        return this.registry.allocate("nodes", node);
+    }
+
+    Scene_DestroyNode({ NODE_IDX }) {
+        const idx = Number(NODE_IDX);
+        const node = this._get("nodes", idx);
+        if (!node) return;
+        if (node.parent === null) return;
+
+        const all = [];
+        const stack = [node];
+        while (stack.length) {
+            const n = stack.pop();
+            all.push(n);
+            stack.push(...(n.children ?? []));
+        }
+
+        // 回收矩阵
+        this._getScene(node.sceneIndex)?.detachNode(node);
+
+        // 注册表注销
+        for (const n of all) {
+            if (n.registryIndex >= 0) this.registry.dispose("nodes", n.registryIndex);
+        }
+    }
 
     Scene_NodeSetTRS({ NODE_IDX, TRS }) {
         const node = this._get("nodes", NODE_IDX);
@@ -180,53 +220,28 @@ export class SceneHandlers {
     Scene_GetContainerRootIndex({ INDEX }) {
         const container = this._get("containers", INDEX);
         if (!container) return -3;
-        return container.rootNode?.registryIndex ?? -2;
+
+        const ri = container.rootNode?.registryIndex;
+        // -1 在 SetParent 约定里表示 root，不能当成合法节点索引透出去
+        return (ri == null || ri < 0) ? -2 : ri;
     }
 
     Scene_AddContainer({ INDEX, CONTAINER_IDX }) {
-        const sceneIndex = Number(INDEX);
+        const scene = this._getScene(Number(INDEX));
         const containerIndex = Number(CONTAINER_IDX);
-        const scene = this._getScene(sceneIndex);
         const container = this._get("containers", containerIndex);
 
         if (!scene || !container?.rootNode) return;
 
-        if (scene.containersMap.get(containerIndex) === container) return;
-
-        // A mutable node tree belongs to one Scene at a time.
-        if (container.rootNode.sceneIndex != null &&
-            container.rootNode.sceneIndex !== sceneIndex) {
-            return;
-        }
-
         scene.addContainer(containerIndex);
-
-        this._walkNodes(container.rootNode, node => {
-            node.sceneIndex = sceneIndex;
-        });
     }
 
     Scene_RemoveContainer({ INDEX, CONTAINER_IDX }) {
-        const sceneIndex = Number(INDEX);
-        const containerIndex = Number(CONTAINER_IDX);
-        const scene = this._getScene(sceneIndex);
-
+        const scene = this._getScene(Number(INDEX));
         if (!scene) return;
 
-        const container = scene.containersMap.get(containerIndex);
-        if (!container) return;
-
-        // Clear Scene ownership before Scene.removeContainer disposes it.
-        this._walkNodes(container.rootNode, node => {
-            node.sceneIndex = null;
-        });
-
-        // Preserves the current Scene.removeContainer behavior:
-        // detach, unregister nodes, and dispose the Container.
-        scene.removeContainer(containerIndex);
-
-        // The Container has been disposed, so release its Registry slot too.
-        this._release("containers", containerIndex);
+        // 仅摘除
+        scene.removeContainer(Number(CONTAINER_IDX));
     }
 
     Scene_GetContainerMeshCount({ INDEX }) {
@@ -239,14 +254,13 @@ export class SceneHandlers {
 
     Scene_SkeletonGetJointCount({ INDEX }) {
         const skeleton = this._get("skeletons", INDEX);
-        return skeleton?.numJoints ?? skeleton?.joints?.length ?? -1;
+        return skeleton ? skeleton.joints.length : -1;
     }
 
-    Scene_SkeletonSetJointTRS({ INDEX, NAME, TRS }) {
+    Scene_SkeletonGetJoint({ INDEX, NAME }) {
         const skeleton = this._get("skeletons", INDEX);
         const joint = skeleton?.joints?.find(j => j.name === NAME);
-        if (!joint) return;
-        this._applyTRS(joint, TRS);
+        return joint?.registryIndex ?? -1;
     }
 
     Scene_SkeletonBindTexture({ INDEX, UNIT }) {
@@ -274,13 +288,42 @@ export class SceneHandlers {
         node.draw(MODE);
     }
 
-    Scene_MeshGetTexture({ INDEX, TEX_TYPE }) {
+    Scene_MeshIsVisible({ INDEX }) {
+        const node = this._get("nodes", INDEX);
+        if (!node) return 0;
+        return node.visible;
+    }
+
+    Scene_MeshSetVisible({ NODE_IDX, VISIBLE, RECURSIVE }) {
+        const node = this._get("nodes", NODE_IDX);
+        if (!node) {
+            console.error(`Vapor3D: SetVisible failed, node index ${NODE_IDX} not found`);
+            return;
+        }
+        const v = Number(VISIBLE) === 1;
+        if (String(RECURSIVE) === "true") {
+            this._setVisibleTree(node, v);
+        } else {
+            node.visible = v;
+        }
+    }
+    _setVisibleTree(node, v) {
+        if (!node) return;
+
+        node.visible = v;
+
+        for (const child of node.children ?? []) {
+            this._setVisibleTree(child, v);
+        }
+    }
+
+    Scene_MeshGetTexture({ INDEX, TEX_TYPE }) { // legacy
         const node = this._get("nodes", INDEX);
         const tex = node?.material?.[TEX_TYPE];
         return tex?.registryIndex ?? -1;
     }
 
-    Scene_MeshGetParam({ INDEX, PARAM }) {
+    Scene_MeshGetParam({ INDEX, PARAM }) { // legacy
         const node = this._get("nodes", INDEX);
         if (!node) return "";
 
@@ -290,6 +333,47 @@ export class SceneHandlers {
         return Array.isArray(value) || ArrayBuffer.isView(value)
             ? JSON.stringify(Array.from(value))
             : value;
+    }
+
+    Scene_MeshGetMaterial({ INDEX }) {
+        const node = this._get("nodes", INDEX);
+        return node?.material?.registryIndex ?? -1;
+    }
+
+    Scene_MeshSetMaterial({ NODE_IDX, MAT_IDX }) {
+        const node = this._get("nodes", NODE_IDX);
+        if (!node) {
+            console.error(`Vapor3D: SetMaterial failed, node index ${NODE_IDX} not found`);
+            return;
+        }
+
+        const mat = this._get("materials", MAT_IDX);
+        if (!mat) {
+            console.error(`Vapor3D: SetMaterial failed, material index ${MAT_IDX} not found`);
+            return;
+        }
+
+        const template = node.sourceMesh;
+
+        // 无模板节点：只改自身
+        if (!template) {
+            const oldMat = node.material;
+            node.material = mat;
+            this._get("scenes", node.sceneIndex)?.rebindMaterial(oldMat, mat);
+            return;
+        }
+
+        // 有模板：改模板 + 所有共享该模板的节点
+        template.material = mat;
+
+        const nodes = this.registry.nodes ?? [];
+        for (const other of nodes) {
+            if (!other || other.sourceMesh !== template) continue;
+
+            const oldMat = other.material;
+            other.material = mat;
+            this._get("scenes", other.sceneIndex)?.rebindMaterial(oldMat, mat);
+        }
     }
 
     Scene_MeshGetLightmapParam({ INDEX, PARAM }) {
@@ -320,5 +404,78 @@ export class SceneHandlers {
             case "W": return scaleOffset[3];
             default: return 0;
         }
+    }
+
+    // ====================== Material ======================
+
+    Material_Create({ NAME }) {
+        const mat = new Material();
+        mat.name = NAME || "";
+        return this.registry.allocate("materials", mat);
+    }
+
+    Material_GetTexture({ INDEX, TEX_TYPE }) {
+        const mat = this._get("materials", INDEX);
+        const tex = mat?.[TEX_TYPE];
+        return tex?.registryIndex ?? -1;
+    }
+
+    Material_SetTexture({ INDEX, TEX_TYPE, TEX_IDX }) {
+        const mat = this._get("materials", INDEX);
+        if (!mat) return console.warn(`Vapor3D: material index ${INDEX} not found`);
+
+        const texIdx = Number(TEX_IDX);
+        if (texIdx < 0) {
+            mat[TEX_TYPE] = null;
+            return;
+        }
+
+        const tex = this._get("textures", texIdx);
+        if (!tex) return console.warn(`Vapor3D: texture index ${texIdx} not found`);
+
+        mat[TEX_TYPE] = tex;
+    }
+
+    Material_GetParam({ INDEX, PARAM }) {
+        const mat = this._get("materials", INDEX);
+        const value = mat?.[PARAM] ?? "";
+
+        return Array.isArray(value) || ArrayBuffer.isView(value)
+            ? JSON.stringify(Array.from(value))
+            : value;
+    }
+
+    Material_SetParam({ INDEX, PARAM, VALUE }) {
+        const mat = this._get("materials", INDEX);
+        if (!mat) {
+            console.error(`Vapor3D: SetParam failed, material index ${INDEX} not found.`);
+            return;
+        }
+
+        if (PARAM === "baseColor") {
+            let arr = VALUE;
+            if (typeof arr === "string") {
+                try { arr = JSON.parse(arr); } catch {
+                    console.error(`Vapor3D: SetParam baseColor parse failed, value = "${VALUE}"`);
+                    return;
+                }
+            }
+            if (!Array.isArray(arr) && !ArrayBuffer.isView(arr)) {
+                console.error(`Vapor3D: SetParam baseColor expects array, got ${typeof arr}`);
+                return;
+            }
+            mat.baseColor = [0, 1, 2, 3].map(i => {
+                const n = Number(arr[i] ?? 0);
+                return Number.isFinite(n) ? n : 0;
+            });
+            return;
+        }
+
+        const n = Number(VALUE);
+        if (!Number.isFinite(n)) {
+            console.error(`Vapor3D: SetParam ${PARAM} expects number, got "${VALUE}"`);
+            return;
+        }
+        mat[PARAM] = n;
     }
 }

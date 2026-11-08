@@ -244,6 +244,7 @@ export class EngineHandlers {
         const dataArray = new typeInfo.ArrayType(values);
         vao.addBuffer(dataArray, LOC, SIZE, typeInfo.glType);
     }
+    
     VAO_SetIndices({ INDEX, LIST, TYPE = "GL_UNSIGNED_SHORT" }) {
         const vao = this.registry.get('vaos', INDEX);
         if (!vao) return console.warn(`Vapor3D: VAO ${INDEX} not found`);
@@ -289,6 +290,70 @@ export class EngineHandlers {
         if (!vao) return;
         vao.draw(MODE, COUNT);
     }
+    // Instance
+    VAO_AddInstanceBuffer({ INDEX, LIST, LOC, SIZE, TYPE = "GL_FLOAT", DIVISOR = 1 }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return console.warn(`Vapor3D: VAO ${INDEX} not found`);
+
+        const listData = this.getListData(LIST);
+        if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
+        if (!Number.isInteger(SIZE) || SIZE < 1) return console.error(`Vapor3D: Invalid SIZE=${SIZE}`);
+        if (listData.length % SIZE !== 0) return console.error(`Vapor3D: ${listData.length} items cannot be divided evenly by SIZE=${SIZE}`);
+
+        const typeInfo = Utils.getGLTypeConfig(vao.gl, TYPE);
+        if (!typeInfo) return console.error(`Vapor3D: Invalid TYPE="${TYPE}"`);
+
+        const numbers = listData.map(Number);
+        if (numbers.some(v => !Number.isFinite(v))) return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
+
+        if (typeInfo.integer) {
+            const bad = numbers.find(v => v < typeInfo.min || v > typeInfo.max);
+            if (bad !== undefined) return console.error(`Vapor3D: Value ${bad} out of range for ${TYPE} (${typeInfo.min}..${typeInfo.max})`);
+        }
+
+        const values = typeInfo.integer ? numbers.map(v => Math.trunc(v)) : numbers;
+        const dataArray = new typeInfo.ArrayType(values);
+        const loc = Number(LOC);
+        const divisor = Math.max(0, Math.trunc(Number(DIVISOR) || 1));
+
+        if (!vao.updateInstanceBuffer(dataArray, loc)) {
+            vao.addInstanceBuffer(dataArray, loc, SIZE, typeInfo.glType, divisor);
+        }
+    }
+    VAO_AddInstanceMatrix4({ INDEX, LIST, LOC }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return console.warn(`Vapor3D: VAO ${INDEX} not found`);
+
+        const listData = this.getListData(LIST);
+        if (!listData?.length) return console.warn(`Vapor3D: List "${LIST}" is empty or not found`);
+        if (listData.length % 16 !== 0)
+            return console.error(`Vapor3D: ${listData.length} items cannot be divided evenly by 16 (mat4)`);
+
+        const numbers = listData.map(Number);
+        if (numbers.some(v => !Number.isFinite(v))) return console.error(`Vapor3D: List "${LIST}" contains invalid numbers`);
+
+        const data = new Float32Array(numbers);
+        const loc = Number(LOC);
+        if (!vao.updateInstanceBuffer(data, loc)) {
+            vao.addInstanceMatrix4(data, loc);
+        }
+    }
+    VAO_SetInstanceCount({ INDEX, COUNT }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return;
+        vao.setInstanceCount(COUNT);
+    }
+    VAO_SetDivisor({ INDEX, LOC, DIVISOR }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return;
+        vao.setDivisor(Number(LOC), Math.max(0, Math.trunc(Number(DIVISOR) || 0)));
+    }
+    VAO_DrawInstanced({ INDEX, COUNT, MODE, INSTANCES }) {
+        const vao = this.registry.get('vaos', INDEX);
+        if (!vao) return;
+        vao.drawInstanced(MODE, Number(COUNT) || -1, Number(INSTANCES) || -1);
+    }
+
     VAO_Destroy({ INDEX }) {
         const vao = this.registry.get('vaos', INDEX);
         if (!vao) return;

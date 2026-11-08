@@ -1,5 +1,4 @@
 import { Math3D } from '../../index';
-import { Timeline } from '../../index';
 
 /**
  * 骨架类：管理模型的骨骼调色板 (Matrix Palette)

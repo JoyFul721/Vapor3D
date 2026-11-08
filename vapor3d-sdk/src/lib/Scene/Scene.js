@@ -7,6 +7,7 @@ export class Scene {
         this.registry = registry;
         this.registryIndex = -1;
 
+        this.maxNodes = maxNodes;
         this.worldMatrixBuffer = new Float32Array(maxNodes * 16);
         this.nodes = [];
         this._freeIndices = [];
@@ -16,6 +17,7 @@ export class Scene {
         this.containersMap = new Map();
         this.skeletonsMap = new Map();
         this.animationsMap = new Map();
+        this.materialsMap = new Map();
         this.containerIndices = new Set();
 
         this.registryCache = {
@@ -46,10 +48,61 @@ export class Scene {
         if (indices.size === 0) map.delete(name);
     }
 
-    _setNodeSceneIndex(node) { // 给 Node.sceneIndex 赋值
+    // 递归赋值 Node.sceneIndex
+    _setNodeSceneIndex(node) {
         if (!node) return;
         node.sceneIndex = this.registryIndex;
         for (const child of node.children ?? []) this._setNodeSceneIndex(child);
+    }
+
+    // 递归清空 Node.sceneIndex
+    _clearNodeSceneIndex(node) {
+        if (!node) return;
+        node.sceneIndex = -1;
+        for (const child of node.children ?? []) this._clearNodeSceneIndex(child);
+    }
+
+    // 递归登记节点材质名到 materialsMap
+    _setNodeMaterialMap(node) {
+        if (!node) return;
+
+        const mat = node.material;
+        if (mat?.registryIndex != null && mat.registryIndex >= 0) {
+            this._addToMap(this.materialsMap, mat.name, mat.registryIndex);
+        }
+
+        for (const child of node.children ?? []) {
+            this._setNodeMaterialMap(child);
+        }
+    }
+
+    // 收集子树里用到的材质索引
+    _collectMaterials(node, out) {
+        if (!node) return;
+
+        const idx = node.material?.registryIndex;
+        if (idx != null && idx >= 0) out.add(idx);
+
+        for (const child of node.children ?? []) {
+            this._collectMaterials(child, out);
+        }
+    }
+
+    // 注销材质登记
+    _releaseMaterials(indices) {
+        if (!indices.size) return;
+
+        const stillUsed = new Set();
+        for (const node of this.nodes) {
+            const idx = node?.material?.registryIndex;
+            if (idx != null && idx >= 0) stillUsed.add(idx);
+        }
+
+        for (const idx of indices) {
+            if (stillUsed.has(idx)) continue;
+            const mat = this._get('materials', idx);
+            this._removeFromMap(this.materialsMap, mat?.name, idx);
+        }
     }
 
     getNodeByIndex(idx) {
@@ -59,27 +112,73 @@ export class Scene {
             : null;
     }
 
+    // 挂树
+    // 断父 -> 接父 -> 新 sceneIndex -> 分配矩阵 -> Dirty
+    attachNode(node, parent = this.root) {
+        if (!node || this._destroyed) return false;
+        if (!parent) return false;
+
+        // 防跨域
+        if (node.worldMatrixIndex !== -1 && node.sceneIndex !== this.registryIndex) {
+            return false;
+        }
+
+        if (node.parent !== parent) {
+            node.parent?.removeChild(node);
+            parent.addChild(node);
+        }
+
+        this._setNodeSceneIndex(node);
+        this._setNodeMaterialMap(node);  
+        this.registerNode(node);
+        node.setDirty?.();
+        return true;
+    }
+
+    // 摘树
+    // 断父 -> 回收矩阵 -> 清 sceneIndex
+    // 只释放 scene 层，注册表索引由 registry.dispose 负责
+    detachNode(node) {
+        if (!node) return false;
+        if (node.worldMatrixIndex === -1 && node.sceneIndex !== this.registryIndex) return false;
+
+        const removedMaterials = new Set();
+        this._collectMaterials(node, removedMaterials);
+
+        node.parent?.removeChild(node);
+        this.unregisterNode(node);
+        this._clearNodeSceneIndex(node);
+        this._releaseMaterials(removedMaterials); // ← 新增
+        return true;
+    }
+
+    // ====================== MatrixBuffer ======================
+
     registerNode(node) {
-        if (!node || node.worldMatrixIndex !== -1) return;
+        if (!node) return;
 
-        const index = this._freeIndices.length
-            ? this._freeIndices.pop()
-            : this._nextIndex++;
+        if (node.worldMatrixIndex === -1) {
+            const index = this._freeIndices.length
+                ? this._freeIndices.pop()
+                : this._nextIndex++;
 
-        node.worldMatrixIndex = index;
-        this.nodes[index] = node;
+            node.worldMatrixIndex = index;
+            this.nodes[index] = node;
+        }
 
-        for (const child of node.children) {
+        for (const child of node.children ?? []) {
             this.registerNode(child);
         }
     }
 
     unregisterNode(node) {
-        if (!node || node.worldMatrixIndex === -1) return;
+        if (!node) return;
 
-        for (const child of node.children) {
+        for (const child of node.children ?? []) {
             this.unregisterNode(child);
         }
+
+        if (node.worldMatrixIndex === -1) return;
 
         const index = node.worldMatrixIndex;
         this.nodes[index] = null;
@@ -87,17 +186,17 @@ export class Scene {
         node.worldMatrixIndex = -1;
     }
 
+    // ====================== Container ======================
+
     addContainer(index) {
         const containerIndex = Number(index);
         const container = this._get('containers', containerIndex);
 
         if (!container || this._destroyed) return false;
         if (this.containerIndices.has(containerIndex)) return true;
-        if (container.rootNode.worldMatrixIndex !== -1) return false;
+        if (!container.rootNode || container.rootNode.worldMatrixIndex !== -1) return false;
 
-        this.root.addChild(container.rootNode);
-        this.registerNode(container.rootNode);
-        this._setNodeSceneIndex(container.rootNode);
+        if (!this.attachNode(container.rootNode)) return false;
 
         // 用于 Inspector 查询
         this.containerIndices.add(containerIndex);
@@ -112,32 +211,12 @@ export class Scene {
                 }
             }
         }
-        if (container.animations) {
-            // Map,后期可能改成数组
-            if (container.animations instanceof Map) {
-                for (const [animName, animation] of container.animations) {
-                    if (animation.registryIndex != null && animation.registryIndex >= 0) {
-                        this._addToMap(this.animationsMap, animName, animation.registryIndex);
-                    }
-                }
-            }
-            else if (Array.isArray(container.animations)) {
-                for (const animation of container.animations) {
-                    if (animation.registryIndex != null && animation.registryIndex >= 0) {
-                        this._addToMap(this.animationsMap, animation.name, animation.registryIndex);
-                    }
-                }
+        
+        for (const [animName, animation] of container.animations) {
+            if (animation.registryIndex != null && animation.registryIndex >= 0) {
+                this._addToMap(this.animationsMap, animName, animation.registryIndex);
             }
         }
-        /*
-        if (container.meshes) {
-            for (const meshNode of container.meshes) {
-                if (meshNode.registryIndex != null && meshNode.registryIndex >= 0) {
-                    // this._addToMap(this.meshNodesMap, meshNode.name, meshNode.registryIndex);
-                }
-            }
-        }
-        */
 
         return true;
     }
@@ -149,8 +228,7 @@ export class Scene {
         const container = this._get('containers', containerIndex);
 
         if (container?.rootNode) {
-            this.root.removeChild(container.rootNode);
-            this.unregisterNode(container.rootNode);
+            this.detachNode(container.rootNode);
 
             this._removeFromMap(
                 this.containersMap,
@@ -159,7 +237,7 @@ export class Scene {
             );
 
             for (const skeleton of container.skeletons ?? []) {
-                skeleton.sceneIndex = null;
+                skeleton.sceneIndex = -1;
                 this._removeFromMap(
                     this.skeletonsMap,
                     skeleton.name,
@@ -167,10 +245,10 @@ export class Scene {
                 );
             }
 
-            for (const animation of container.animations ?? []) {
+            for (const [animName, animation] of container.animations) {
                 this._removeFromMap(
                     this.animationsMap,
-                    animation.name,
+                    animName,
                     animation.registryIndex
                 );
             }
@@ -192,6 +270,8 @@ export class Scene {
     findAnimations(name) {
         return this.animationsMap.get(name) ?? new Set();
     }
+
+    // ====================== 更新 ======================
 
     update(dt) {
         if (this._destroyed) return;
@@ -218,6 +298,8 @@ export class Scene {
             }
         }
     }
+
+    // ====================== 资源缓存 ======================
 
     async getOrCreateTexture(id, creator) {
         let promise = this.registryCache.textures.get(id);
@@ -272,6 +354,11 @@ export class Scene {
         this.containersMap.clear();
         this.skeletonsMap.clear();
         this.animationsMap.clear();
+        this.materialsMap.clear();  
         this.containerIndices.clear();
+
+        this.nodes.length = 0;
+        this._freeIndices.length = 0;
+        this._nextIndex = 0;
     }
 }

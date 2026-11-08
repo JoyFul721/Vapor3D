@@ -14,11 +14,12 @@ export class Registry {
         this.skeletons = [];
         this.animations = [];
         this.timelines = []; 
+        this.materials = [];
 
         // 空闲索引栈
         this._freeIndices = {
             shaders: [], vaos: [], textures: [], fbos: [], stencilBuffers: [],
-            nodes: [], scenes: [], containers: [], skeletons: [], animations: [], timelines: []
+            nodes: [], scenes: [], containers: [], skeletons: [], animations: [], timelines: [], materials: []
         };
     }
 
@@ -51,7 +52,7 @@ export class Registry {
     }
 
     clear() {
-        for (const type of ['shaders', 'vaos', 'textures', 'fbos', 'stencilBuffers', 'nodes', 'scenes', 'containers', 'skeletons', 'animations', 'timelines']) {
+        for (const type of ['shaders', 'vaos', 'textures', 'fbos', 'stencilBuffers', 'nodes', 'scenes', 'containers', 'skeletons', 'animations', 'timelines', 'materials']) {
             for (const obj of this[type]) obj?.destroy?.();
             this[type].length = 0;
             this._freeIndices[type] = [];

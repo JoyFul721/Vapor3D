@@ -2,9 +2,10 @@ export const SceneBlocks = [
     {
         opcode: "Scene_Create",
         blockType: "reporter",
-        text: "new Scene [NAME]",
+        text: "new Scene [NAME] [MAXNODES]",
         arguments: {
-            NAME: { type: "string", defaultValue: "Main" }
+            NAME: { type: "string", defaultValue: "Main" },
+            MAXNODES: { type: "string", defaultValue: "1042"}
         }
     },
     {
@@ -25,7 +26,26 @@ export const SceneBlocks = [
     },
 
 
+
     { blockType: "label", text: "Node" },
+    {
+        opcode: "Scene_CreateNode",
+        blockType: "reporter",
+        text: "new Node [NAME] [SCENE_IDX] [PARENT_NODE_IDX]",
+        arguments: {
+            SCENE_IDX: { type: "number", defaultValue: 0 },
+            NAME: { type: "string", defaultValue: "node" },
+            PARENT_NODE_IDX: { type: "number", defaultValue: -1 }
+        }
+    },
+    {
+        opcode: "Scene_DestroyNode",
+        blockType: "command",
+        text: "Node [NODE_IDX] .destroy",
+        arguments: {
+            NODE_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
     {
         opcode: "Scene_NodeSetTRS",
         blockType: "command",
@@ -68,7 +88,8 @@ export const SceneBlocks = [
             INDEX: { type: "number", defaultValue: 0 }
         }
     },
-    
+
+
 
     { blockType: "label", text: "Container" },
     {
@@ -107,6 +128,7 @@ export const SceneBlocks = [
     },
 
 
+
     { blockType: "label", text: "Skeleton" },
     {
         opcode: "Scene_SkeletonGetJointCount",
@@ -117,13 +139,12 @@ export const SceneBlocks = [
         }
     },
     {
-        opcode: "Scene_SkeletonSetJointTRS",
-        blockType: "command",
-        text: "Skeleton [INDEX] .Joint [NAME] .setTRS [TRS]",
+        opcode: "Scene_SkeletonGetJoint",
+        blockType: "reporter",
+        text: "Skeleton [INDEX] .getJoint [NAME] ",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 },
-            NAME: { type: "string", defaultValue: "spine" },
-            TRS: { type: "string", defaultValue: "[0,0,0,0,0,0,1,1,1,1]" }
+            NAME: { type: "string", defaultValue: "spine" }
         }
     },
     {
@@ -136,6 +157,8 @@ export const SceneBlocks = [
         }
     },
 
+
+
     { blockType: "label", text: "Mesh" },
     {
         opcode: "Scene_MeshDraw",
@@ -147,9 +170,44 @@ export const SceneBlocks = [
         }
     },
     {
+        opcode: "Scene_MeshIsVisible",
+        blockType: "reporter",
+        text: "MeshNode [INDEX] is visible",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Scene_MeshSetVisible",
+        blockType: "command",
+        text: "MeshNode [NODE_IDX] .setVisible [VISIBLE] recursive [RECURSIVE]",
+        arguments: {
+            NODE_IDX: { type: "number", defaultValue: 0 },
+            VISIBLE: { type: "number", defaultValue: 1 },
+            RECURSIVE: { type: "string", menu: "boolMenu" }
+        }
+    },
+    {
+        opcode: "Scene_MeshGetMaterial",
+        blockType: "reporter",
+        text: "MeshNode [INDEX] .material",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Scene_MeshSetMaterial",
+        blockType: "command",
+        text: "MeshNode [NODE_IDX] .setMaterial [MAT_IDX]",
+        arguments: {
+            NODE_IDX: { type: "number", defaultValue: 0 },
+            MAT_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
         opcode: "Scene_MeshGetTexture",
         blockType: "reporter",
-        text: "MeshNode [INDEX] .getTexture [TEX_TYPE]",
+        text: "MeshNode [INDEX] .getMaterialTexture [TEX_TYPE]",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 },
             TEX_TYPE: { type: "string", menu: "pbrTexMenu" }
@@ -158,7 +216,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_MeshGetParam",
         blockType: "reporter",
-        text: "MeshNode [INDEX] .getMaterial [PARAM]",
+        text: "MeshNode [INDEX] .getMaterialParam [PARAM]",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 },
             PARAM: {
@@ -192,6 +250,64 @@ export const SceneBlocks = [
                 menu: "v4CompMenu",
                 defaultValue: "X"
             }
+        }
+    },
+
+
+
+    { blockType: "label", text: "Material" },
+    {
+        opcode: "Material_Create",
+        blockType: "reporter",
+        text: "create Material [NAME]",
+        arguments: {
+            NAME: { type: "string", defaultValue: "Mat"}
+        }
+    },
+    {
+        opcode: "Material_GetTexture",
+        blockType: "reporter",
+        text: "Material [INDEX] .getTexture [TEX_TYPE]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            TEX_TYPE: { type: "string", menu: "pbrTexMenu" }
+        }
+    },
+    {
+        opcode: "Material_SetTexture",
+        blockType: "command",
+        text: "Material [INDEX] .setTexture [TEX_TYPE] [TEX_IDX]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            TEX_TYPE: { type: "string", menu: "pbrTexMenu" },
+            TEX_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Material_GetParam",
+        blockType: "reporter",
+        text: "Material [INDEX] .getParam [PARAM]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            PARAM: {
+                type: "string",
+                menu: "pbrParamMenu",
+                defaultValue: "baseColor"
+            }
+        }
+    },
+    {
+        opcode: "Material_SetParam",
+        blockType: "command",
+        text: "Material [INDEX] .setParam [PARAM] [VALUE]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            PARAM: {
+                type: "string",
+                menu: "pbrParamMenu",
+                defaultValue: "baseColor"
+            },
+            VALUE: { type: "string", defaultValue: "[1,1,1,1]" }
         }
     },
 

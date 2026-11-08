@@ -58,6 +58,8 @@ export class InspectorHandlers {
                 return this._find(scene.skeletonsMap, NAME);
             case "animation":
                 return this._find(scene.animationsMap, NAME);
+            case "material":
+                return this._find(scene.materialsMap, NAME);
             case "mesh":
                 return this._findNodeInTree(scene.root, NAME);
             default:
@@ -76,6 +78,8 @@ export class InspectorHandlers {
                 return this._findOwnedResource(container.skeletons, NAME);
             case "animation":
                 return this._findOwnedResource(container.animations, NAME);
+            case "material":
+                return this._findMeshMaterial(container.meshes, NAME);
             default:
                 return -1;
         }
@@ -141,9 +145,18 @@ export class InspectorHandlers {
 
         return -1;
     }
+    _findMeshMaterial(meshes, name) {
+        if (!meshes) return -1;
 
-    Inspector_MeshFind({ MESHNODE_INDEX, TYPE, NAME }) {
-        // 以后加 material
+        const target = String(name);
+        for (const mesh of meshes) {
+            const mat = mesh?.material;
+            if (mat?.name !== target) continue;
+
+            const idx = mat.registryIndex;
+            if (Number.isInteger(idx) && idx >= 0) return idx;
+        }
+
         return -1;
     }
 }

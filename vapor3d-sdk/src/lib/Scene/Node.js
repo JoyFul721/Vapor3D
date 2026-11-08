@@ -67,27 +67,3 @@ export class TransformNode extends Node {
         }
     }
 }
-
-export class MeshNode extends TransformNode {
-    constructor(name, vao) {
-        super(name);
-        this.vao = vao;
-        this.material = new Material();
-        this.visible = true;
-
-        this.isSkinned = false;
-        this.skeleton = null;
-
-
-        this.hasLightmap = false;
-        this.lightmapIndex = -1;
-        this.lightmapScaleOffset = [1, 1, 0, 0];
-        this.lightmapTex = null;
-    }
-
-    draw(mode) {
-        if (this.visible && this.vao) {
-            this.vao.draw(mode);
-        }
-    }
-}

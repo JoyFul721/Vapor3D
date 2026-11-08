@@ -79,19 +79,18 @@ export const EngineMenus = {
                 { text: "Container", value: "container" },
                 { text: "Skeleton", value: "skeleton" },
                 { text: "Animation", value: "animation" },
-                { text: "Mesh", value: "mesh" }
+                { text: "Mesh", value: "mesh" },
+                { text: "Material", value: "material" }
         ],
         Inspector_ContainerType: [
                 { text: "Mesh", value: "mesh" },
                 { text: "Skeleton", value: "skeleton" },
-                { text: "Animation", value: "animation" }
+                { text: "Animation", value: "animation" },
+                { text: "Material", value: "material" }
         ],
         Inspector_ContainerArrayType: [
                 { text: "Mesh", value: "mesh" },
                 { text: "Skeleton", value: "skeleton" }
-        ],
-        Inspector_MeshType: [
-                { text: "Material", value: "material" }
         ],
 };
 
@@ -131,6 +130,11 @@ export const EngineBlocks = [
         { opcode: "VAO_AddBuffer", blockType: "command", text: "VAO [INDEX] .addBuffer data [LIST] loc [LOC] size [SIZE] type [TYPE]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, LOC: { type: "number", defaultValue: 0 }, SIZE: { type: "number", defaultValue: 3 }, TYPE: { type: "string", defaultValue: "GL_FLOAT", menu: "GLTypeMenu" } } },
         { opcode: "VAO_SetIndices", blockType: "command", text: "VAO [INDEX] .setIndices data [LIST] type [TYPE]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, TYPE: { type: "string", defaultValue: "GL_UNSIGNED_SHORT", menu: "IndexTypeMenu" } } },
         { opcode: "VAO_Draw", blockType: "command", text: "VAO [INDEX] .draw count [COUNT] mode [MODE]", arguments: { INDEX: { type: "number" }, COUNT: { type: "number", defaultValue: -1 }, MODE: { type: "string", menu: "drawMode" } } },
+        { opcode: "VAO_AddInstanceBuffer", blockType: "command", text: "VAO [INDEX] .addInstanceBuffer data [LIST] loc [LOC] size [SIZE] type [TYPE] divisor [DIVISOR]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, LOC: { type: "number", defaultValue: 4 }, SIZE: { type: "number", defaultValue: 3 }, TYPE: { type: "string", defaultValue: "GL_FLOAT", menu: "GLTypeMenu" }, DIVISOR: { type: "number", defaultValue: 1 } } },
+        { opcode: "VAO_AddInstanceMatrix4", blockType: "command", text: "VAO [INDEX] .addInstanceMatrix4 data [LIST] loc [LOC]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LIST: { type: "string", menu: "listMenu" }, LOC: { type: "number", defaultValue: 4 } } },
+        { opcode: "VAO_SetInstanceCount", blockType: "command", text: "VAO [INDEX] .setInstanceCount [COUNT]", arguments: { INDEX: { type: "number", defaultValue: 0 }, COUNT: { type: "number", defaultValue: 1 } } },
+        { opcode: "VAO_SetDivisor", blockType: "command", text: "VAO [INDEX] .setDivisor loc [LOC] divisor [DIVISOR]", arguments: { INDEX: { type: "number", defaultValue: 0 }, LOC: { type: "number", defaultValue: 4 }, DIVISOR: { type: "number", defaultValue: 0 } } },
+        { opcode: "VAO_DrawInstanced", blockType: "command", text: "VAO [INDEX] .drawInstanced count [COUNT] mode [MODE] instances [INSTANCES]", arguments: { INDEX: { type: "number" }, COUNT: { type: "number", defaultValue: -1 }, MODE: { type: "string", menu: "drawMode" }, INSTANCES: { type: "number", defaultValue: -1 } } },
         { opcode: "VAO_Destroy", blockType: "command", text: "VAO [INDEX] .destroy", arguments: { INDEX: { type: "number" } } },
 
         { blockType: "label", text: "Texture" },

@@ -27,6 +27,7 @@ export class Loader {
             const meshNodesList = [];
             const vaoLibrary = new Map();
             const textureCache = new Map();
+            const materialCache = new Map();
 
             const sourceID = `MODEL_${modelID}`;
 
@@ -215,68 +216,84 @@ export class Loader {
                             return v;
                         });
 
-                        const meshInstance = new Mesh(gltfMesh.name || `m${mIdx}_p${pIdx}`, vao);
-                        meshInstance.material.hasUV2 = (prim.attributes.TEXCOORD_1 !== undefined);
-
                         // 材质
-                        const mat = meshInstance.material;
-                        const matIdx = prim.material;
+                        const meshInstance = new Mesh(vao);
+                        const hasUV2 = (prim.attributes.TEXCOORD_1 !== undefined);
 
-                        if (matIdx !== undefined && asset.gltf.materials && asset.gltf.materials[matIdx]) {
-                            const matData = asset.gltf.materials[matIdx];
+                        const matKey = prim.material;
+                        let mat = materialCache.get(matKey);
 
-                            let baseColor = matData.pbrMetallicRoughness?.baseColorFactor || [1.0, 1.0, 1.0, 1.0];
-                            let roughness = matData.pbrMetallicRoughness?.roughnessFactor !== undefined ? matData.pbrMetallicRoughness.roughnessFactor : 1.0;
-                            let metallic = matData.pbrMetallicRoughness?.metallicFactor !== undefined ? matData.pbrMetallicRoughness.metallicFactor : 1.0;
-
-                            mat.baseColor = baseColor;
-
-                            // Albedo
-                            if (matData.pbrMetallicRoughness?.baseColorTexture) {
-                                mat.albedoTex = textureCache.get(matData.pbrMetallicRoughness.baseColorTexture.index);
-                            } else {
-                                // 没有纹理，创建基于材质 baseColorFactor 的 1x1 静态贴图
-                                const r = Math.round(baseColor[0] * 255);
-                                const g = Math.round(baseColor[1] * 255);
-                                const b = Math.round(baseColor[2] * 255);
-                                const a = Math.round(baseColor[3] * 255);
-                                mat.albedoTex = getOrCreateValueTexture(`col_${r}_${g}_${b}_${a}`, r, g, b, a);
-                            }
-
-                            // ORM
-                            if (matData.pbrMetallicRoughness?.metallicRoughnessTexture) {
-                                mat.ormTex = textureCache.get(matData.pbrMetallicRoughness.metallicRoughnessTexture.index);
-                            } else if (!mat.ormTex && matData.occlusionTexture) {
-                                mat.ormTex = textureCache.get(matData.occlusionTexture.index);
-                            } else {
-                                const r = 255;
-                                const g = Math.round(roughness * 255);
-                                const b = Math.round(metallic * 255);
-                                mat.ormTex = getOrCreateValueTexture(`orm_${g}_${b}`, r, g, b);
-                            }
-
-                            // Normal Tex
-                            if (matData.normalTexture && matData.normalTexture.index !== undefined) {
-                                mat.normalTex = textureCache.get(matData.normalTexture.index);
-                            } else {
-                                mat.normalTex = getOrCreateValueTexture('default_normal', 128, 128, 255); // [0,0,1]
-                            }
-
-                            // Emissive Tex
-                            if (matData.emissiveTexture && matData.emissiveTexture.index !== undefined) {
-                                mat.emissiveTex = textureCache.get(matData.emissiveTexture.index);
-                            } else {
-                                mat.emissiveTex = getOrCreateValueTexture('default_emissive', 0, 0, 0);
-                            }
-
+                        if (mat) {
+                            // 命中：复用已注册的材质对象，跳过所有解析
+                            meshInstance.material = mat;
                         } else {
-                            // 没有材质数据，默认值纯白
-                            mat.baseColor = [1.0, 1.0, 1.0, 1.0];
-                            mat.albedoTex = getOrCreateValueTexture('default_white', 255, 255, 255);
-                            mat.ormTex = getOrCreateValueTexture('default_orm', 255, 255, 0); // AO=1, Roughness=1, Metallic=0
-                            mat.normalTex = getOrCreateValueTexture('default_normal', 128, 128, 255);
-                            mat.emissiveTex = getOrCreateValueTexture('default_emissive', 0, 0, 0);
+                            // 未命中，填充材质
+                            mat = meshInstance.material;
+                            let matName;
+
+                            if (matKey !== undefined && asset.gltf.materials && asset.gltf.materials[matKey]) {
+                                const matData = asset.gltf.materials[matKey];
+
+                                let baseColor = matData.pbrMetallicRoughness?.baseColorFactor || [1.0, 1.0, 1.0, 1.0];
+                                let roughness = matData.pbrMetallicRoughness?.roughnessFactor !== undefined ? matData.pbrMetallicRoughness.roughnessFactor : 1.0;
+                                let metallic = matData.pbrMetallicRoughness?.metallicFactor !== undefined ? matData.pbrMetallicRoughness.metallicFactor : 1.0;
+
+                                mat.baseColor = baseColor;
+
+                                // Albedo
+                                if (matData.pbrMetallicRoughness?.baseColorTexture) {
+                                    mat.albedoTex = textureCache.get(matData.pbrMetallicRoughness.baseColorTexture.index);
+                                } else {
+                                    const r = Math.round(baseColor[0] * 255);
+                                    const g = Math.round(baseColor[1] * 255);
+                                    const b = Math.round(baseColor[2] * 255);
+                                    const a = Math.round(baseColor[3] * 255);
+                                    mat.albedoTex = getOrCreateValueTexture(`col_${r}_${g}_${b}_${a}`, r, g, b, a);
+                                }
+
+                                // ORM
+                                if (matData.pbrMetallicRoughness?.metallicRoughnessTexture) {
+                                    mat.ormTex = textureCache.get(matData.pbrMetallicRoughness.metallicRoughnessTexture.index);
+                                } else if (!mat.ormTex && matData.occlusionTexture) {
+                                    mat.ormTex = textureCache.get(matData.occlusionTexture.index);
+                                } else {
+                                    const r = 255;
+                                    const g = Math.round(roughness * 255);
+                                    const b = Math.round(metallic * 255);
+                                    mat.ormTex = getOrCreateValueTexture(`orm_${g}_${b}`, r, g, b);
+                                }
+
+                                // Normal Tex
+                                if (matData.normalTexture && matData.normalTexture.index !== undefined) {
+                                    mat.normalTex = textureCache.get(matData.normalTexture.index);
+                                } else {
+                                    mat.normalTex = getOrCreateValueTexture('default_normal', 128, 128, 255);
+                                }
+
+                                // Emissive Tex
+                                if (matData.emissiveTexture && matData.emissiveTexture.index !== undefined) {
+                                    mat.emissiveTex = textureCache.get(matData.emissiveTexture.index);
+                                } else {
+                                    mat.emissiveTex = getOrCreateValueTexture('default_emissive', 0, 0, 0);
+                                }
+
+                                matName = matData.name || `${sourceID}:MAT:${matKey}`;
+                            } else {
+                                mat.baseColor = [1.0, 1.0, 1.0, 1.0];
+                                mat.albedoTex = getOrCreateValueTexture('default_white', 255, 255, 255);
+                                mat.ormTex = getOrCreateValueTexture('default_orm', 255, 255, 0);
+                                mat.normalTex = getOrCreateValueTexture('default_normal', 128, 128, 255);
+                                mat.emissiveTex = getOrCreateValueTexture('default_emissive', 0, 0, 0);
+
+                                matName = `${sourceID}:MAT:default`;
+                            }
+
+                            mat.name = matName;
+                            const idx = reg('materials', mat);
+                            materialCache.set(matKey, mat);
                         }
+
+                        if (hasUV2) mat.hasUV2 = true;
 
                         meshInstances.push(meshInstance);
                     }
@@ -327,6 +344,7 @@ export class Loader {
                         meshInsts.forEach((mInst, pIdx) => {
                             // VAO 已经实现了基于 Accessor 的底层查重，这里直接创建 MeshNode
                             const meshNode = new MeshNode(`${vNode.name}_p${pIdx}`, mInst.vao);
+                            meshNode.sourceMesh = mInst; // 注入 Mesh 模板
                             reg('nodes', meshNode);
                             meshNode.material = mInst.material;
                             if (nDef.skin !== undefined) {
