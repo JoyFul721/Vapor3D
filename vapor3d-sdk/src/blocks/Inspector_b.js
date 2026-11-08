@@ -39,16 +39,6 @@ export const InspectorBlocks = [
         }
     },
     {
-        opcode: "Inspector_MeshFind",
-        blockType: "reporter",
-        text: "MeshNode [MESHNODE_INDEX] .find [TYPE] [NAME]",
-        arguments: {
-            MESHNODE_INDEX: { type: "number", defaultValue: 0 },
-            TYPE: { type: "string", menu: "Inspector_MeshType" },
-            NAME: { type: "string", defaultValue: "" }
-        }
-    },
-    {
         opcode: "Inspector_ConsolePrint",
         blockType: "command",
         text: "print to console"

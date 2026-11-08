@@ -259,7 +259,7 @@ export const SceneBlocks = [
     {
         opcode: "Material_Create",
         blockType: "reporter",
-        text: "create Material [NAME]",
+        text: "new Material [NAME]",
         arguments: {
             NAME: { type: "string", defaultValue: "Mat"}
         }
