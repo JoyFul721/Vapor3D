@@ -180,14 +180,14 @@ import { Registry } from "./lib/Registry/Registry.js";
         }
     }
 
-    // ==========================================
+
     // 包映射，侧边栏分类注入
-    // ==========================================
     const originalGetBlocksXML = vm.runtime.getBlocksXML;
 
     vm.runtime.getBlocksXML = function (target) {
         const res = originalGetBlocksXML.call(this, target);
 
+        // 注入失败时回退到 res
         try {
             if (!this._blockInfo || !Array.isArray(this._blockInfo)) return res;
 
@@ -215,6 +215,9 @@ import { Registry } from "./lib/Registry/Registry.js";
                 { name: "Text", data: TextBlocks, color: "#2f2f36" },
             ];
 
+            // temp
+            const newCategories = [];
+
             // 构建每个子类别的 XML
             groupDefinitions.forEach((group) => {
                 const groupXml = group.data
@@ -241,14 +244,16 @@ import { Registry } from "./lib/Registry/Registry.js";
                     .join("");
 
                 if (groupXml) {
-                    res.push({
+                    newCategories.push({
                         id: `v3d_cat_${group.name.toLowerCase()}`,
                         xml: `<category name="${group.name}" id="v3d_cat_${group.name.toLowerCase()}" colour="${group.color}" secondaryColour="${group.color}">${groupXml}</category>`,
                     });
                 }
             });
 
-            return res.map((item) => {
+            if (newCategories.length === 0) return res;
+
+            const result = res.map((item) => {
                 if (item.id === "vapor3D") {
                     // 保留 Vapor 3D 的名字，但清空其内部积木
                     // 占位符，防止 ccw 发布检查时报错
@@ -259,6 +264,12 @@ import { Registry } from "./lib/Registry/Registry.js";
                 }
                 return item;
             });
+
+            if (!result.some((item) => item && item.id === "vapor3D")) {
+                return res;
+            }
+
+            return result.concat(newCategories);
         } catch (e) {
             return res;
         }
