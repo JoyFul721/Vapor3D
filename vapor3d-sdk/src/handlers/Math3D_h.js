@@ -6,7 +6,7 @@ export class Math3DHandlers {
     constructor() {}
 
     static ZEROD_VEC = SafeArray.createWithArray([0, 0, 0]);
-    static MAT4_IDENTITY = SafeArray.createWithArray(Math3D.mat4_identity());
+    static MAT4_IDENTITY = SafeArray.createWithArray(Math3D.mat4_identity);
 
     static parseInputOrIdentity(input, util) {
         return (Utils.parseInput(input, util) || Math3DHandlers.MAT4_IDENTITY)

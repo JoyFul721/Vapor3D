@@ -1,6 +1,4 @@
-import { LIB_MATH3D } from "../compiler/lib_Math3D";
-import { LIB_SAFEARRAY } from "../compiler/lib_SafeArray";
-import { LIB_PARSEVEC3, LIB_PARSEMAT4 } from "../compiler/lib_ParseInput";
+import { LIB } from "../compiler/Patcher";
 
 export const Math3DBlocks = [
     { blockType: "label", text: "Vector" },
@@ -13,14 +11,15 @@ export const Math3DBlocks = [
             Y: { type: "number", defaultValue: 0 },
             Z: { type: "number", defaultValue: 0 },
         },
-        compile({ X, Y, Z }, _) {
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
+        compile({ X, Y, Z }, { TYPE_STRING }) {
+            const x = `Number(${this.descendInput(X).asUnknown()})`;
+            const y = `Number(${this.descendInput(Y).asUnknown()})`;
+            const z = `Number(${this.descendInput(Z).asUnknown()})`;
 
-            const x = this.descendInput(X);
-            const y = this.descendInput(Y);
-            const z = this.descendInput(Z);
-
-            return `(${libSafeArray}.createWithArray([${x},${y},${z}]))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray([${x},${y},${z}]))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -32,22 +31,21 @@ export const Math3DBlocks = [
             OP: { type: "string", menu: "v3OpMenu" },
             OTHER: { type: "string", defaultValue: "[0,0,0]" },
         },
-        compile({ V, OP, OTHER }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseVec3 = this.evaluateOnce(LIB_PARSEVEC3(libSafeArray));
-
+        compile({ V, OP, OTHER }, { TYPE_STRING }) {
             const opFnNames = {
                 "+": "vec3_add",
                 "-": "vec3_sub",
                 mul: "vec3_mul",
             };
 
-            const lhs = `${libParseVec3}(${this.descendInput(V)})`;
+            const lhs = `${LIB("Vec3")}(target,${this.descendInput(V).asUnknown()})`;
             const opFnName = opFnNames[OP];
-            const rhs = `${libParseVec3}(${this.descendInput(OTHER)})`;
+            const rhs = `${LIB("Vec3")}(target,${this.descendInput(OTHER).asUnknown()})`;
 
-            return `(${libSafeArray}.createWithArray(${libMath3D}.${opFnName}(${lhs},${rhs})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.${opFnName}(${lhs},${rhs})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -58,15 +56,14 @@ export const Math3DBlocks = [
             V: { type: "string", defaultValue: "[0,0,0]" },
             SCALAR: { type: "number", defaultValue: 1 },
         },
-        compile({ V, SCALAR }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseVec3 = this.evaluateOnce(LIB_PARSEVEC3(libSafeArray));
+        compile({ V, SCALAR }, { TYPE_STRING }) {
+            const v = `${LIB("Vec3")}(target,${this.descendInput(V).asUnknown()})`;
+            const scalar = `Number(${this.descendInput(SCALAR).asUnknown()})`;
 
-            const v = `${libParseVec3}(${this.descendInput(V)})`;
-            const scalar = `Number(${this.descendInput(SCALAR)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.vec3_scale(${v},${scalar})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.vec3_scale(${v},${scalar})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -77,15 +74,11 @@ export const Math3DBlocks = [
             V: { type: "string", defaultValue: "[0,0,0]" },
             OTHER: { type: "string", defaultValue: "[0,0,0]" },
         },
-        compile({ V, OTHER }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseVec3 = this.evaluateOnce(LIB_PARSEVEC3(libSafeArray));
+        compile({ V, OTHER }, { TYPE_NUMBER }) {
+            const lhs = `${LIB("Vec3")}(target,${this.descendInput(V).asUnknown()})`;
+            const rhs = `${LIB("Vec3")}(target,${this.descendInput(OTHER).asUnknown()})`;
 
-            const lhs = `${libParseVec3}(${this.descendInput(V)})`;
-            const rhs = `${libParseVec3}(${this.descendInput(OTHER)})`;
-
-            return `(${libMath3D}.vec3_dot(${lhs},${rhs}))`;
+            return [`(${LIB("Math3D")}.vec3_dot(${lhs},${rhs}))`, TYPE_NUMBER];
         },
     },
     {
@@ -96,15 +89,14 @@ export const Math3DBlocks = [
             V: { type: "string", defaultValue: "[0,0,0]" },
             OTHER: { type: "string", defaultValue: "[0,0,0]" },
         },
-        compile({ V, OTHER }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseVec3 = this.evaluateOnce(LIB_PARSEVEC3(libSafeArray));
+        compile({ V, OTHER }, { TYPE_STRING }) {
+            const lhs = `${LIB("Vec3")}(target,${this.descendInput(V).asUnknown()})`;
+            const rhs = `${LIB("Vec3")}(target,${this.descendInput(OTHER).asUnknown()})`;
 
-            const lhs = `${libParseVec3}(${this.descendInput(V)})`;
-            const rhs = `${libParseVec3}(${this.descendInput(OTHER)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.vec3_cross(${lhs},${rhs})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.vec3_cross(${lhs},${rhs})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -116,16 +108,15 @@ export const Math3DBlocks = [
             B: { type: "string", defaultValue: "[1,1,1]" },
             T: { type: "number", defaultValue: 0.5 },
         },
-        compile({ A, B, T }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseVec3 = this.evaluateOnce(LIB_PARSEVEC3(libSafeArray));
+        compile({ A, B, T }, { TYPE_STRING }) {
+            const a = `${LIB("Vec3")}(target,${this.descendInput(A).asUnknown()})`;
+            const b = `${LIB("Vec3")}(target,${this.descendInput(B).asUnknown()})`;
+            const t = `Number(${this.descendInput(T).asUnknown()})`;
 
-            const a = `${libParseVec3}(${this.descendInput(A)})`;
-            const b = `${libParseVec3}(${this.descendInput(B)})`;
-            const t = `Number(${this.descendInput(T)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.vec3_lerp(${a},${b}, ${t})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.vec3_lerp(${a},${b}, ${t})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -137,16 +128,15 @@ export const Math3DBlocks = [
             MIN: { type: "string", defaultValue: "[0,0,0]" },
             MAX: { type: "string", defaultValue: "[1,1,1]" },
         },
-        compile({ X, MIN, MAX }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseVec3 = this.evaluateOnce(LIB_PARSEVEC3(libSafeArray));
+        compile({ X, MIN, MAX }, { TYPE_STRING }) {
+            const x = `${LIB("Vec3")}(target,${this.descendInput(X).asUnknown()})`;
+            const min = `${LIB("Vec3")}(target,${this.descendInput(MIN).asUnknown()})`;
+            const max = `${LIB("Vec3")}(target,${this.descendInput(MAX).asUnknown()})`;
 
-            const x = `${libParseVec3}(${this.descendInput(X)})`;
-            const min = `${libParseVec3}(${this.descendInput(MIN)})`;
-            const max = `${libParseVec3}(${this.descendInput(MAX)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.vec3_clamp(${x},${min},${max})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.vec3_clamp(${x},${min},${max})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -156,14 +146,13 @@ export const Math3DBlocks = [
         arguments: {
             V: { type: "string", defaultValue: "[0,0,0]" },
         },
-        compile({ V }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseVec3 = this.evaluateOnce(LIB_PARSEVEC3(libSafeArray));
+        compile({ V }, { TYPE_STRING }) {
+            const v = `${LIB("Vec3")}(target,${this.descendInput(V).asUnknown()})`;
 
-            const v = `${libParseVec3}(${this.descendInput(V)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.vec3_normalize(${v})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.vec3_normalize(${v})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -177,16 +166,14 @@ export const Math3DBlocks = [
                 defaultValue: "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]",
             },
         },
-        compile({ V, M }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseVec3 = this.evaluateOnce(LIB_PARSEVEC3(libSafeArray));
-            const libParseMat4 = this.evaluateOnce(LIB_PARSEMAT4(libSafeArray));
+        compile({ V, M }, { TYPE_STRING }) {
+            const v = `${LIB("Vec3")}(target,${this.descendInput(V).asUnknown()})`;
+            const m = `${LIB("Mat4")}(target,${this.descendInput(M).asUnknown()})`;
 
-            const v = `${libParseVec3}(${this.descendInput(V)})`;
-            const m = `${libParseMat4}(${this.descendInput(M)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.vec3_transform(${v},${m})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.vec3_transform(${v},${m})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -197,16 +184,13 @@ export const Math3DBlocks = [
             V: { type: "string", defaultValue: "[0,0,0]" },
             COMP: { type: "string", menu: "axisMenu" },
         },
-        compile({ V, COMP }, _) {
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseVec3 = this.evaluateOnce(LIB_PARSEVEC3(libSafeArray));
-
+        compile({ V, COMP }, { TYPE_NUMBER }) {
             const compIndexes = { X: 0, Y: 1, Z: 2 };
 
-            const v = `${libParseVec3}(${this.descendInput(V)})`;
+            const v = `${LIB("Vec3")}(target,${this.descendInput(V).asUnknown()})`;
             const compIndex = compIndexes[COMP];
 
-            return `(${v}[${compIndex}])`;
+            return [`(${v}[${compIndex}])`, TYPE_NUMBER];
         },
     },
 
@@ -216,12 +200,14 @@ export const Math3DBlocks = [
         blockType: "reporter",
         text: "mat4 identity",
 
-        compile({}, _) {
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            return `(${libSafeArray}.createWithArray([1,0,0,0,
+        compile({}, { TYPE_STRING }) {
+            return [
+                `(${LIB("SafeArray")}.createWithArray([1,0,0,0,
                                                       0,1,0,0,
                                                       0,0,1,0,
-                                                      0,0,0,1]))`;
+                                                      0,0,0,1]))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -234,16 +220,16 @@ export const Math3DBlocks = [
             N: { type: "number", defaultValue: 0.1 },
             F2: { type: "number", defaultValue: 100 },
         },
-        compile({ F, A, N, F2 }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
+        compile({ F, A, N, F2 }, { TYPE_STRING }) {
+            const f = `Number(${this.descendInput(F).asUnknown()})`;
+            const a = `Number(${this.descendInput(A).asUnknown()})`;
+            const n = `Number(${this.descendInput(N).asUnknown()})`;
+            const f2 = `Number(${this.descendInput(F2).asUnknown()})`;
 
-            const f = `Number(${this.descendInput(F)})`;
-            const a = `Number(${this.descendInput(A)})`;
-            const n = `Number(${this.descendInput(N)})`;
-            const f2 = `Number(${this.descendInput(F2)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.mat4_perspective(${f}*Math.PI/180,${a},${n},${f2})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.mat4_perspective(${f}*Math.PI/180,${a},${n},${f2})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -261,21 +247,21 @@ export const Math3DBlocks = [
             UY: { type: "number", defaultValue: 1 },
             UZ: { type: "number", defaultValue: 0 },
         },
-        compile({ EX, EY, EZ, TX, TY, TZ, UX, UY, UZ }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
+        compile({ EX, EY, EZ, TX, TY, TZ, UX, UY, UZ }, { TYPE_STRING }) {
+            const ex = `Number(${this.descendInput(EX).asUnknown()})`;
+            const ey = `Number(${this.descendInput(EY).asUnknown()})`;
+            const ez = `Number(${this.descendInput(EZ).asUnknown()})`;
+            const tx = `Number(${this.descendInput(TX).asUnknown()})`;
+            const ty = `Number(${this.descendInput(TY).asUnknown()})`;
+            const tz = `Number(${this.descendInput(TZ).asUnknown()})`;
+            const ux = `Number(${this.descendInput(UX).asUnknown()})`;
+            const uy = `Number(${this.descendInput(UY).asUnknown()})`;
+            const uz = `Number(${this.descendInput(UZ).asUnknown()})`;
 
-            const ex = `Number(${this.descendInput(EX)})`;
-            const ey = `Number(${this.descendInput(EY)})`;
-            const ez = `Number(${this.descendInput(EZ)})`;
-            const tx = `Number(${this.descendInput(TX)})`;
-            const ty = `Number(${this.descendInput(TY)})`;
-            const tz = `Number(${this.descendInput(TZ)})`;
-            const ux = `Number(${this.descendInput(UX)})`;
-            const uy = `Number(${this.descendInput(UY)})`;
-            const uz = `Number(${this.descendInput(UZ)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.mat4_lookAt([${ex},${ey},${ez}],[${tx},${ty},${tz}],[${ux},${uy},${uz}])))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.mat4_lookAt([${ex},${ey},${ez}],[${tx},${ty},${tz}],[${ux},${uy},${uz}])))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -288,17 +274,16 @@ export const Math3DBlocks = [
             Y: { type: "number", defaultValue: 0 },
             Z: { type: "number", defaultValue: 0 },
         },
-        compile({ M, X, Y, Z }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseMat4 = this.evaluateOnce(LIB_PARSEMAT4(libSafeArray));
+        compile({ M, X, Y, Z }, { TYPE_STRING }) {
+            const m = `${LIB("Mat4")}(target,${this.descendInput(M).asUnknown()})`;
+            const x = `Number(${this.descendInput(X).asUnknown()})`;
+            const y = `Number(${this.descendInput(Y).asUnknown()})`;
+            const z = `Number(${this.descendInput(Z).asUnknown()})`;
 
-            const m = `${libParseMat4}(${this.descendInput(M)})`;
-            const x = `Number(${this.descendInput(X)})`;
-            const y = `Number(${this.descendInput(Y)})`;
-            const z = `Number(${this.descendInput(Z)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.mat4_translate(${m},${x},${y},${z})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.mat4_translate(${m},${x},${y},${z})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -310,22 +295,21 @@ export const Math3DBlocks = [
             AXIS: { type: "string", menu: "axisMenu" },
             DEG: { type: "number", defaultValue: 0 },
         },
-        compile({ M, AXIS, DEG }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseMat4 = this.evaluateOnce(LIB_PARSEMAT4(libSafeArray));
-
+        compile({ M, AXIS, DEG }, { TYPE_STRING }) {
             const rotateFnNames = {
                 X: "mat4_rotateX",
                 Y: "mat4_rotateY",
                 Z: "mat4_rotateZ",
             };
 
-            const m = `${libParseMat4}(${this.descendInput(M)})`;
+            const m = `${LIB("Mat4")}(target,${this.descendInput(M).asUnknown()})`;
             const rotateFnName = rotateFnNames[AXIS];
-            const deg = `Number(${this.descendInput(DEG)})`;
+            const deg = `Number(${this.descendInput(DEG).asUnknown()})`;
 
-            return `(${libSafeArray}.createWithArray(${libMath3D}.${rotateFnName}(${m},${deg}*Math.PI/180)))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.${rotateFnName}(${m},${deg}*Math.PI/180)))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -338,17 +322,16 @@ export const Math3DBlocks = [
             Y: { type: "number", defaultValue: 1 },
             Z: { type: "number", defaultValue: 1 },
         },
-        compile({ M, X, Y, Z }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseMat4 = this.evaluateOnce(LIB_PARSEMAT4(libSafeArray));
+        compile({ M, X, Y, Z }, { TYPE_STRING }) {
+            const m = `${LIB("Mat4")}(target,${this.descendInput(M).asUnknown()})`;
+            const x = `Number(${this.descendInput(X).asUnknown()})`;
+            const y = `Number(${this.descendInput(Y).asUnknown()})`;
+            const z = `Number(${this.descendInput(Z).asUnknown()})`;
 
-            const m = `${libParseMat4}(${this.descendInput(M)})`;
-            const x = `Number(${this.descendInput(X)})`;
-            const y = `Number(${this.descendInput(Y)})`;
-            const z = `Number(${this.descendInput(Z)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.mat4_scale(${m},${x},${y},${z})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.mat4_scale(${m},${x},${y},${z})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -356,15 +339,14 @@ export const Math3DBlocks = [
         blockType: "reporter",
         text: "mat4 [A] * [B]",
         arguments: { A: { type: "string" }, B: { type: "string" } },
-        compile({ A, B }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseMat4 = this.evaluateOnce(LIB_PARSEMAT4(libSafeArray));
+        compile({ A, B }, { TYPE_STRING }) {
+            const a = `${LIB("Mat4")}(target,${this.descendInput(A).asUnknown()})`;
+            const b = `${LIB("Mat4")}(target,${this.descendInput(B).asUnknown()})`;
 
-            const a = `${libParseMat4}(${this.descendInput(A)})`;
-            const b = `${libParseMat4}(${this.descendInput(B)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.mat4_multiply(${a},${b})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.mat4_multiply(${a},${b})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -372,14 +354,13 @@ export const Math3DBlocks = [
         blockType: "reporter",
         text: "mat4 [M] .inverse",
         arguments: { M: { type: "string" } },
-        compile({ M }, _) {
-            const libMath3D = this.evaluateOnce(LIB_MATH3D);
-            const libSafeArray = this.evaluateOnce(LIB_SAFEARRAY);
-            const libParseMat4 = this.evaluateOnce(LIB_PARSEMAT4(libSafeArray));
+        compile({ M }, { TYPE_STRING }) {
+            const m = `${LIB("Mat4")}(target,${this.descendInput(M).asUnknown()})`;
 
-            const m = `${libParseMat4}(${this.descendInput(M)})`;
-
-            return `(${libSafeArray}.createWithArray(${libMath3D}.mat4_inverse(${m})))`;
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.mat4_inverse(${m})))`,
+                TYPE_STRING,
+            ];
         },
     },
 

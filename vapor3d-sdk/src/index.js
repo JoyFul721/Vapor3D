@@ -19,13 +19,13 @@ import { InspectorHandlers } from "./handlers/Inspector_h.js";
 import { CompilerPatcher } from "./compiler/Patcher.js";
 
 import { Registry } from "./lib/Registry/Registry.js";
+import { Math3D } from "./lib/index.js";
+import { SafeArray } from "./lib/Tools/SafeArray.js";
 
 (function (Scratch) {
     "use strict";
 
-    // if you are developing this extension, you can disable
-    // the compiler support if you need to modify
-    // `Math3D` or `SafeArray`
+    // in general times you should never disable it
     const enableCompiler = true;
 
     if (!Scratch.extensions.unsandboxed)
@@ -92,10 +92,54 @@ import { Registry } from "./lib/Registry/Registry.js";
             if (enableCompiler) {
                 try {
                     const compilerPatcher = new CompilerPatcher(
+                        runtime,
                         // this function maybe broken in the later version of TurboWarp
                         // be careful to check if this is available.
-                        Scratch.vm.exports.these_broke_before_and_will_break_again(),
+                        Scratch.vm.exports.i_will_not_ask_for_help_when_these_break(),
                     );
+
+                    compilerPatcher.inject("Math3D", Math3D);
+                    compilerPatcher.inject("SafeArray", SafeArray);
+                    compilerPatcher.inject("Vec3", (target, input) => {
+                        if (input instanceof SafeArray) return input.underlying;
+
+                        if (
+                            typeof input === "string" &&
+                            input.startsWith("[")
+                        ) {
+                            const array = SafeArray.createWithString(input);
+                            return array ? array.underlying : Math3D.vec3_zerod;
+                        }
+
+                        const list = target.lookupVariableByNameAndType(
+                            input,
+                            "list",
+                        );
+                        return list
+                            ? list.value.map(Number)
+                            : Math3D.vec3_zerod;
+                    });
+                    compilerPatcher.inject("Mat4", (target, input) => {
+                        if (input instanceof SafeArray) return input.underlying;
+
+                        if (
+                            typeof input === "string" &&
+                            input.startsWith("[")
+                        ) {
+                            const array = SafeArray.createWithString(input);
+                            return array
+                                ? array.underlying
+                                : Math3D.mat4_identity;
+                        }
+
+                        const list = target.lookupVariableByNameAndType(
+                            input,
+                            "list",
+                        );
+                        return list
+                            ? list.value.map(Number)
+                            : Math3D.mat4_identity;
+                    });
 
                     compilerPatcher.addBlocks(Math3DBlocks);
 

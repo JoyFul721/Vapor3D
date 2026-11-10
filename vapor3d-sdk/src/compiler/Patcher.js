@@ -1,12 +1,22 @@
+export function LIB(id) {
+    return "runtime.Vapor3D." + id;
+}
+
 export class CompilerPatcher {
-    constructor(vmUnsafeExports) {
+    constructor(runtime, vmUnsafeExports) {
         if (!vmUnsafeExports) {
             throw new Error(
                 "cannot patch compiler! there's no unsafe exports in Scratch.vm",
             );
         }
+        this.runtime = runtime;
         this.vmUnsafeExports = vmUnsafeExports;
         this.blocksCanCompile = {};
+    }
+
+    inject(utilName, util) {
+        if (!this.runtime.Vapor3D) this.runtime.Vapor3D = {};
+        this.runtime.Vapor3D[utilName] = util;
     }
 
     addBlocks(blocks) {
@@ -96,15 +106,13 @@ export class CompilerPatcher {
             },
         });
 
+        const jsgenApi = this.vmUnsafeExports.JSGenerator.unstable_exports;
+
         patch(this.vmUnsafeExports.JSGenerator.prototype, {
             descendStackedBlock(original, node) {
                 const blockInfo = that.blocksCanCompile[node.kind];
                 if (blockInfo && !blockInfo.isReporter) {
-                    return blockInfo.compile.call(
-                        this,
-                        node,
-                        that.vmUnsafeExports,
-                    );
+                    return blockInfo.compile.call(this, node, jsgenApi);
                 } else {
                     return original(node);
                 }
@@ -112,10 +120,8 @@ export class CompilerPatcher {
             descendInput(original, node) {
                 const blockInfo = that.blocksCanCompile[node.kind];
                 if (blockInfo) {
-                    return blockInfo.compile.call(
-                        this,
-                        node,
-                        that.vmUnsafeExports,
+                    return new jsgenApi.TypedInput(
+                        ...blockInfo.compile.call(this, node, jsgenApi),
                     );
                 } else {
                     return original(node);
