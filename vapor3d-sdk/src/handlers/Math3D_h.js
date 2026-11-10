@@ -60,14 +60,19 @@ export class Math3DHandlers {
         const a = Math3DHandlers.parseInputOrZerod(A, util);
         const b = Math3DHandlers.parseInputOrZerod(B, util);
         const t = Number(T);
-        return Math3D.vec3_lerp(a, b, t);
+        return SafeArray.createWithArray(Math3D.vec3_lerp(a, b, t));
     }
 
     v3_Clamp({ X, MIN, MAX }, util) {
         const x = Math3DHandlers.parseInputOrZerod(X, util);
         const min = Math3DHandlers.parseInputOrZerod(MIN, util);
         const max = Math3DHandlers.parseInputOrZerod(MAX, util);
-        return Math3D.vec3_clamp(x, min, max);
+        return SafeArray.createWithArray(Math3D.vec3_clamp(x, min, max));
+    }
+
+    v3_Normalize({ V }, util) {
+        const v = Math3DHandlers.parseInputOrZerod(V, util);
+        return SafeArray.createWithArray(Math3D.vec3_normalize(v));
     }
 
     v3_Get({ V, COMP }, util) {
