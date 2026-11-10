@@ -1,38 +1,85 @@
+import { SafeArray } from "./SafeArray";
+
 export class Utils {
     static parseInput(input, util) {
+        if (input instanceof SafeArray) return input;
+
         if (typeof input === "string" && input.startsWith("[")) {
-            try { return JSON.parse(input); } catch (e) { return null; }
+            return SafeArray.createWithString(input);
         }
         // 如果 input 是列表名，从 Scratch 运行时查找
         const list = util.target.lookupVariableByNameAndType(input, "list");
-        return list ? list.value.map(Number) : null;
+        return list ? SafeArray.createWithArray(list.value.map(Number)) : null;
     }
-    
+
     static async fetchBinary(url) {
-        if (url.startsWith('data:')) {
-            const b64 = url.split(',').pop();
+        if (url.startsWith("data:")) {
+            const b64 = url.split(",").pop();
             const binStr = atob(b64);
             const bytes = new Uint8Array(binStr.length);
-            for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+            for (let i = 0; i < binStr.length; i++)
+                bytes[i] = binStr.charCodeAt(i);
             return bytes;
         }
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Vapor3D: HTTP error! status: ${response.status}`);
+        if (!response.ok)
+            throw new Error(`Vapor3D: HTTP error! status: ${response.status}`);
         return new Uint8Array(await response.arrayBuffer());
     }
-
 
     static getGLTypeConfig(gl, typeStr) {
         if (!gl) return null;
         const key = String(typeStr).toUpperCase().trim().replace(/^GL_/, "");
         const map = {
-            "FLOAT":          { glType: gl.FLOAT,          ArrayType: Float32Array, min: -Infinity, max: Infinity, integer: false },
-            "BYTE":           { glType: gl.BYTE,           ArrayType: Int8Array,    min: -128,     max: 127,       integer: true  },
-            "SHORT":          { glType: gl.SHORT,          ArrayType: Int16Array,   min: -32768,   max: 32767,     integer: true  },
-            "UNSIGNED_BYTE":  { glType: gl.UNSIGNED_BYTE,  ArrayType: Uint8Array,   min: 0,        max: 255,       integer: true  },
-            "UNSIGNED_SHORT": { glType: gl.UNSIGNED_SHORT, ArrayType: Uint16Array,  min: 0,        max: 65535,     integer: true  },
-            "INT":            { glType: gl.INT,            ArrayType: Int32Array,   min: -2147483648, max: 2147483647, integer: true },
-            "UNSIGNED_INT":   { glType: gl.UNSIGNED_INT,   ArrayType: Uint32Array,  min: 0,        max: 4294967295, integer: true }
+            FLOAT: {
+                glType: gl.FLOAT,
+                ArrayType: Float32Array,
+                min: -Infinity,
+                max: Infinity,
+                integer: false,
+            },
+            BYTE: {
+                glType: gl.BYTE,
+                ArrayType: Int8Array,
+                min: -128,
+                max: 127,
+                integer: true,
+            },
+            SHORT: {
+                glType: gl.SHORT,
+                ArrayType: Int16Array,
+                min: -32768,
+                max: 32767,
+                integer: true,
+            },
+            UNSIGNED_BYTE: {
+                glType: gl.UNSIGNED_BYTE,
+                ArrayType: Uint8Array,
+                min: 0,
+                max: 255,
+                integer: true,
+            },
+            UNSIGNED_SHORT: {
+                glType: gl.UNSIGNED_SHORT,
+                ArrayType: Uint16Array,
+                min: 0,
+                max: 65535,
+                integer: true,
+            },
+            INT: {
+                glType: gl.INT,
+                ArrayType: Int32Array,
+                min: -2147483648,
+                max: 2147483647,
+                integer: true,
+            },
+            UNSIGNED_INT: {
+                glType: gl.UNSIGNED_INT,
+                ArrayType: Uint32Array,
+                min: 0,
+                max: 4294967295,
+                integer: true,
+            },
         };
         return map[key] || null;
     }
@@ -41,32 +88,95 @@ export class Utils {
         if (!gl) return null;
         const key = String(formatStr).toUpperCase().trim();
         const map = {
-            "RGB8":  { internal: gl.RGB8,  format: gl.RGB,  type: gl.UNSIGNED_BYTE, arrayType: Uint8Array },
-            "RGBA8": { internal: gl.RGBA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE, arrayType: Uint8Array },
+            RGB8: {
+                internal: gl.RGB8,
+                format: gl.RGB,
+                type: gl.UNSIGNED_BYTE,
+                arrayType: Uint8Array,
+            },
+            RGBA8: {
+                internal: gl.RGBA8,
+                format: gl.RGBA,
+                type: gl.UNSIGNED_BYTE,
+                arrayType: Uint8Array,
+            },
 
-            "R16F":    { internal: gl.R16F,    format: gl.RED, type: gl.HALF_FLOAT, arrayType: Uint16Array },
-            "RG16F":   { internal: gl.RG16F,   format: gl.RG,  type: gl.HALF_FLOAT, arrayType: Uint16Array },
-            "RGB16F":  { internal: gl.RGB16F,  format: gl.RGB, type: gl.HALF_FLOAT, arrayType: Uint16Array },
-            "RGBA16F": { internal: gl.RGBA16F, format: gl.RGBA,type: gl.HALF_FLOAT, arrayType: Uint16Array },
+            R16F: {
+                internal: gl.R16F,
+                format: gl.RED,
+                type: gl.HALF_FLOAT,
+                arrayType: Uint16Array,
+            },
+            RG16F: {
+                internal: gl.RG16F,
+                format: gl.RG,
+                type: gl.HALF_FLOAT,
+                arrayType: Uint16Array,
+            },
+            RGB16F: {
+                internal: gl.RGB16F,
+                format: gl.RGB,
+                type: gl.HALF_FLOAT,
+                arrayType: Uint16Array,
+            },
+            RGBA16F: {
+                internal: gl.RGBA16F,
+                format: gl.RGBA,
+                type: gl.HALF_FLOAT,
+                arrayType: Uint16Array,
+            },
 
-            "R32F":    { internal: gl.R32F,    format: gl.RED, type: gl.FLOAT, arrayType: Float32Array },
-            "RGB32F":  { internal: gl.RGB32F,  format: gl.RGB, type: gl.FLOAT, arrayType: Float32Array },
-            "RGBA32F": { internal: gl.RGBA32F, format: gl.RGBA,type: gl.FLOAT, arrayType: Float32Array },
+            R32F: {
+                internal: gl.R32F,
+                format: gl.RED,
+                type: gl.FLOAT,
+                arrayType: Float32Array,
+            },
+            RGB32F: {
+                internal: gl.RGB32F,
+                format: gl.RGB,
+                type: gl.FLOAT,
+                arrayType: Float32Array,
+            },
+            RGBA32F: {
+                internal: gl.RGBA32F,
+                format: gl.RGBA,
+                type: gl.FLOAT,
+                arrayType: Float32Array,
+            },
 
-            "R11G11B10F": { internal: gl.R11F_G11F_B10F, format: gl.RGB, type: gl.UNSIGNED_INT_10F_11F_11F_REV, arrayType: Uint32Array },
+            R11G11B10F: {
+                internal: gl.R11F_G11F_B10F,
+                format: gl.RGB,
+                type: gl.UNSIGNED_INT_10F_11F_11F_REV,
+                arrayType: Uint32Array,
+            },
 
-            "DEPTH_COMPONENT24": { internal: gl.DEPTH_COMPONENT24, format: gl.DEPTH_COMPONENT, type: gl.UNSIGNED_INT, arrayType: Uint32Array },
-            "DEPTH24_STENCIL8":  { internal: gl.DEPTH24_STENCIL8,  format: gl.DEPTH_STENCIL,  type: gl.UNSIGNED_INT_24_8, arrayType: null }
+            DEPTH_COMPONENT24: {
+                internal: gl.DEPTH_COMPONENT24,
+                format: gl.DEPTH_COMPONENT,
+                type: gl.UNSIGNED_INT,
+                arrayType: Uint32Array,
+            },
+            DEPTH24_STENCIL8: {
+                internal: gl.DEPTH24_STENCIL8,
+                format: gl.DEPTH_STENCIL,
+                type: gl.UNSIGNED_INT_24_8,
+                arrayType: null,
+            },
         };
         return map[key] || null;
     }
 
-
     static parseKTX(buffer) {
         const bytes = new Uint8Array(buffer);
-        const identifier = [0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A];
+        const identifier = [
+            0xab, 0x4b, 0x54, 0x58, 0x20, 0x31, 0x31, 0xbb, 0x0d, 0x0a, 0x1a,
+            0x0a,
+        ];
         for (let i = 0; i < 12; i++) {
-            if (bytes[i] !== identifier[i]) throw new Error("Vapor3D: Not a valid KTX 1.0 file");
+            if (bytes[i] !== identifier[i])
+                throw new Error("Vapor3D: Not a valid KTX 1.0 file");
         }
 
         const dv = new DataView(buffer);
@@ -81,7 +191,8 @@ export class Utils {
         let numberOfMipmapLevels = dv.getUint32(56, littleEndian);
         const bytesOfKeyValueData = dv.getUint32(60, littleEndian);
 
-        if (numberOfFaces !== 6) throw new Error("Vapor3D: KTX must be a Cubemap");
+        if (numberOfFaces !== 6)
+            throw new Error("Vapor3D: KTX must be a Cubemap");
         if (numberOfMipmapLevels === 0) numberOfMipmapLevels = 1;
 
         let offset = 64 + bytesOfKeyValueData;
@@ -94,20 +205,29 @@ export class Utils {
                 const faceBuffer = buffer.slice(offset, offset + imageSize);
                 let dataArray;
                 if (glType === 5126) dataArray = new Float32Array(faceBuffer);
-                else if (glType === 5131 || glType === 36193) dataArray = new Uint16Array(faceBuffer);
+                else if (glType === 5131 || glType === 36193)
+                    dataArray = new Uint16Array(faceBuffer);
                 else dataArray = new Uint8Array(faceBuffer);
 
                 mipmaps.push({
-                    level: mip, face: face,
-                    width: Math.max(1, pixelWidth >> mip), height: Math.max(1, pixelHeight >> mip),
-                    data: dataArray
+                    level: mip,
+                    face: face,
+                    width: Math.max(1, pixelWidth >> mip),
+                    height: Math.max(1, pixelHeight >> mip),
+                    data: dataArray,
                 });
                 offset += imageSize;
                 offset = (offset + 3) & ~3;
             }
             offset = (offset + 3) & ~3;
         }
-        return { glInternalFormat, glFormat, glType, numberOfMipmapLevels, mipmaps };
+        return {
+            glInternalFormat,
+            glFormat,
+            glType,
+            numberOfMipmapLevels,
+            mipmaps,
+        };
     }
 
     static parseHDR(buffer) {
@@ -125,7 +245,8 @@ export class Utils {
         };
 
         let line = readLine();
-        if (!line.startsWith("#?")) throw new Error("Vapor3D: Invalid HDR format");
+        if (!line.startsWith("#?"))
+            throw new Error("Vapor3D: Invalid HDR format");
 
         while (pos < buffer.byteLength) {
             line = readLine();
@@ -147,7 +268,8 @@ export class Utils {
             rgbe[3] = view.getUint8(pos++);
 
             // If New RLE
-            const isNewRLE = (rgbe[0] === 2 && rgbe[1] === 2 && !(rgbe[2] & 0x80));
+            const isNewRLE =
+                rgbe[0] === 2 && rgbe[1] === 2 && !(rgbe[2] & 0x80);
 
             if (!isNewRLE) {
                 // 非压缩格式
@@ -186,7 +308,8 @@ export class Utils {
                             while (count-- > 0) scanline[scanOffset++] = val;
                         } else {
                             let count = code;
-                            while (count-- > 0) scanline[scanOffset++] = view.getUint8(pos++);
+                            while (count-- > 0)
+                                scanline[scanOffset++] = view.getUint8(pos++);
                         }
                     }
                 }

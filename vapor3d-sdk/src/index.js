@@ -1,69 +1,119 @@
-import { EngineBlocks, EngineMenus } from './blocks/Engine_b.js';
-import { SceneBlocks } from './blocks/Scene_b.js';
-import { LoaderBlocks } from './blocks/Loader_b.js';
-import { Math3DBlocks } from './blocks/Math3D_b.js';
-import { CubeCameraBlocks } from './blocks/CubeCamera_b.js';
-import { TextBlocks } from './blocks/Text_b.js';
-import { TimelineBlocks } from './blocks/Timeline_b.js';
-import { InspectorBlocks } from './blocks/Inspector_b.js';
+import { EngineBlocks, EngineMenus } from "./blocks/Engine_b.js";
+import { SceneBlocks } from "./blocks/Scene_b.js";
+import { LoaderBlocks } from "./blocks/Loader_b.js";
+import { Math3DBlocks } from "./blocks/Math3D_b.js";
+import { CubeCameraBlocks } from "./blocks/CubeCamera_b.js";
+import { TextBlocks } from "./blocks/Text_b.js";
+import { TimelineBlocks } from "./blocks/Timeline_b.js";
+import { InspectorBlocks } from "./blocks/Inspector_b.js";
 
-import { EngineHandlers } from './handlers/Engine_h.js';
-import { SceneHandlers } from './handlers/Scene_h.js';
-import { LoaderHandlers } from './handlers/Loader_h.js';
-import { Math3DHandlers } from './handlers/Math3D_h.js';
-import { CubeCameraHandlers } from './handlers/CubeCamera_h.js';
-import { TextHandlers } from './handlers/Text_h.js';
-import { TimelineHandlers } from './handlers/Timeline_h.js';
-import { InspectorHandlers } from './handlers/Inspector_h.js';
+import { EngineHandlers } from "./handlers/Engine_h.js";
+import { SceneHandlers } from "./handlers/Scene_h.js";
+import { LoaderHandlers } from "./handlers/Loader_h.js";
+import { Math3DHandlers } from "./handlers/Math3D_h.js";
+import { CubeCameraHandlers } from "./handlers/CubeCamera_h.js";
+import { TextHandlers } from "./handlers/Text_h.js";
+import { TimelineHandlers } from "./handlers/Timeline_h.js";
+import { InspectorHandlers } from "./handlers/Inspector_h.js";
 
-import { Registry } from './lib/Registry/Registry.js';
+import { CompilerPatcher } from "./compiler/Patcher.js";
+
+import { Registry } from "./lib/Registry/Registry.js";
 
 (function (Scratch) {
     "use strict";
-    if (!Scratch.extensions.unsandboxed) throw new Error("Vapor3D must run unsandboxed");
+
+    // if you are developing this extension, you can disable
+    // the compiler support if you need to modify
+    // `Math3D` or `SafeArray`
+    const enableCompiler = true;
+
+    if (!Scratch.extensions.unsandboxed)
+        throw new Error("Vapor3D must run unsandboxed");
 
     const vm = Scratch.vm;
     const runtime = vm.runtime || Scratch.runtime;
     const Cast = Scratch.Cast;
 
     // For CCW
-    
+
     if (vm && !vm.renderer && runtime.renderer) {
         console.log("Vapor3D CCW Environment Detected. Applying Shims...");
 
         vm.renderer = runtime.renderer;
 
         if (!vm.renderer.canvas) {
-            Object.defineProperty(vm.renderer, 'canvas', {
+            Object.defineProperty(vm.renderer, "canvas", {
                 get: function () {
-                    return this._gl?.canvas || runtime._gl?.canvas || document.querySelector('canvas');
+                    return (
+                        this._gl?.canvas ||
+                        runtime._gl?.canvas ||
+                        document.querySelector("canvas")
+                    );
                 },
                 enumerable: true,
-                configurable: true
+                configurable: true,
             });
         }
     } else {
         console.log("Vapor3D Standard TurboWarp Environment Detected.");
     }
 
-    // 对于 ccw：从vm.runtime.renderer._gl.canvas  提前到  vm.renderer.canvas 
+    // 对于 ccw：从vm.runtime.renderer._gl.canvas  提前到  vm.renderer.canvas
 
     class Vapor3DExtension {
         constructor() {
             const registry = new Registry();
             this.engineHandlers = new EngineHandlers(Scratch, registry);
-            this.sceneHandlers = new SceneHandlers(this.engineHandlers, registry);
-            this.loaderHandlers = new LoaderHandlers(this.engineHandlers, this.sceneHandlers, registry);
+            this.sceneHandlers = new SceneHandlers(
+                this.engineHandlers,
+                registry,
+            );
+            this.loaderHandlers = new LoaderHandlers(
+                this.engineHandlers,
+                this.sceneHandlers,
+                registry,
+            );
             this.mathHandlers = new Math3DHandlers();
             this.cubeCameraHandlers = new CubeCameraHandlers();
-            this.textHandlers = new TextHandlers(this.engineHandlers, Cast, registry);
+            this.textHandlers = new TextHandlers(
+                this.engineHandlers,
+                Cast,
+                registry,
+            );
             this.timelineHandlers = new TimelineHandlers(registry);
-            this.inspectorHandlers = new InspectorHandlers(this.engineHandlers, this.sceneHandlers, this.timelineHandlers, registry);
+            this.inspectorHandlers = new InspectorHandlers(
+                this.engineHandlers,
+                this.sceneHandlers,
+                this.timelineHandlers,
+                registry,
+            );
 
+            if (enableCompiler) {
+                try {
+                    const compilerPatcher = new CompilerPatcher(
+                        // this function maybe broken in the later version of TurboWarp
+                        // be careful to check if this is available.
+                        Scratch.vm.exports.these_broke_before_and_will_break_again(),
+                    );
 
+                    compilerPatcher.addBlocks(Math3DBlocks);
 
-            runtime.on('PROJECT_STOP_ALL', () => {
-                console.log("Vapor3D: Project stopped. releasing all resources...");
+                    // inject our opcodes to the compiler
+                    compilerPatcher.monkeyPatch();
+
+                    console.log("Vapor3D: successfully patch compiler!");
+                } catch (e) {
+                    console.error("Vapor3D:", e);
+                }
+            } else {
+                console.warn("Vapor3D: compiler support is disabled");
+            }
+
+            runtime.on("PROJECT_STOP_ALL", () => {
+                console.log(
+                    "Vapor3D: Project stopped. releasing all resources...",
+                );
 
                 this.sceneHandlers.Scene_ClearAll();
                 this.engineHandlers.gl_ResetResources();
@@ -80,8 +130,11 @@ import { Registry } from './lib/Registry/Registry.js';
             // 绑定所有 Handler 方法到扩展实例
             const bindMethods = (instance) => {
                 const proto = Object.getPrototypeOf(instance);
-                Object.getOwnPropertyNames(proto).forEach(method => {
-                    if (method !== 'constructor' && typeof instance[method] === 'function') {
+                Object.getOwnPropertyNames(proto).forEach((method) => {
+                    if (
+                        method !== "constructor" &&
+                        typeof instance[method] === "function"
+                    ) {
                         this[method] = instance[method].bind(instance);
                     }
                 });
@@ -99,8 +152,8 @@ import { Registry } from './lib/Registry/Registry.js';
 
         getInfo() {
             return {
-                id: 'vapor3D',
-                name: 'Vapor 3D',
+                id: "vapor3D",
+                name: "Vapor 3D",
                 color1: "#2f2f36",
                 hideFromPalette: true,
                 blocks: [
@@ -122,11 +175,10 @@ import { Registry } from './lib/Registry/Registry.js';
                 ],
                 menus: {
                     ...EngineMenus,
-                }
+                },
             };
         }
     }
-
 
     // ==========================================
     // 包映射，侧边栏分类注入
@@ -139,7 +191,9 @@ import { Registry } from './lib/Registry/Registry.js';
         try {
             if (!this._blockInfo || !Array.isArray(this._blockInfo)) return res;
 
-            const ext = this._blockInfo.find(info => info && info.id === "vapor3D");
+            const ext = this._blockInfo.find(
+                (info) => info && info.id === "vapor3D",
+            );
 
             if (!ext || !ext.blocks) return res;
 
@@ -152,46 +206,59 @@ import { Registry } from './lib/Registry/Registry.js';
                 { name: "Scene", data: SceneBlocks, color: "#2f2f36" },
                 { name: "Timeline", data: TimelineBlocks, color: "#2f2f36" },
                 { name: "Loader", data: LoaderBlocks, color: "#2f2f36" },
-                { name: "CubeCamera", data: CubeCameraBlocks, color: "#2f2f36" },
+                {
+                    name: "CubeCamera",
+                    data: CubeCameraBlocks,
+                    color: "#2f2f36",
+                },
                 { name: "Math", data: Math3DBlocks, color: "#2f2f36" },
-                { name: "Text", data: TextBlocks, color: "#2f2f36" }
+                { name: "Text", data: TextBlocks, color: "#2f2f36" },
             ];
 
             // 构建每个子类别的 XML
-            groupDefinitions.forEach(group => {
-                const groupXml = group.data.map(def => {
-                    if (def === "---") return '<sep gap="36"/>';
-                    if (typeof def === 'object' && def.blockType === 'label') {
-                        return `<label text="${def.text}"/>`;
-                    }
-                    if (def.opcode) {
-                        const b = allBlocks.find(ab => ab && ab.info && ab.info.opcode === def.opcode);
-                        if (!b) return '';
-                        return b.xml || '';
-                    }
-                    return '';
-                }).join('');
+            groupDefinitions.forEach((group) => {
+                const groupXml = group.data
+                    .map((def) => {
+                        if (def === "---") return '<sep gap="36"/>';
+                        if (
+                            typeof def === "object" &&
+                            def.blockType === "label"
+                        ) {
+                            return `<label text="${def.text}"/>`;
+                        }
+                        if (def.opcode) {
+                            const b = allBlocks.find(
+                                (ab) =>
+                                    ab &&
+                                    ab.info &&
+                                    ab.info.opcode === def.opcode,
+                            );
+                            if (!b) return "";
+                            return b.xml || "";
+                        }
+                        return "";
+                    })
+                    .join("");
 
                 if (groupXml) {
                     res.push({
                         id: `v3d_cat_${group.name.toLowerCase()}`,
-                        xml: `<category name="${group.name}" id="v3d_cat_${group.name.toLowerCase()}" colour="${group.color}" secondaryColour="${group.color}">${groupXml}</category>`
+                        xml: `<category name="${group.name}" id="v3d_cat_${group.name.toLowerCase()}" colour="${group.color}" secondaryColour="${group.color}">${groupXml}</category>`,
                     });
                 }
             });
 
-            return res.map(item => {
+            return res.map((item) => {
                 if (item.id === "vapor3D") {
                     // 保留 Vapor 3D 的名字，但清空其内部积木
                     // 占位符，防止 ccw 发布检查时报错
                     return {
                         id: "vapor3D",
-                        xml: `<category name="Vapor 3D" id="vapor3D" colour="#2f2f36" secondaryColour="#2f2f36"></category>`
+                        xml: `<category name="Vapor 3D" id="vapor3D" colour="#2f2f36" secondaryColour="#2f2f36"></category>`,
                     };
                 }
                 return item;
             });
-
         } catch (e) {
             return res;
         }
