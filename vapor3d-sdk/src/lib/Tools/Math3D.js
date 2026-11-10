@@ -7,6 +7,8 @@ export class Math3D {
     // ==========================================
     //                  vec3
     // ==========================================
+    static vec3_zerod = [0, 0, 0];
+
     static vec3_create(x = 0, y = 0, z = 0) {
         return [x, y, z];
     }
@@ -61,9 +63,7 @@ export class Math3D {
     // ==========================================
     //                 mat4
     // ==========================================
-    static mat4_identity() {
-        return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-    }
+    static mat4_identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
     static mat4_perspective(fovy, aspect, near, far) {
         const f = Math.tan(Math.PI * 0.5 - 0.5 * fovy);
@@ -411,7 +411,7 @@ export class Math3D {
             b03 * b08 -
             b04 * b07 +
             b05 * b06;
-        if (!det) return this.mat4_identity();
+        if (!det) return this.mat4_identity;
         const invDet = 1.0 / det;
         return [
             (m5 * b11 - m6 * b10 + m7 * b09) * invDet,

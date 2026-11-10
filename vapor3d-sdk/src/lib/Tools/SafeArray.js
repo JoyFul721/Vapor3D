@@ -41,7 +41,6 @@ export class SafeArray extends String {
      * @returns {SafeArray}
      */
     static createWithString(string) {
-        console.log("parse new SafeArray");
         try {
             const array = JSON.parse(string);
             return new SafeArray(string, array);
