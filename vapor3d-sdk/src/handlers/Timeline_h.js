@@ -39,6 +39,12 @@ export class TimelineHandlers {
         timeline.addClip(CLIP_NAME, animation, MODE);
     }
 
+    Timeline_RemoveClip({ INDEX, CLIP_NAME }) {
+        const timeline = this.registry.get('timelines', INDEX);
+        if (!timeline) return;
+        timeline.removeClip(CLIP_NAME);
+    }
+
     Timeline_SetClipProperty({ INDEX, CLIP_NAME, PROP, VALUE }) {
         const timeline = this.registry.get('timelines', INDEX);
         const clip = timeline?.clips.get(CLIP_NAME);

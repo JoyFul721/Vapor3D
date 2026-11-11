@@ -29,6 +29,15 @@ export const TimelineBlocks = [
         }
     },
     {
+        opcode: "Timeline_RemoveClip",
+        blockType: "command",
+        text: "Timeline [INDEX] .removeClip [CLIP_NAME]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            CLIP_NAME: { type: "string", defaultValue: "idle" }
+        }
+    },
+    {
         opcode: "Timeline_SetClipProperty",
         blockType: "command",
         text: "Timeline [INDEX] .Clip [CLIP_NAME] .set [PROP] [VALUE]",

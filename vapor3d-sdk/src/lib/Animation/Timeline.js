@@ -24,6 +24,10 @@ export class Timeline {
         this.clips.set(clipID, clip);
     }
 
+    removeClip(clipID) {
+        return this.clips.delete(clipID);
+    }
+
     applyAt(time) {
         this.currentTime = time;
 
