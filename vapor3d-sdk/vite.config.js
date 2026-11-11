@@ -1,22 +1,22 @@
-import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { defineConfig } from "vite";
+import { resolve } from "node:path";
 
 export default defineConfig({
-  server: {
-    port: 8000,
-    cors: true
-  },
-  build: {
-    minify: true,
-
-    lib: {
-      entry: resolve(__dirname, 'src/index.js'),
-      name: 'Vapor3D',
-      fileName: () => 'vapor3d.js',
-      formats: ['iife']
+    server: {
+        port: 8000,
+        cors: true,
     },
-    outDir: 'dist',
+    build: {
+        minify: true,
 
-    sourcemap: false
-  }
+        lib: {
+            entry: resolve(__dirname, "src/index.js"),
+            name: "Vapor3D",
+            fileName: () => "vapor3d.js",
+            formats: ["iife"],
+        },
+        outDir: "dist",
+
+        sourcemap: false,
+    },
 });

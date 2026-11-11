@@ -140,6 +140,27 @@ import { SafeArray } from "./lib/Tools/SafeArray.js";
                             ? list.value.map(Number)
                             : Math3D.mat4_identity;
                     });
+                    compilerPatcher.inject("TRS", (target, input) => {
+                        if (input instanceof SafeArray) return input.underlying;
+
+                        if (
+                            typeof input === "string" &&
+                            input.startsWith("[")
+                        ) {
+                            const array = SafeArray.createWithString(input);
+                            return array
+                                ? array.underlying
+                                : Math3D.trs_default;
+                        }
+
+                        const list = target.lookupVariableByNameAndType(
+                            input,
+                            "list",
+                        );
+                        return list
+                            ? list.value.map(Number)
+                            : Math3D.trs_default;
+                    });
 
                     compilerPatcher.addBlocks(Math3DBlocks);
 

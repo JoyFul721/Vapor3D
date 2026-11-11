@@ -380,6 +380,22 @@ export const Math3DBlocks = [
             SY: { type: "number", defaultValue: 1 },
             SZ: { type: "number", defaultValue: 1 },
         },
+        compile({ PX, PY, PZ, RX, RY, RZ, SX, SY, SZ }, { TYPE_STRING }) {
+            const px = `Number(${this.descendInput(PX).asUnknown()})`;
+            const py = `Number(${this.descendInput(PY).asUnknown()})`;
+            const pz = `Number(${this.descendInput(PZ).asUnknown()})`;
+            const rx = `Number(${this.descendInput(RX).asUnknown()})`;
+            const ry = `Number(${this.descendInput(RY).asUnknown()})`;
+            const rz = `Number(${this.descendInput(RZ).asUnknown()})`;
+            const sx = `Number(${this.descendInput(SX).asUnknown()})`;
+            const sy = `Number(${this.descendInput(SY).asUnknown()})`;
+            const sz = `Number(${this.descendInput(SZ).asUnknown()})`;
+
+            return [
+                `(${LIB("SafeArray")}.createWithArray([${px},${py},${pz},${rx},${ry},${rz},${sx},${sy},${sz}]))`,
+                TYPE_STRING,
+            ];
+        },
     },
     {
         opcode: "TRS_Decompose",
@@ -390,6 +406,14 @@ export const Math3DBlocks = [
             TYPE: { type: "string", menu: "TRSTypeMenu" }, // Pos, Rot, Scale
             AXIS: { type: "string", menu: "axisMenu" }, // X, Y, Z
         },
+        compile({ TRS, TYPE, AXIS }, { TYPE_NUMBER }) {
+            const trs = `${LIB("TRS")}(target,${this.descendInput(TRS).asUnknown()})`;
+
+            return [
+                `(${LIB("Math3D")}.TRS_decompose(${trs}, "${TYPE}", "${AXIS}"))`,
+                TYPE_NUMBER,
+            ];
+        },
     },
     {
         opcode: "TRS_Add",
@@ -398,6 +422,15 @@ export const Math3DBlocks = [
         arguments: {
             TRSA: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
             TRSB: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
+        },
+        compile({ TRSA, TRSB }, { TYPE_STRING }) {
+            const trsa = `${LIB("TRS")}(target,${this.descendInput(TRSA).asUnknown()})`;
+            const trsb = `${LIB("TRS")}(target,${this.descendInput(TRSB).asUnknown()})`;
+
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.TRS_add(${trsa}, ${trsb})))`,
+                TYPE_STRING,
+            ];
         },
     },
     {
@@ -408,6 +441,16 @@ export const Math3DBlocks = [
             A: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
             B: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
             T: { type: "number", defaultValue: 0.5 },
+        },
+        compile({ A, B, T }, { TYPE_STRING }) {
+            const trsa = `${LIB("TRS")}(target,${this.descendInput(A).asUnknown()})`;
+            const trsb = `${LIB("TRS")}(target,${this.descendInput(B).asUnknown()})`;
+            const t = `Math.min(Math.max(Number(${this.descendInput(T).asUnknown()}),0),1)`;
+
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.TRS_lerp(${trsa}, ${trsb}, ${t})))`,
+                TYPE_STRING,
+            ];
         },
     },
 

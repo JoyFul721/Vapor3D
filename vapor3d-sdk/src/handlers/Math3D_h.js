@@ -7,6 +7,7 @@ export class Math3DHandlers {
 
     static ZEROD_VEC = SafeArray.createWithArray([0, 0, 0]);
     static MAT4_IDENTITY = SafeArray.createWithArray(Math3D.mat4_identity);
+    static TRS_DEFAULT = SafeArray.createWithArray([0, 0, 0, 0, 0, 0, 1, 1, 1]);
 
     static parseInputOrIdentity(input, util) {
         return (Utils.parseInput(input, util) || Math3DHandlers.MAT4_IDENTITY)
@@ -15,6 +16,11 @@ export class Math3DHandlers {
 
     static parseInputOrZerod(input, util) {
         return (Utils.parseInput(input, util) || Math3DHandlers.ZEROD_VEC)
+            .underlying;
+    }
+
+    static parseInputOrTRSDefault(input, util) {
+        return (Utils.parseInput(input, util) || Math3DHandlers.TRS_DEFAULT)
             .underlying;
     }
 
@@ -132,29 +138,36 @@ export class Math3DHandlers {
     }
 
     TRS_Create(args) {
-        return Math3D.TRS_create(
-            args.PX,
-            args.PY,
-            args.PZ,
-            args.RX,
-            args.RY,
-            args.RZ,
-            args.SX,
-            args.SY,
-            args.SZ,
+        return SafeArray.createWithArray(
+            Math3D.TRS_create(
+                args.PX,
+                args.PY,
+                args.PZ,
+                args.RX,
+                args.RY,
+                args.RZ,
+                args.SX,
+                args.SY,
+                args.SZ,
+            ),
         );
     }
 
-    TRS_Decompose(args) {
-        return Math3D.TRS_decompose(args.TRS, args.TYPE, args.AXIS); // 好像没必要用 json.stringify
+    TRS_Decompose(args, util) {
+        const trs = Math3DHandlers.parseInputOrTRSDefault(args.TRS, util);
+        return Math3D.TRS_decompose(trs, args.TYPE, args.AXIS);
     }
 
-    TRS_Add(args) {
-        return Math3D.TRS_add(args.TRSA, args.TRSB);
+    TRS_Add(args, util) {
+        const trsa = Math3DHandlers.parseInputOrTRSDefault(args.TRSA, util);
+        const trsb = Math3DHandlers.parseInputOrTRSDefault(args.TRSB, util);
+        return SafeArray.createWithArray(Math3D.TRS_add(trsa, trsb));
     }
 
-    TRS_Lerp(args) {
+    TRS_Lerp(args, util) {
+        const trsa = Math3DHandlers.parseInputOrTRSDefault(args.A, util);
+        const trsb = Math3DHandlers.parseInputOrTRSDefault(args.B, util);
         const t = Math.max(0, Math.min(1, Number(args.T) || 0));
-        return Math3D.TRS_lerp(args.A, args.B, t);
+        return SafeArray.createWithArray(Math3D.TRS_lerp(trsa, trsb, t));
     }
 }
