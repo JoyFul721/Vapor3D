@@ -92,6 +92,7 @@ export const EngineMenus = {
                 { text: "Mesh", value: "mesh" },
                 { text: "Skeleton", value: "skeleton" }
         ],
+        canvasSize: ["width", "height"],
 };
 
 
@@ -100,6 +101,7 @@ export const EngineBlocks = [
         { opcode: "gl_Init", blockType: "command", text: "Core.init" },
         { opcode: "gl_ResetResources", blockType: "command", text: "Core.resetAll" },
         { opcode: "gl_Present", blockType: "command", text: "Core.updateLayer" },
+        { opcode: "gl_GetCanvasSize", blockType: "reporter", text: "Core.canvas [SIZE]", arguments: { SIZE: { type: "string", menu: "canvasSize", defaultValue: "width" } } },
 
         { blockType: "label", text: "Shader" },
         { opcode: "Shader_Create", blockType: "reporter", text: "new Shader [NAME] [VS] [FS]", arguments: { NAME: { type: "string" }, VS: { type: "string" }, FS: { type: "string" } } },
