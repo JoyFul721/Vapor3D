@@ -245,18 +245,14 @@ import { SafeArray } from "./lib/Tools/SafeArray.js";
 
             // 定义子类别映射
             const groupDefinitions = [
-                { name: "Inspector", data: InspectorBlocks, color: "#2f2f36" },
-                { name: "Engine", data: EngineBlocks, color: "#2f2f36" },
-                { name: "Scene", data: SceneBlocks, color: "#2f2f36" },
-                { name: "Timeline", data: TimelineBlocks, color: "#2f2f36" },
-                { name: "Loader", data: LoaderBlocks, color: "#2f2f36" },
-                {
-                    name: "CubeCamera",
-                    data: CubeCameraBlocks,
-                    color: "#2f2f36",
-                },
-                { name: "Math", data: Math3DBlocks, color: "#2f2f36" },
-                { name: "Text", data: TextBlocks, color: "#2f2f36" },
+                { name: "Inspector",  data: InspectorBlocks,  color: "#2f2f36", secondary: "#1e1e24" },
+                { name: "Engine",     data: EngineBlocks,     color: "#2f2f36", secondary: "#1e1e24" },
+                { name: "Scene",      data: SceneBlocks,      color: "#2f2f36", secondary: "#1e1e24" },
+                { name: "Timeline",   data: TimelineBlocks,   color: "#2f2f36", secondary: "#1e1e24" },
+                { name: "Loader",     data: LoaderBlocks,     color: "#2f2f36", secondary: "#1e1e24" },
+                { name: "CubeCamera", data: CubeCameraBlocks, color: "#2f2f36", secondary: "#1e1e24" },
+                { name: "Math",       data: Math3DBlocks,     color: "#2f2f36", secondary: "#1e1e24" },
+                { name: "Text",       data: TextBlocks,       color: "#2f2f36", secondary: "#1e1e24" },
             ];
 
             // temp
@@ -290,7 +286,7 @@ import { SafeArray } from "./lib/Tools/SafeArray.js";
                 if (groupXml) {
                     newCategories.push({
                         id: `v3d_cat_${group.name.toLowerCase()}`,
-                        xml: `<category name="${group.name}" id="v3d_cat_${group.name.toLowerCase()}" colour="${group.color}" secondaryColour="${group.color}">${groupXml}</category>`,
+                        xml: `<category name="${group.name}" id="v3d_cat_${group.name.toLowerCase()}" colour="${group.color}" secondaryColour="${group.secondary}">${groupXml}</category>`,
                     });
                 }
             });
