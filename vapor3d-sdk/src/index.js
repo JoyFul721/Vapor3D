@@ -48,7 +48,7 @@ import { SafeArray } from "./lib/Tools/SafeArray.js";
                     return (
                         this._gl?.canvas ||
                         runtime._gl?.canvas ||
-                        document.querySelector("canvas")
+                        globalThis.document?.querySelector("canvas")
                     );
                 },
                 enumerable: true,
