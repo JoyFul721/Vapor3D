@@ -128,7 +128,15 @@ export class EngineHandlers {
         const shader = this.registry.get('shaders', INDEX);
         if (!shader) return;
         const mat = Utils.parseInput(VAL, util);
-        if (mat) shader.setMat4(NAME, ArrayBuffer.isView(mat) ? mat : new Float32Array(mat));
+        if (mat) {
+            const underlyingMat = mat.underlying;
+            shader.setMat4(
+                NAME,
+                ArrayBuffer.isView(underlyingMat)
+                    ? underlyingMat
+                    : new Float32Array(underlyingMat),
+            );
+        }
     }
     Shader_SetVec4({ INDEX, NAME, X, Y, Z, W }) {
         const shader = this.registry.get('shaders', INDEX);
