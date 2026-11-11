@@ -436,8 +436,10 @@ export class Math3D {
     // ==========================================
     //                 TRS
     // ==========================================
+    static trs_default = [0, 0, 0, 0, 0, 0, 1, 1, 1];
+
     static TRS_create(px, py, pz, rx, ry, rz, sx, sy, sz) {
-        return JSON.stringify([
+        return [
             Number(px),
             Number(py),
             Number(pz),
@@ -447,11 +449,10 @@ export class Math3D {
             Number(sx),
             Number(sy),
             Number(sz),
-        ]);
+        ];
     }
 
-    static TRS_decompose(trsString, type, axis) {
-        const d = JSON.parse(trsString);
+    static TRS_decompose(d, type, axis) {
         if (!Array.isArray(d)) return 0;
 
         const typeMap = { Pos: 0, Rot: 3, Scale: 6 };
@@ -527,19 +528,13 @@ export class Math3D {
         );
     }
 
-    static TRS_parse(trsString) {
-        try {
-            const d = JSON.parse(trsString);
-            if (!Array.isArray(d) || d.length < 9) return null;
-
-            return {
-                position: [d[0], d[1], d[2]],
-                euler: [d[3], d[4], d[5]],
-                scale: [d[6], d[7], d[8]],
-            };
-        } catch (e) {
-            return null;
-        }
+    static TRS_parse(d) {
+        if (d.length < 9) return null;
+        return {
+            position: [d[0], d[1], d[2]],
+            euler: [d[3], d[4], d[5]],
+            scale: [d[6], d[7], d[8]],
+        };
     }
 
     // ==========================================
