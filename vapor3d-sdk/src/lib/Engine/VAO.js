@@ -169,8 +169,18 @@ export class VAO {
     // 静态预制件生成
     static createScreenQuad(gl) {
         const vao = new VAO(gl);
-        vao.addBuffer(new Float32Array([-1, 1, 0, -1, -1, 0, 1, 1, 0, 1, 1, 0, -1, -1, 0, 1, -1, 0]), 0, 3);
-        vao.addBuffer(new Float32Array([0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0]), 1, 2);
+        vao.addBuffer(new Float32Array([
+            -1, 1, 0,  -1, -1, 0,   1, 1, 0,
+             1, 1, 0,  -1, -1, 0,   1, -1, 0
+        ]), 0, 3);
+        vao.addBuffer(new Float32Array([
+            0, 0, 1,   0, 0, 1,   0, 0, 1,
+            0, 0, 1,   0, 0, 1,   0, 0, 1
+        ]), 1, 3);
+        vao.addBuffer(new Float32Array([
+            0, 1,   0, 0,   1, 1,
+            1, 1,   0, 0,   1, 0
+        ]), 2, 2);
         vao.defaultCount = 6;
         return vao;
     }
@@ -185,18 +195,20 @@ export class VAO {
             { p: [[-1, -1, -1], [1, -1, -1], [1, -1, 1], [-1, -1, 1]], n: [0, -1, 0] }
         ];
         const uv = [[0, 0], [1, 0], [1, 1], [0, 1]];
-        const positions = [], uvs = [], indices = [];
+        const positions = [], normals = [], uvs = [], indices = [];
         for (const face of faces) {
             const base = positions.length / 3;
             for (let i = 0; i < 4; i++) {
                 positions.push(...face.p[i]);
+                normals.push(...face.n);
                 uvs.push(...uv[i]);
             }
             indices.push(base, base + 1, base + 2, base + 2, base + 3, base);
         }
         const vao = new VAO(gl);
         vao.addBuffer(new Float32Array(positions), 0, 3);
-        vao.addBuffer(new Float32Array(uvs), 1, 2);
+        vao.addBuffer(new Float32Array(normals), 1, 3);
+        vao.addBuffer(new Float32Array(uvs), 2, 2);
         vao.setIndices(new Uint16Array(indices));
         vao.defaultCount = 36;
         return vao;
@@ -221,9 +233,11 @@ export class VAO {
                 indices.push(first, first + 1, second, second, first + 1, second + 1);
             }
         }
+        const posArr = new Float32Array(pos);
         const vao = new VAO(gl);
-        vao.addBuffer(new Float32Array(pos), 0, 3);
-        vao.addBuffer(new Float32Array(uv), 1, 2);
+        vao.addBuffer(posArr, 0, 3);
+        vao.addBuffer(posArr, 1, 3);
+        vao.addBuffer(new Float32Array(uv), 2, 2);
         vao.setIndices(new Uint16Array(indices));
         vao.defaultCount = indices.length;
         return vao;
