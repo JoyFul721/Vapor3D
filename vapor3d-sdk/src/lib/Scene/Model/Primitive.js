@@ -1,4 +1,4 @@
-// /lib/Mesh/Primitive.js
+// /lib/Scene/Model/Primitive.js
 
 /*
   The actual draw unit. 
