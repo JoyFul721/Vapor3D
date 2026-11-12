@@ -54,11 +54,20 @@ jobs:
       - name: Read readme
         id: read_readme
         run: |
+          delimiter="$(openssl rand -hex 16)"
           {
-            echo 'content<<EOF'
+            echo "content<<${delimiter}"
             cat ../.github/README.md
-            echo 'EOF'
+            echo
+            echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Handle Tag Name
+        id: handle_tag_name
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: echo "tag_name=${TAG_NAME#v}" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Vapor Deploy
@@ -70,7 +79,7 @@ jobs:
           token: ${{ secrets.CCW_TOKEN }}
           eid: vapor3D
           cover: .github/cover.png
-          version: ${{ github.event.release.tag_name }}
+          version: ${{ steps.handle_tag_name.outputs.tag_name }}
           name: Vapor 3D
           desc: Vapor 3D - WebGL2 3D Engine
           readme: ${{ steps.read_readme.outputs.content }}
