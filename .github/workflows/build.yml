@@ -57,7 +57,7 @@ jobs:
           delimiter="$(openssl rand -hex 16)"
           {
             echo "content<<${delimiter}"
-            cat ../.github/README.md
+            cat ../.github/docs.md
             echo
             echo "${delimiter}"
           } >> "$GITHUB_OUTPUT"
