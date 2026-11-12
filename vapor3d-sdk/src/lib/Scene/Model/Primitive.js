@@ -1,7 +1,11 @@
+// MeshNode.js
+
+// glTF mesh.primitives
 export class Primitive {
-    constructor(vao, material, hasUV2 = false) {
+    constructor(vao, material) {
         this.vao = vao;
         this.material = material;
-        this.hasUV2 = hasUV2;
+
+        this.hasUV2 = false;
     }
 }
