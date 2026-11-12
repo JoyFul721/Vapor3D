@@ -2,8 +2,12 @@
 
 import { GltfLoader } from 'gltf-loader-ts';
 
-import { Mesh, VAO, Texture2D, TextureCube, Math3D, Utils, Skeleton, Animation, TransformNode, MeshNode, AssetContainer } from '../index.js';
-
+import {
+    Primitive, Material, Mesh,
+    VAO, Texture2D, TextureCube,
+    Math3D, Utils, Skeleton, Animation,
+    TransformNode, MeshNode, AssetContainer
+} from '../index.js';
 
 
 export class Loader {
@@ -24,12 +28,8 @@ export class Loader {
                 registryTextures: this.registry.textures?.length
             });
 
-            const meshNodesList = [];
-            const vaoLibrary = new Map();
-            const textureCache = new Map();
-            const materialCache = new Map();
-
             const sourceID = `MODEL_${modelID}`;
+            const meshNodesList = [];
 
             // 1x1 占位贴图
             const valueTextureCache = new Map();
@@ -46,264 +46,290 @@ export class Loader {
                 return tex;
             };
 
-            // 辅助函数：注册到 Registry 并标记索引
+            // 注册到 Registry 并标记索引
             const reg = (type, obj) => {
                 const idx = this.registry.allocate(type, obj);
-                obj.registryIndex = idx; // 将索引反向注入对象
+                obj.registryIndex = idx;
                 return idx;
             };
 
-            // 1 - 纹理去重加载
+            /*
+            Texture
+            */
+            const textures = [];
             if (asset.gltf.textures) {
                 for (let i = 0; i < asset.gltf.textures.length; i++) {
-                    const resId = `${sourceID}:TEX:${i}`;
+                    const texDef = asset.gltf.textures[i];
+                    if (!texDef) { textures[i] = null; continue; }
 
-                    const tex = await targetScene.getOrCreateTexture(resId, async () => {
-                        const texDef = asset.gltf.textures[i];
-                        if (!texDef) return null;
-
-                        // 图片源查找
-                        let imgIdx = texDef.source;
-                        if (imgIdx === undefined && texDef.extensions) {
-                            for (const k in texDef.extensions) {
-                                if (texDef.extensions[k].source !== undefined) {
-                                    imgIdx = texDef.extensions[k].source;
-                                    break;
-                                }
+                    // image source
+                    let imgIdx = texDef.source;
+                    if (imgIdx === undefined && texDef.extensions) {
+                        for (const k in texDef.extensions) {
+                            if (texDef.extensions[k].source !== undefined) {
+                                imgIdx = texDef.extensions[k].source;
+                                break;
                             }
                         }
-                        if (imgIdx === undefined) return null;
+                    }
+                    if (imgIdx === undefined) { textures[i] = null; continue; }
 
-                        const rawImg = await asset.imageData.get(imgIdx);
-                        const img = (rawImg && rawImg.image) ? rawImg.image : rawImg;
-                        if (!img || img.width === 0) return null;
+                    const rawImg = await asset.imageData.get(imgIdx);
+                    const img = (rawImg && rawImg.image) ? rawImg.image : rawImg;
+                    if (!img || img.width === 0) { textures[i] = null; continue; }
 
-                        const t = new Texture2D(this.gl);
-                        reg('textures', t);
-                        t.uploadImageBitmap(img);
-                        t.generateMipmap();
-                        t.setFilter("LINEAR_MIPMAP_LINEAR", "LINEAR");
-
-                        return t;
-                    });
-                    textureCache.set(i, tex);
+                    const t = new Texture2D(this.gl);
+                    reg('textures', t);
+                    t.uploadImageBitmap(img);
+                    t.generateMipmap();
+                    t.setFilter("LINEAR_MIPMAP_LINEAR", "LINEAR");
+                    textures[i] = t;
                 }
             }
 
-            // 2 - 解析 Mesh
-            // 基于 SourceID + Accessor 索引去重
+            /*
+            Material
+            one per gltf index
+            */
+            const materials = [];
+
+            const buildMaterial = (matData, fallbackName) => {
+                const mat = new Material();
+
+                const pbr = matData.pbrMetallicRoughness;
+                let baseColor = pbr?.baseColorFactor || [1.0, 1.0, 1.0, 1.0];
+                let roughness = pbr?.roughnessFactor !== undefined ? pbr.roughnessFactor : 1.0;
+                let metallic = pbr?.metallicFactor !== undefined ? pbr.metallicFactor : 1.0;
+
+                mat.baseColor = baseColor;
+                mat.roughness = roughness;
+                mat.metalness = metallic;
+                mat.alpha = baseColor[3];
+
+                // Albedo Tex
+                if (pbr?.baseColorTexture) {
+                    mat.albedoTex = textures[pbr.baseColorTexture.index];
+                } else {
+                    const r = Math.round(baseColor[0] * 255);
+                    const g = Math.round(baseColor[1] * 255);
+                    const b = Math.round(baseColor[2] * 255);
+                    const a = Math.round(baseColor[3] * 255);
+                    mat.albedoTex = getOrCreateValueTexture(`col_${r}_${g}_${b}_${a}`, r, g, b, a);
+                }
+
+                // ORM: metallicRoughness first, occlusion as fallback
+                if (pbr?.metallicRoughnessTexture) {
+                    mat.ormTex = textures[pbr.metallicRoughnessTexture.index];
+                } else if (matData.occlusionTexture) {
+                    mat.ormTex = textures[matData.occlusionTexture.index];
+                } else {
+                    const r = 255;
+                    const g = Math.round(roughness * 255);
+                    const b = Math.round(metallic * 255);
+                    mat.ormTex = getOrCreateValueTexture(`orm_${g}_${b}`, r, g, b);
+                }
+
+                // Normal Tex
+                const nrmIdx = matData.normalTexture?.index;
+                mat.normalTex = (nrmIdx !== undefined && textures[nrmIdx])
+                    ? textures[nrmIdx]
+                    : getOrCreateValueTexture('default_normal', 128, 128, 255);
+
+                // Emissive Tex
+                const emiIdx = matData.emissiveTexture?.index;
+                mat.emissiveTex = (emiIdx !== undefined && textures[emiIdx])
+                    ? textures[emiIdx]
+                    : getOrCreateValueTexture('default_emissive', 0, 0, 0);
+
+                mat.name = matData.name || fallbackName;
+                return mat;
+            };
+
+            // shared fallback for primitives without a gltf material, built lazily
+            let defaultMaterial = null;
+            const getDefaultMaterial = () => {
+                if (defaultMaterial) return defaultMaterial;
+
+                defaultMaterial = new Material();
+                defaultMaterial.name = `${sourceID}:MAT:default`;
+                defaultMaterial.baseColor = [1.0, 1.0, 1.0, 1.0];
+                defaultMaterial.alpha = 1;
+                defaultMaterial.albedoTex = getOrCreateValueTexture('default_white', 255, 255, 255);
+                defaultMaterial.ormTex    = getOrCreateValueTexture('default_orm', 255, 255, 0);
+                defaultMaterial.normalTex = getOrCreateValueTexture('default_normal', 128, 128, 255);
+                defaultMaterial.emissiveTex = getOrCreateValueTexture('default_emissive', 0, 0, 0);
+
+                reg('materials', defaultMaterial);
+                return defaultMaterial;
+            };
+
+            if (asset.gltf.materials) {
+                for (let i = 0; i < asset.gltf.materials.length; i++) {
+                    const mat = buildMaterial(asset.gltf.materials[i], `${sourceID}:MAT:${i}`);
+                    reg('materials', mat);
+                    materials[i] = mat;
+                }
+            }
+
+            /*
+            Mesh
+            one gltf mesh -> one Mesh, one primitive -> one VAO + Material ref
+            */
+            const meshes = [];
+
             if (asset.gltf.meshes) {
                 for (let mIdx = 0; mIdx < asset.gltf.meshes.length; mIdx++) {
                     const gltfMesh = asset.gltf.meshes[mIdx];
-                    const meshInstances = [];
+                    const mesh = new Mesh(gltfMesh.name || `${modelID}_mesh${mIdx}`);
 
                     for (let pIdx = 0; pIdx < gltfMesh.primitives.length; pIdx++) {
                         const prim = gltfMesh.primitives[pIdx];
+                        const vao = new VAO(this.gl);
+                        reg('vaos', vao);
 
+                        // POS
                         const posIdx = prim.attributes.POSITION;
-                        const vaoResId = `${sourceID}:ACC:${posIdx}`;
-
-                        const vao = await targetScene.getOrCreateVAO(vaoResId, async () => {
-                            const v = new VAO(this.gl);
-                            reg('vaos', v);
-
-                            // POS
-                            if (posIdx !== undefined) {
-                                const raw = await asset.accessorData(posIdx);
-                                v.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 0, 3);
-                            }
-
-                            // NORMAL
-                            const normIdx = prim.attributes.NORMAL;
-                            if (normIdx !== undefined) {
-                                const raw = await asset.accessorData(normIdx);
-                                v.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 1, 3);
-                            }
-
-                            // UV0
-                            const uvIdx = prim.attributes.TEXCOORD_0;
-                            if (uvIdx !== undefined) {
-                                const raw = await asset.accessorData(uvIdx);
-                                v.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 2, 2);
-                            }
-
-                            // UV1
-                            const uv2Idx = prim.attributes.TEXCOORD_1;
-                            if (uv2Idx !== undefined) {
-                                const raw = await asset.accessorData(uv2Idx);
-                                v.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 3, 2);
-                            }
-
-                            // JOINT
-                            const jIdx = prim.attributes.JOINTS_0;
-                            if (jIdx !== undefined) {
-                                const raw = await asset.accessorData(jIdx);
-                                const accessor = asset.gltf.accessors[jIdx]; // 获取 accessor
-                                let jointsData;
-
-                                // 根据 accessor.componentType 选择 TypedArray
-                                switch (accessor.componentType) {
-                                    case 5121: // UNSIGNED_BYTE
-                                        jointsData = new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
-                                        break;
-                                    case 5123: // UNSIGNED_SHORT
-                                        jointsData = new Uint16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2);
-                                        break;
-                                    default:
-                                        console.error(`Vapor3D: Unsupported joint component type: ${accessor.componentType}`);
-                                        jointsData = new Uint8Array(0);
-                                        break;
-                                }
-
-                                // 将整数索引转换为 Float32Array，vao 接收 float 数据
-                                const jointsFloat = new Float32Array(jointsData);
-                                v.addBuffer(jointsFloat, 4, 4);
-                            }
-
-                            // 有关二进制解析的均借助了 AI 编程
-                            const wIdx = prim.attributes.WEIGHTS_0; // weight
-                            if (wIdx !== undefined) {
-                                const raw = await asset.accessorData(wIdx);
-                                const accessor = asset.gltf.accessors[wIdx];
-                                let weightsFloat;
-
-                                if (accessor.componentType === 5126) { // FLOAT
-                                    weightsFloat = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice();
-                                } else if (accessor.componentType === 5121) { // UNSIGNED_BYTE (Normalized)
-                                    const arr = new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
-                                    weightsFloat = new Float32Array(arr.length);
-                                    for (let i = 0; i < arr.length; i++) weightsFloat[i] = arr[i] / 255.0;
-                                } else if (accessor.componentType === 5123) { // UNSIGNED_SHORT (Normalized)
-                                    const arr = new Uint16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2);
-                                    weightsFloat = new Float32Array(arr.length);
-                                    for (let i = 0; i < arr.length; i++) weightsFloat[i] = arr[i] / 65535.0;
-                                } else {
-                                    console.error(`Vapor3D: Unsupported weights component type: ${accessor.componentType}`);
-                                    weightsFloat = new Float32Array(0);
-                                }
-
-                                for (let i = 0; i < weightsFloat.length; i += 4) {
-                                    let sum = weightsFloat[i] + weightsFloat[i + 1] + weightsFloat[i + 2] + weightsFloat[i + 3];
-                                    if (sum > 0.0001) {
-                                        weightsFloat[i] /= sum;
-                                        weightsFloat[i + 1] /= sum;
-                                        weightsFloat[i + 2] /= sum;
-                                        weightsFloat[i + 3] /= sum;
-                                    } else {
-                                        // 如果都没有权重，设置第一根为 1.0
-                                        weightsFloat[i] = 1.0;
-                                        weightsFloat[i + 1] = 0.0;
-                                        weightsFloat[i + 2] = 0.0;
-                                        weightsFloat[i + 3] = 0.0;
-                                    }
-                                }
-
-                                v.addBuffer(weightsFloat, 5, 4);
-                            }
-
-                            if (prim.indices !== undefined) { // indices
-                                const raw = await asset.accessorData(prim.indices);
-                                const acc = asset.gltf.accessors[prim.indices];
-                                const is32 = acc.componentType === 5125;
-                                const arr = is32
-                                    ? new Uint32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice()
-                                    : new Uint16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2).slice();
-                                v.setIndices(arr, is32 ? this.gl.UNSIGNED_INT : this.gl.UNSIGNED_SHORT);
-                            } else {
-                                v.defaultCount = v.vbos.length > 0 ? (await asset.accessorData(posIdx)).byteLength / 12 : 0;
-                            }
-
-                            return v;
-                        });
-
-                        // 材质
-                        const meshInstance = new Mesh(vao);
-                        const hasUV2 = (prim.attributes.TEXCOORD_1 !== undefined);
-
-                        const matKey = prim.material;
-                        let mat = materialCache.get(matKey);
-
-                        if (mat) {
-                            // 命中：复用已注册的材质对象，跳过所有解析
-                            meshInstance.material = mat;
-                        } else {
-                            // 未命中，填充材质
-                            mat = meshInstance.material;
-                            let matName;
-
-                            if (matKey !== undefined && asset.gltf.materials && asset.gltf.materials[matKey]) {
-                                const matData = asset.gltf.materials[matKey];
-
-                                let baseColor = matData.pbrMetallicRoughness?.baseColorFactor || [1.0, 1.0, 1.0, 1.0];
-                                let roughness = matData.pbrMetallicRoughness?.roughnessFactor !== undefined ? matData.pbrMetallicRoughness.roughnessFactor : 1.0;
-                                let metallic = matData.pbrMetallicRoughness?.metallicFactor !== undefined ? matData.pbrMetallicRoughness.metallicFactor : 1.0;
-
-                                mat.baseColor = baseColor;
-
-                                // Albedo
-                                if (matData.pbrMetallicRoughness?.baseColorTexture) {
-                                    mat.albedoTex = textureCache.get(matData.pbrMetallicRoughness.baseColorTexture.index);
-                                } else {
-                                    const r = Math.round(baseColor[0] * 255);
-                                    const g = Math.round(baseColor[1] * 255);
-                                    const b = Math.round(baseColor[2] * 255);
-                                    const a = Math.round(baseColor[3] * 255);
-                                    mat.albedoTex = getOrCreateValueTexture(`col_${r}_${g}_${b}_${a}`, r, g, b, a);
-                                }
-
-                                // ORM
-                                if (matData.pbrMetallicRoughness?.metallicRoughnessTexture) {
-                                    mat.ormTex = textureCache.get(matData.pbrMetallicRoughness.metallicRoughnessTexture.index);
-                                } else if (!mat.ormTex && matData.occlusionTexture) {
-                                    mat.ormTex = textureCache.get(matData.occlusionTexture.index);
-                                } else {
-                                    const r = 255;
-                                    const g = Math.round(roughness * 255);
-                                    const b = Math.round(metallic * 255);
-                                    mat.ormTex = getOrCreateValueTexture(`orm_${g}_${b}`, r, g, b);
-                                }
-
-                                // Normal Tex
-                                if (matData.normalTexture && matData.normalTexture.index !== undefined) {
-                                    mat.normalTex = textureCache.get(matData.normalTexture.index);
-                                } else {
-                                    mat.normalTex = getOrCreateValueTexture('default_normal', 128, 128, 255);
-                                }
-
-                                // Emissive Tex
-                                if (matData.emissiveTexture && matData.emissiveTexture.index !== undefined) {
-                                    mat.emissiveTex = textureCache.get(matData.emissiveTexture.index);
-                                } else {
-                                    mat.emissiveTex = getOrCreateValueTexture('default_emissive', 0, 0, 0);
-                                }
-
-                                matName = matData.name || `${sourceID}:MAT:${matKey}`;
-                            } else {
-                                mat.baseColor = [1.0, 1.0, 1.0, 1.0];
-                                mat.albedoTex = getOrCreateValueTexture('default_white', 255, 255, 255);
-                                mat.ormTex = getOrCreateValueTexture('default_orm', 255, 255, 0);
-                                mat.normalTex = getOrCreateValueTexture('default_normal', 128, 128, 255);
-                                mat.emissiveTex = getOrCreateValueTexture('default_emissive', 0, 0, 0);
-
-                                matName = `${sourceID}:MAT:default`;
-                            }
-
-                            mat.name = matName;
-                            const idx = reg('materials', mat);
-                            materialCache.set(matKey, mat);
+                        if (posIdx !== undefined) {
+                            const raw = await asset.accessorData(posIdx);
+                            vao.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 0, 3);
                         }
 
-                        if (hasUV2) mat.hasUV2 = true;
+                        // NORMAL
+                        const normIdx = prim.attributes.NORMAL;
+                        if (normIdx !== undefined) {
+                            const raw = await asset.accessorData(normIdx);
+                            vao.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 1, 3);
+                        }
 
-                        meshInstances.push(meshInstance);
+                        // UV0
+                        const uvIdx = prim.attributes.TEXCOORD_0;
+                        if (uvIdx !== undefined) {
+                            const raw = await asset.accessorData(uvIdx);
+                            vao.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 2, 2);
+                        }
+
+                        // UV1
+                        const uv2Idx = prim.attributes.TEXCOORD_1;
+                        if (uv2Idx !== undefined) {
+                            const raw = await asset.accessorData(uv2Idx);
+                            vao.addBuffer(new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice(), 3, 2);
+                        }
+
+                        // JOINT
+                        const jIdx = prim.attributes.JOINTS_0;
+                        if (jIdx !== undefined) {
+                            const raw = await asset.accessorData(jIdx);
+                            const accessor = asset.gltf.accessors[jIdx]; // 获取 accessor
+                            let jointsData;
+
+                            // accessor.componentType -> TypedArray
+                            switch (accessor.componentType) {
+                                case 5121: // UNSIGNED_BYTE
+                                    jointsData = new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
+                                    break;
+                                case 5123: // UNSIGNED_SHORT
+                                    jointsData = new Uint16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2);
+                                    break;
+                                default:
+                                    console.error(`Vapor3D: Unsupported joint component type: ${accessor.componentType}`);
+                                    jointsData = new Uint8Array(0);
+                                    break;
+                            }
+
+                            const jointsFloat = new Float32Array(jointsData);
+                            vao.addBuffer(jointsFloat, 4, 4);
+                        }
+
+                        const wIdx = prim.attributes.WEIGHTS_0; // weight
+                        if (wIdx !== undefined) {
+                            const raw = await asset.accessorData(wIdx);
+                            const accessor = asset.gltf.accessors[wIdx];
+                            let weightsFloat;
+
+                            if (accessor.componentType === 5126) { // FLOAT
+                                weightsFloat = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice();
+                            } else if (accessor.componentType === 5121) { // UNSIGNED_BYTE (Normalized)
+                                const arr = new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
+                                weightsFloat = new Float32Array(arr.length);
+                                for (let i = 0; i < arr.length; i++) weightsFloat[i] = arr[i] / 255.0;
+                            } else if (accessor.componentType === 5123) { // UNSIGNED_SHORT (Normalized)
+                                const arr = new Uint16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2);
+                                weightsFloat = new Float32Array(arr.length);
+                                for (let i = 0; i < arr.length; i++) weightsFloat[i] = arr[i] / 65535.0;
+                            } else {
+                                console.error(`Vapor3D: Unsupported weights component type: ${accessor.componentType}`);
+                                weightsFloat = new Float32Array(0);
+                            }
+
+                            for (let i = 0; i < weightsFloat.length; i += 4) {
+                                let sum = weightsFloat[i] + weightsFloat[i + 1] + weightsFloat[i + 2] + weightsFloat[i + 3];
+                                if (sum > 0.0001) {
+                                    weightsFloat[i] /= sum;
+                                    weightsFloat[i + 1] /= sum;
+                                    weightsFloat[i + 2] /= sum;
+                                    weightsFloat[i + 3] /= sum;
+                                } else {
+                                    // 如果都没有权重，设置第一根为 1.0
+                                    weightsFloat[i] = 1.0;
+                                    weightsFloat[i + 1] = 0.0;
+                                    weightsFloat[i + 2] = 0.0;
+                                    weightsFloat[i + 3] = 0.0;
+                                }
+                            }
+
+                            vao.addBuffer(weightsFloat, 5, 4);
+                        }
+
+                        /*
+                        Indices
+                        */
+                        if (prim.indices !== undefined) {
+                            const raw = await asset.accessorData(prim.indices);
+                            const acc = asset.gltf.accessors[prim.indices];
+                            const is32 = acc.componentType === 5125;
+                            const arr = is32
+                                ? new Uint32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4).slice()
+                                : new Uint16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2).slice();
+                            vao.setIndices(arr, is32 ? this.gl.UNSIGNED_INT : this.gl.UNSIGNED_SHORT);
+                        } else if (posIdx !== undefined) {
+                            // no index buffer, derive vertex count from POSITION
+                            const raw = await asset.accessorData(posIdx);
+                            vao.defaultCount = raw.byteLength / 12;
+                        }
+
+                        /*
+                        Material
+                        */
+                        const mat = (prim.material !== undefined && materials[prim.material])
+                            ? materials[prim.material]
+                            : getDefaultMaterial();
+
+                        // a shared material turns on UV2 if any of its primitives has TEXCOORD_1
+                        if (prim.attributes.TEXCOORD_1 !== undefined) {
+                            mat.hasUV2 = true;
+                        }
+
+                        const primitive = new Primitive(vao, mat);
+                        reg('primitives', primitive);
+                        mesh.primitives.push(primitive);
                     }
-                    vaoLibrary.set(mIdx, meshInstances);
+
+                    reg('meshes', mesh);
+                    meshes[mIdx] = mesh;
                 }
             }
 
-            // 3 - 解析 Node
+            /*
+            Node
+            */
             const vNodes = asset.gltf.nodes.map((n, i) => {
-                const vNode = new TransformNode(n.name || `${modelID}_n${i}`);
+                let vNode;
+                if (n.mesh !== undefined && meshes[n.mesh]) {
+                    vNode = new MeshNode(n.name || `${modelID}_n${i}`, meshes[n.mesh]);
+                } else {
+                    vNode = new TransformNode(n.name || `${modelID}_n${i}`);
+                }
+
                 if (n.matrix) {
                     const { t, q, s } = Math3D.mat4_decompose(n.matrix);
                     vNode.position = t; vNode.quaternion = q; vNode.scale = s;
@@ -316,7 +342,9 @@ export class Loader {
                 return vNode;
             });
 
-            // 4 - 解析 Skin
+            /*
+            Skin
+            */
             const skeletons = [];
             if (asset.gltf.skins) {
                 for (let sDef of asset.gltf.skins) {
@@ -332,33 +360,27 @@ export class Loader {
                 }
             }
 
-            // 5 - 组装 Node 树
+            /*
+            Assemble node tree
+            */
             asset.gltf.nodes.forEach((nDef, i) => {
                 const vNode = vNodes[i];
                 if (nDef.children) {
                     nDef.children.forEach(cIdx => vNode.addChild(vNodes[cIdx]));
                 }
-                if (nDef.mesh !== undefined) {
-                    const meshInsts = vaoLibrary.get(nDef.mesh);
-                    if (meshInsts) {
-                        meshInsts.forEach((mInst, pIdx) => {
-                            // VAO 已经实现了基于 Accessor 的底层查重，这里直接创建 MeshNode
-                            const meshNode = new MeshNode(`${vNode.name}_p${pIdx}`, mInst.vao);
-                            meshNode.sourceMesh = mInst; // 注入 Mesh 模板
-                            reg('nodes', meshNode);
-                            meshNode.material = mInst.material;
-                            if (nDef.skin !== undefined) {
-                                meshNode.skeleton = skeletons[nDef.skin];
-                                meshNode.isSkinned = true;
-                            }
-                            vNode.addChild(meshNode);
-                            meshNodesList.push(meshNode);
-                        });
+
+                if (vNode instanceof MeshNode) {
+                    if (nDef.skin !== undefined && skeletons[nDef.skin]) {
+                        vNode.skeleton = skeletons[nDef.skin];
+                        vNode.isSkinned = true;
                     }
+                    meshNodesList.push(vNode);
                 }
             });
 
-            // 6 - 解析 Animation
+            /*
+            Animation
+            */
             const animations = new Map();
             if (asset.gltf.animations) {
                 for (const animDef of asset.gltf.animations) {
@@ -386,11 +408,13 @@ export class Loader {
                 }
             }
 
-            // 7 - 组装 AssetContainer
+            /*
+            Assemble AssetContainer
+            */
             const modelRoot = new TransformNode(modelID);
             reg('nodes', modelRoot); // 以前忘记注册到 Registry 了
 
-            // 组装层级树
+            // Assemble Scene nodes tree
             const defaultScene = asset.gltf.scenes[asset.gltf.scene || 0];
             if (defaultScene && defaultScene.nodes) {
                 defaultScene.nodes.forEach(idx => modelRoot.addChild(vNodes[idx]));
@@ -398,7 +422,7 @@ export class Loader {
 
             const container = new AssetContainer(modelID);
             container.rootNode = modelRoot;
-            container.meshes = meshNodesList;   // 在 Step 4 中收集的 MeshNode 引用
+            container.meshes = meshNodesList;   // 在 Step 5 中收集的 MeshNode 引用
             container.skeletons = skeletons;    // 解析出的 Skeleton 数组
             container.animations = animations;  // 解析出的 Animation Map
             reg('containers', container);       // 注册到 registry
@@ -426,7 +450,13 @@ export class Loader {
 
         const metaMap = new Map();
         metadata.items.forEach(item => {
-            metaMap.set(item.name, item); // 这里 item.name 带有 _p0, _p1
+            metaMap.set(item.name, item);
+
+            // lightmap is per mesh
+            const baseName = item.name.replace(/_p\d+$/, '');
+            if (baseName !== item.name && !metaMap.has(baseName)) {
+                metaMap.set(baseName, item);
+            }
         });
 
         let appliedCount = 0;
@@ -434,8 +464,7 @@ export class Loader {
         const missingNames = [];
 
         container.meshes.forEach(meshNode => {
-            let searchName = meshNode.name;
-            const meta = metaMap.get(searchName);
+            const meta = metaMap.get(meshNode.name);
 
             if (meta) {
                 meshNode.hasLightmap = true;
@@ -510,3 +539,4 @@ export class Loader {
         return tex;
     }
 }
+            
