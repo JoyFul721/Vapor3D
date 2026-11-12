@@ -6,16 +6,18 @@ export class AssetContainer {
         this.name = name;
         this.id = name;           // 历史遗留 统一用 name
         this.rootNode = null;     // glb 加载时所创建的节点
-        this.meshes = [];         // 扁平 MeshNode 引用
+        this.meshes = [];         // 扁平 MeshNode 引用，每个对应一个 glTF mesh（内含 N 个 Primitive）
         this.skeletons = [];      // 扁平 Skeleton 引用
         this.animations = new Map();
 
         this.registryIndex = -1;
     }
 
+    // 只清本地引用。GPU 资源归 Registry
     dispose() {
-        this.rootNode.destroy();
-        this.meshes = []; // 存的是 Mesh 模板
+        this.rootNode = null;
+        this.meshes = [];
         this.skeletons = [];
+        this.animations.clear();
     }
 }
