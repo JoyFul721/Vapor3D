@@ -412,7 +412,7 @@ export class Loader {
             Assemble AssetContainer
             */
             const modelRoot = new TransformNode(modelID);
-            reg('nodes', modelRoot); // 以前忘记注册到 Registry 了
+            reg('nodes', modelRoot);
 
             // Assemble Scene nodes tree
             const defaultScene = asset.gltf.scenes[asset.gltf.scene || 0];
@@ -422,10 +422,10 @@ export class Loader {
 
             const container = new AssetContainer(modelID);
             container.rootNode = modelRoot;
-            container.meshes = meshNodesList;   // 在 Step 5 中收集的 MeshNode 引用
-            container.skeletons = skeletons;    // 解析出的 Skeleton 数组
-            container.animations = animations;  // 解析出的 Animation Map
-            reg('containers', container);       // 注册到 registry
+            container.meshes = meshNodesList;   // MeshNodes Array, just for find
+            container.skeletons = skeletons;    // Skeletons Array
+            container.animations = animations;  // Animations Map
+            reg('containers', container);       // register to Registry
             return container;
 
         } catch (error) {
@@ -539,4 +539,3 @@ export class Loader {
         return tex;
     }
 }
-            
