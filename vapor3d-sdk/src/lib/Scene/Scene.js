@@ -1,4 +1,5 @@
 // /lib/Scene/Scene.js
+
 import { TransformNode } from '../index.js';
 
 export class Scene {
@@ -17,7 +18,6 @@ export class Scene {
         this.containersMap = new Map();
         this.skeletonsMap = new Map();
         this.animationsMap = new Map();
-        this.materialsMap = new Map();
         this.containerIndices = new Set();
 
         this.registryCache = {
@@ -62,49 +62,6 @@ export class Scene {
         for (const child of node.children ?? []) this._clearNodeSceneIndex(child);
     }
 
-    // 递归登记节点材质名到 materialsMap
-    _setNodeMaterialMap(node) {
-        if (!node) return;
-
-        const mat = node.material;
-        if (mat?.registryIndex != null && mat.registryIndex >= 0) {
-            this._addToMap(this.materialsMap, mat.name, mat.registryIndex);
-        }
-
-        for (const child of node.children ?? []) {
-            this._setNodeMaterialMap(child);
-        }
-    }
-
-    // 收集子树里用到的材质索引
-    _collectMaterials(node, out) {
-        if (!node) return;
-
-        const idx = node.material?.registryIndex;
-        if (idx != null && idx >= 0) out.add(idx);
-
-        for (const child of node.children ?? []) {
-            this._collectMaterials(child, out);
-        }
-    }
-
-    // 注销材质登记
-    _releaseMaterials(indices) {
-        if (!indices.size) return;
-
-        const stillUsed = new Set();
-        for (const node of this.nodes) {
-            const idx = node?.material?.registryIndex;
-            if (idx != null && idx >= 0) stillUsed.add(idx);
-        }
-
-        for (const idx of indices) {
-            if (stillUsed.has(idx)) continue;
-            const mat = this._get('materials', idx);
-            this._removeFromMap(this.materialsMap, mat?.name, idx);
-        }
-    }
-
     getNodeByIndex(idx) {
         const i = Number(idx);
         return Number.isInteger(i) && i >= 0 && i < this.nodes.length
@@ -129,7 +86,6 @@ export class Scene {
         }
 
         this._setNodeSceneIndex(node);
-        this._setNodeMaterialMap(node);  
         this.registerNode(node);
         node.setDirty?.();
         return true;
@@ -142,13 +98,9 @@ export class Scene {
         if (!node) return false;
         if (node.worldMatrixIndex === -1 && node.sceneIndex !== this.registryIndex) return false;
 
-        const removedMaterials = new Set();
-        this._collectMaterials(node, removedMaterials);
-
         node.parent?.removeChild(node);
         this.unregisterNode(node);
         this._clearNodeSceneIndex(node);
-        this._releaseMaterials(removedMaterials); // ← 新增
         return true;
     }
 
@@ -211,7 +163,7 @@ export class Scene {
                 }
             }
         }
-        
+
         for (const [animName, animation] of container.animations) {
             if (animation.registryIndex != null && animation.registryIndex >= 0) {
                 this._addToMap(this.animationsMap, animName, animation.registryIndex);
@@ -271,7 +223,6 @@ export class Scene {
         return this.animationsMap.get(name) ?? new Set();
     }
 
-    // ====================== 更新 ======================
 
     update(dt) {
         if (this._destroyed) return;
@@ -354,7 +305,6 @@ export class Scene {
         this.containersMap.clear();
         this.skeletonsMap.clear();
         this.animationsMap.clear();
-        this.materialsMap.clear();  
         this.containerIndices.clear();
 
         this.nodes.length = 0;
