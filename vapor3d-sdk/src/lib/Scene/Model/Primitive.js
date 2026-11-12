@@ -1,6 +1,5 @@
-// MeshNode.js
-
 // glTF mesh.primitives
+
 export class Primitive {
     constructor(vao, material) {
         this.vao = vao;
