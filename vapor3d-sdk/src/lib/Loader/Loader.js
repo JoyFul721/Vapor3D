@@ -422,7 +422,7 @@ export class Loader {
 
             const container = new AssetContainer(modelID);
             container.rootNode = modelRoot;
-            container.meshes = meshNodesList;   // MeshNodes Array, just for find
+            container.meshes = meshNodesList;   // MeshNodes Array, convenient to getMesh by index
             container.skeletons = skeletons;    // Skeletons Array
             container.animations = animations;  // Animations Map
             reg('containers', container);       // register to Registry
