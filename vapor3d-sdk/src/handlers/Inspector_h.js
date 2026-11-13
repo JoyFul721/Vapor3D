@@ -18,8 +18,7 @@ export class InspectorHandlers {
             timeline: this.timelineHandler.timelinesMap
         };
 
-  
-        this._globalTypes = new Set([
+       this._globalTypes = new Set([
             'shader', 'vao', 'fbo', 'texture', 'stencil',
             'scene', 'container', 'timeline'
         ]);
@@ -29,9 +28,9 @@ export class InspectorHandlers {
         this._containerTypes = new Set([
             'meshNode', 'skeleton', 'animation', 'material'
         ]);
-        // fetche by index
+        // fetched by index from a container.
         this._containerIndexTypes = new Set([
-            'meshNode', 'skeleton', 'primitive'
+            'meshNode', 'skeleton'
         ]);
     }
 
@@ -105,7 +104,7 @@ export class InspectorHandlers {
             case 'animation':
                 return this._findOwnedResource(container.animations, NAME);
             case 'material':
-                return this._findPrimitiveMaterial(container.primitives, NAME);
+                return this._findMeshMaterial(container.meshes, NAME);
             default:
                 return -1;
         }
@@ -122,21 +121,15 @@ export class InspectorHandlers {
         const i = Number(RESOURCE_INDEX);
         if (!Number.isInteger(i) || i < 0) return -1;
 
-        let obj = null;
-        switch (TYPE) {
-            case 'meshNode':
-                obj = container.meshes?.[i];
-                break;
-            case 'skeleton':
-                obj = container.skeletons?.[i];
-                break;
-            case 'primitive':
-                obj = container.primitives?.[i];
-                break;
-        }
+        const obj = TYPE === 'meshNode'
+            ? container.meshes?.[i]
+            : TYPE === 'skeleton'
+                ? container.skeletons?.[i]
+                : null;
 
         return obj?.registryIndex >= 0 ? obj.registryIndex : -1;
     }
+
 
 
     Inspector_ConsolePrint() {
@@ -152,8 +145,8 @@ export class InspectorHandlers {
         while (stack.length) {
             const node = stack.pop();
 
-            // A MeshNode is anything carrying a .mesh reference. The Mesh
-            // itself stays internal
+            // A MeshNode is anything carrying a .mesh field
+            // The Mesh itself stays internal
             if (
                 node.name === target &&
                 (!meshOnly || node.mesh !== undefined)
@@ -186,17 +179,21 @@ export class InspectorHandlers {
         return -1;
     }
 
-    // Flat scan over container.primitives
-    _findPrimitiveMaterial(primitives, name) {
-        if (!primitives) return -1;
+    // container.meshes is MeshNode[]
+    // walk each node's mesh.primitives to reach the materials
+    // Mesh itself is a hop, not a lookup layer.
+    _findMeshMaterial(meshNodes, name) {
+        if (!meshNodes) return -1;
 
         const target = String(name);
-        for (const prim of primitives) {
-            const mat = prim?.material;
-            if (mat?.name !== target) continue;
+        for (const meshNode of meshNodes) {
+            for (const prim of meshNode?.mesh?.primitives ?? []) {
+                const mat = prim?.material;
+                if (mat?.name !== target) continue;
 
-            const idx = mat.registryIndex;
-            if (Number.isInteger(idx) && idx >= 0) return idx;
+                const idx = mat.registryIndex;
+                if (Number.isInteger(idx) && idx >= 0) return idx;
+            }
         }
 
         return -1;
