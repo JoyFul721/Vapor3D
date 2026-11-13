@@ -33,9 +33,9 @@ export const InspectorBlocks = [
         blockType: "reporter",
         text: "Container [CONTAINER_INDEX] .get [TYPE] index [RESOURCE_INDEX]",
         arguments: {
-            CONTAINER_INDEX: { type: "string", defaultValue: "0" },
+            CONTAINER_INDEX: { type: "number", defaultValue: 0 },
             TYPE: { type: "string", menu: "Inspector_ContainerArrayType" },
-            RESOURCE_INDEX: { type: "number", defaultValue: "0" }
+            RESOURCE_INDEX: { type: "number", defaultValue: 0 }
         }
     },
     {
