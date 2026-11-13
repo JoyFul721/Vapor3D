@@ -9,15 +9,15 @@ export class SceneHandlers {
         engineHandlers.scene = this;
         this.registry = registry ?? engineHandlers.registry;
 
-        this.scenesMap = new Map(); // Name -> registrySceneIndex
-
-        this._debugTimer = 0;
+        this.scenesMap = new Map(); // NAME -> registry scene index
     }
 
     _get(type, index) {
-        return this.registry?.get(type, index) ?? null;
+        return this.registry?.get(type, Number(index)) ?? null;
     }
 
+    // Detach an entry from the registry without destroying the object
+    // scene-level destruction goes through registry.dispose
     _release(type, index) {
         const i = Number(index);
         const list = this.registry?.[type];
@@ -29,24 +29,18 @@ export class SceneHandlers {
         if (!free.includes(i)) free.push(i);
     }
 
-    _getScene(index) { // 获取 Scene 实例
+    _getScene(index) {
         return this._get("scenes", index);
     }
 
     _walkNodes(node, callback) {
         if (!node) return;
         callback(node);
-        for (const child of node.children ?? []) {
-            this._walkNodes(child, callback);
-        }
+        for (const child of node.children ?? []) this._walkNodes(child, callback);
     }
 
     _getTRS(node) {
-        return [
-            ...node.position,
-            ...node.quaternion,
-            ...node.scale
-        ];
+        return [...node.position, ...node.quaternion, ...node.scale];
     }
 
     _applyTRS(node, trs) {
@@ -59,83 +53,107 @@ export class SceneHandlers {
         node.setDirty();
     }
 
-    // ====================== Scene Management ======================
 
+
+    /*
+    Scene Management
+    */
     Scene_Create({ NAME, MAXNODES }) {
         if (!this.engine.core) return -1;
+
         const scene = new Scene(NAME || "Main", MAXNODES || 8192, this.registry);
         const index = this.registry.allocate("scenes", scene);
-        
+
         scene.registryIndex = index;
         this.scenesMap.set(NAME, index);
         return index;
     }
 
-    async Scene_ClearAll() {
-        for (const [name, index] of [...this.scenesMap]) {
-            const scene = this._getScene(index);
-            if (scene) {
-                this.Scene_Clear({ INDEX: index });
-                await scene.destroy();
-            }
-            this.registry.dispose("scenes", index);
-            this.scenesMap.delete(name);
-        }
-    }
-
+    /**
+     * Destroy the scene instance and every resource it holds
+     */
     async Scene_Destroy({ INDEX }) {
-        const scene = this._getScene(INDEX);
+        const idx = Number(INDEX);
+        const scene = this._getScene(idx);
         if (!scene) return;
 
-        await scene.destroy();
+        // Snapshot before destroy() clears these
+        const containerIndices = [...scene.containerIndices];
+        const nodeIndices = new Set();
+        for (const node of scene.nodes) {
+            if (node && node.registryIndex >= 0) nodeIndices.add(node.registryIndex);
+        }
 
-        this._release("scenes", INDEX);
+        await scene.destroy(); // detaches all containers + unregisters nodes
+
+        // Destroy resources this scene held
+        for (const containerIndex of containerIndices) {
+            this.registry.dispose("containers", containerIndex);
+        }
+        // Node destroy is idempotent; containers may have already done some
+        for (const nodeIndex of nodeIndices) {
+            this.registry.dispose("nodes", nodeIndex);
+        }
+
+        // Destroy the Scene instance itself.
+        this.registry.dispose("scenes", idx);
 
         for (const [name, value] of this.scenesMap) {
-            if (value === Number(INDEX)) {
+            if (value === idx) {
                 this.scenesMap.delete(name);
                 break;
             }
         }
     }
 
+    /**
+     * Detach everything the scene holds, without destroying any object
+     */
     Scene_Clear({ INDEX }) {
         const scene = this._getScene(INDEX);
         if (!scene) return;
 
         for (const containerIndex of [...scene.containerIndices]) {
-            this.Scene_RemoveContainer({
-                INDEX,
-                CONTAINER_IDX: containerIndex
-            });
+            scene.removeContainer(containerIndex);
         }
     }
 
-    // ====================== Node Transform ======================
+    /**
+     * Destroy all scenes and every resource they hold
+     */
+    async Scene_DestroyAll() {
+        const indices = [...this.scenesMap.values()];
+        for (const index of indices) {
+            await this.Scene_Destroy({ INDEX: index });
+        }
+    }
 
+
+
+    /*
+     Node Transform
+    */
     Scene_CreateNode({ NAME, SCENE_IDX, PARENT_NODE_IDX }) {
         const scene = this._getScene(Number(SCENE_IDX));
         if (!scene || scene._destroyed) return -1;
 
         const parentIndex = Number(PARENT_NODE_IDX);
-        const parent = parentIndex === -1
-            ? scene.root
-            : this._get("nodes", parentIndex);
+        const parent = parentIndex === -1 ? scene.root : this._get("nodes", parentIndex);
         if (!parent) return -2;
-
         if (parent !== scene.root && parent.sceneIndex !== scene.registryIndex) return -1;
-        const node = new TransformNode(NAME || `node_${scene.registryIndex}`);
 
+        const node = new TransformNode(NAME || `node_${scene.registryIndex}`);
         if (!scene.attachNode(node, parent)) return -3;
+
         return this.registry.allocate("nodes", node);
     }
 
     Scene_DestroyNode({ NODE_IDX }) {
-        const idx = Number(NODE_IDX);
-        const node = this._get("nodes", idx);
+        const node = this._get("nodes", NODE_IDX);
         if (!node) return;
         if (node.parent === null) return;
 
+        // Collect the whole subtree before detaching
         const all = [];
         const stack = [node];
         while (stack.length) {
@@ -144,10 +162,10 @@ export class SceneHandlers {
             stack.push(...(n.children ?? []));
         }
 
-        // 回收矩阵
+        // Detach from scene
         this._getScene(node.sceneIndex)?.detachNode(node);
 
-        // 注册表注销
+        // Destroy each node via registry
         for (const n of all) {
             if (n.registryIndex >= 0) this.registry.dispose("nodes", n.registryIndex);
         }
@@ -167,13 +185,11 @@ export class SceneHandlers {
         if (!scene) return;
 
         const parentIndex = Number(PARENT_NODE_IDX);
-        const parent = parentIndex === -1
-            ? scene.root
-            : this._get("nodes", parentIndex);
+        const parent = parentIndex === -1 ? scene.root : this._get("nodes", parentIndex);
+        if (!parent) return;
+        if (child === scene.root || child === parent) return;
 
-        if (!parent || child === scene.root || child === parent) return;
-
-        // Prevent creating a parent-child cycle.
+        // Guard against parent-child cycles
         let ancestor = parent;
         while (ancestor) {
             if (ancestor === child) return;
@@ -183,11 +199,9 @@ export class SceneHandlers {
         child.parent?.removeChild(child);
         parent.addChild(child);
 
-        // Register any unregistered nodes in the moved subtree
-        this._walkNodes(child, node => {
-            if (node.worldMatrixIndex === -1) {
-                scene.registerNode(node);
-            }
+        // Re-register any node in the moved subtree that lost its slot
+        this._walkNodes(child, (n) => {
+            if (n.worldMatrixIndex === -1) scene.registerNode(n);
         });
 
         child.setDirty();
@@ -208,21 +222,24 @@ export class SceneHandlers {
 
     Scene_GetNodeTRS({ NODE_IDX }) {
         const node = this._get("nodes", NODE_IDX);
-        return node ? JSON.stringify(this._getTRS(node)) : "[]";
+        if (!node) return "[]";
+        return JSON.stringify(this._getTRS(node));
     }
 
     Scene_UpdateWorldMatrix({ INDEX }) {
         this._getScene(INDEX)?.update();
     }
 
-    // ====================== Container ======================
 
+
+    /*
+    Container
+    */
     Scene_GetContainerRootIndex({ INDEX }) {
         const container = this._get("containers", INDEX);
         if (!container) return -3;
 
         const ri = container.rootNode?.registryIndex;
-        // -1 在 SetParent 约定里表示 root，不能当成合法节点索引透出去
         return (ri == null || ri < 0) ? -2 : ri;
     }
 
@@ -231,7 +248,8 @@ export class SceneHandlers {
         const containerIndex = Number(CONTAINER_IDX);
         const container = this._get("containers", containerIndex);
 
-        if (!scene || !container?.rootNode) return;
+        if (!scene) return;
+        if (!container?.rootNode) return;
 
         scene.addContainer(containerIndex);
     }
@@ -240,7 +258,7 @@ export class SceneHandlers {
         const scene = this._getScene(Number(INDEX));
         if (!scene) return;
 
-        // 仅摘除
+        // Detach only
         scene.removeContainer(Number(CONTAINER_IDX));
     }
 
@@ -250,21 +268,26 @@ export class SceneHandlers {
         return container.meshes?.length ?? -1;
     }
 
-    // ====================== Skeleton ======================
 
+
+    /*
+    Skeleton
+    */
     Scene_SkeletonGetJointCount({ INDEX }) {
         const skeleton = this._get("skeletons", INDEX);
-        return skeleton ? skeleton.joints.length : -1;
+        if (!skeleton) return -1;
+        return skeleton.joints.length;
     }
 
     Scene_SkeletonGetJoint({ INDEX, NAME }) {
         const skeleton = this._get("skeletons", INDEX);
-        const joint = skeleton?.joints?.find(j => j.name === NAME);
+        const joint = skeleton?.joints?.find((j) => j.name === NAME);
         return joint?.registryIndex ?? -1;
     }
 
     Scene_SkeletonBindTexture({ INDEX, UNIT }) {
         if (!this.engine.core) return;
+
         const skeleton = this._get("skeletons", INDEX);
         const gl = this.engine.core.gl;
 
@@ -272,34 +295,61 @@ export class SceneHandlers {
         gl.bindTexture(gl.TEXTURE_2D, skeleton?.texture ?? null);
     }
 
-    // ====================== MeshNode ======================
 
-    Scene_MeshDraw({ INDEX, MODE } = {}) {
+    /**
+     * MeshNode
+     *
+     * MeshNode is a thin instance wrapper that holds a mesh reference plus
+     * per-node state (visible, skeleton, lightmap).
+     * All geometry and material work happens on Primitive
+     */
+    Scene_MeshNodeGetPrimitive({ NODE_IDX, PRIM_IDX }) {
+        const node = this._get("nodes", NODE_IDX);
+        const prim = node?.mesh?.primitives?.[Number(PRIM_IDX)];
+        return prim?.registryIndex ?? -1;
+    }
+
+    Scene_MeshNodeGetPrimitiveCount({ NODE_IDX }) {
+        const node = this._get("nodes", NODE_IDX);
+        return node?.mesh?.primitives?.length ?? 0;
+    }
+
+    Scene_MeshNodeGetSkeleton({ NODE_IDX }) {
+        const node = this._get("nodes", NODE_IDX);
+        const skel = node?.skeleton;
+        return skel?.registryIndex ?? -1;
+    }
+
+    Scene_MeshNodeUploadModelMatrix({ NODE_IDX, UNIFORM } = {}) {
         if (!this.engine.core) return;
-        const node = this._get("nodes", INDEX);
-        if (!node || !node.visible || !node.vao || typeof node.draw !== "function" || node.worldMatrixIndex < 0) return;
+
+        const node = this._get("nodes", NODE_IDX);
+        if (!node || node.worldMatrixIndex < 0) return;
+
         const scene = this._getScene(node.sceneIndex);
         const shader = this.engine.activeShader;
         if (!scene || !shader) return;
+
         const offset = node.worldMatrixIndex * 16;
-        shader.setMat4("uModel", scene.worldMatrixBuffer.subarray(offset, offset + 16));
-        
-        // if (this._debugTimer++ % 60 === 0) console.log(node);
-        node.draw(MODE);
+        shader.setMat4(
+            UNIFORM || "uModel",
+            scene.worldMatrixBuffer.subarray(offset, offset + 16)
+        );
     }
 
-    Scene_MeshIsVisible({ INDEX }) {
+    Scene_MeshNodeIsVisible({ INDEX }) {
         const node = this._get("nodes", INDEX);
         if (!node) return 0;
         return node.visible;
     }
 
-    Scene_MeshSetVisible({ NODE_IDX, VISIBLE, RECURSIVE }) {
+    Scene_MeshNodeSetVisible({ NODE_IDX, VISIBLE, RECURSIVE }) {
         const node = this._get("nodes", NODE_IDX);
         if (!node) {
             console.error(`Vapor3D: SetVisible failed, node index ${NODE_IDX} not found`);
             return;
         }
+
         const v = Number(VISIBLE) === 1;
         if (String(RECURSIVE) === "true") {
             this._setVisibleTree(node, v);
@@ -307,81 +357,16 @@ export class SceneHandlers {
             node.visible = v;
         }
     }
+
     _setVisibleTree(node, v) {
         if (!node) return;
-
         node.visible = v;
-
-        for (const child of node.children ?? []) {
-            this._setVisibleTree(child, v);
-        }
+        for (const child of node.children ?? []) this._setVisibleTree(child, v);
     }
 
-    Scene_MeshGetTexture({ INDEX, TEX_TYPE }) { // legacy
+    Scene_MeshNodeGetLightmapParam({ INDEX, PARAM }) {
         const node = this._get("nodes", INDEX);
-        const tex = node?.material?.[TEX_TYPE];
-        return tex?.registryIndex ?? -1;
-    }
-
-    Scene_MeshGetParam({ INDEX, PARAM }) { // legacy
-        const node = this._get("nodes", INDEX);
-        if (!node) return "";
-
-        const value = node.material?.[PARAM];
-        if (value == null) return "";
-
-        return Array.isArray(value) || ArrayBuffer.isView(value)
-            ? JSON.stringify(Array.from(value))
-            : value;
-    }
-
-    Scene_MeshGetMaterial({ INDEX }) {
-        const node = this._get("nodes", INDEX);
-        return node?.material?.registryIndex ?? -1;
-    }
-
-    Scene_MeshSetMaterial({ NODE_IDX, MAT_IDX }) {
-        const node = this._get("nodes", NODE_IDX);
-        if (!node) {
-            console.error(`Vapor3D: SetMaterial failed, node index ${NODE_IDX} not found`);
-            return;
-        }
-
-        const mat = this._get("materials", MAT_IDX);
-        if (!mat) {
-            console.error(`Vapor3D: SetMaterial failed, material index ${MAT_IDX} not found`);
-            return;
-        }
-
-        const template = node.sourceMesh;
-
-        // 无模板节点：只改自身
-        if (!template) {
-            const oldMat = node.material;
-            node.material = mat;
-            this._get("scenes", node.sceneIndex)?.rebindMaterial(oldMat, mat);
-            return;
-        }
-
-        // 有模板：改模板 + 所有共享该模板的节点
-        template.material = mat;
-
-        const nodes = this.registry.nodes ?? [];
-        for (const other of nodes) {
-            if (!other || other.sourceMesh !== template) continue;
-
-            const oldMat = other.material;
-            other.material = mat;
-            this._get("scenes", other.sceneIndex)?.rebindMaterial(oldMat, mat);
-        }
-    }
-
-    Scene_MeshGetLightmapParam({ INDEX, PARAM }) {
-        const node = this._get("nodes", INDEX);
-
-        if (!node) {
-            return PARAM === "hasLightmap" ? "0" : -1;
-        }
+        if (!node) return PARAM === "hasLightmap" ? "0" : -1;
 
         switch (PARAM) {
             case "hasLightmap":
@@ -393,21 +378,62 @@ export class SceneHandlers {
         }
     }
 
-    Scene_MeshGetLightmapScaleOffsetComp({ INDEX, COMP }) {
+    Scene_MeshNodeGetLightmapScaleOffsetComp({ INDEX, COMP }) {
         const node = this._get("nodes", INDEX);
-        const scaleOffset = node?.lightmapScaleOffset ?? [0, 0, 0, 0];
+        const s = node?.lightmapScaleOffset ?? [0, 0, 0, 0];
 
         switch (String(COMP).toUpperCase()) {
-            case "X": return scaleOffset[0];
-            case "Y": return scaleOffset[1];
-            case "Z": return scaleOffset[2];
-            case "W": return scaleOffset[3];
+            case "X": return s[0];
+            case "Y": return s[1];
+            case "Z": return s[2];
+            case "W": return s[3];
             default: return 0;
         }
     }
 
-    // ====================== Material ======================
 
+
+    /**
+     * Primitive
+     *
+     * The actual draw unit.
+     * one Primitive = one VAO + one Material.
+     */
+    Primitive_Draw({ PRIM_IDX, MODE } = {}) {
+        const prim = this._get("primitives", PRIM_IDX);
+        if (!prim) return;
+        prim.draw(MODE);
+    }
+
+    Primitive_GetMaterial({ PRIM_IDX }) {
+        const prim = this._get("primitives", PRIM_IDX);
+        return prim?.material?.registryIndex ?? -1;
+    }
+
+    Primitive_SetMaterial({ PRIM_IDX, MAT_IDX }) {
+        const prim = this._get("primitives", PRIM_IDX);
+        if (!prim) {
+            console.error(`Vapor3D: SetMaterial failed, primitive index ${PRIM_IDX} not found`);
+            return;
+        }
+        const mat = this._get("materials", MAT_IDX);
+        if (!mat) {
+            console.error(`Vapor3D: SetMaterial failed, material index ${MAT_IDX} not found`);
+            return;
+        }
+        prim.material = mat;
+    }
+
+    Primitive_GetVAO({ PRIM_IDX }) {
+        const prim = this._get("primitives", PRIM_IDX);
+        return prim?.vao?.registryIndex ?? -1;
+    }
+
+
+
+    /*
+    Material
+    */
     Material_Create({ NAME }) {
         const mat = new Material();
         mat.name = NAME || "";
@@ -422,7 +448,10 @@ export class SceneHandlers {
 
     Material_SetTexture({ INDEX, TEX_TYPE, TEX_IDX }) {
         const mat = this._get("materials", INDEX);
-        if (!mat) return console.warn(`Vapor3D: material index ${INDEX} not found`);
+        if (!mat) {
+            console.warn(`Vapor3D: material index ${INDEX} not found`);
+            return;
+        }
 
         const texIdx = Number(TEX_IDX);
         if (texIdx < 0) {
@@ -431,8 +460,10 @@ export class SceneHandlers {
         }
 
         const tex = this._get("textures", texIdx);
-        if (!tex) return console.warn(`Vapor3D: texture index ${texIdx} not found`);
-
+        if (!tex) {
+            console.warn(`Vapor3D: texture index ${texIdx} not found`);
+            return;
+        }
         mat[TEX_TYPE] = tex;
     }
 
@@ -464,10 +495,12 @@ export class SceneHandlers {
                 console.error(`Vapor3D: SetParam baseColor expects array, got ${typeof arr}`);
                 return;
             }
-            mat.baseColor = [0, 1, 2, 3].map(i => {
+            mat.baseColor = [0, 1, 2, 3].map((i) => {
                 const n = Number(arr[i] ?? 0);
                 return Number.isFinite(n) ? n : 0;
             });
+            // Keep sync with baseColor[3]. Just to make things easier for users
+            mat.alpha = mat.baseColor[3];
             return;
         }
 
