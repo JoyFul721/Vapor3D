@@ -337,8 +337,8 @@ export class SceneHandlers {
         );
     }
 
-    Scene_MeshNodeIsVisible({ INDEX }) {
-        const node = this._get("nodes", INDEX);
+    Scene_MeshNodeIsVisible({ NODE_IDX }) {
+        const node = this._get("nodes", NODE_IDX);
         if (!node) return 0;
         return node.visible;
     }
@@ -364,8 +364,8 @@ export class SceneHandlers {
         for (const child of node.children ?? []) this._setVisibleTree(child, v);
     }
 
-    Scene_MeshNodeGetLightmapParam({ INDEX, PARAM }) {
-        const node = this._get("nodes", INDEX);
+    Scene_MeshNodeGetLightmapParam({ NODE_IDX, PARAM }) {
+        const node = this._get("nodes", NODE_IDX);
         if (!node) return PARAM === "hasLightmap" ? "0" : -1;
 
         switch (PARAM) {
@@ -378,8 +378,8 @@ export class SceneHandlers {
         }
     }
 
-    Scene_MeshNodeGetLightmapScaleOffsetComp({ INDEX, COMP }) {
-        const node = this._get("nodes", INDEX);
+    Scene_MeshNodeGetLightmapScaleOffsetComp({ NODE_IDX, COMP }) {
+        const node = this._get("nodes", NODE_IDX);
         const s = node?.lightmapScaleOffset ?? [0, 0, 0, 0];
 
         switch (String(COMP).toUpperCase()) {
