@@ -65,32 +65,31 @@ export const EngineMenus = {
         lightmapParamMenu: ["hasLightmap", "lightmapIndex"],
 
         Inspector_GlobalType: [
-                { text: "Shader", value: "shader" },
-                { text: "Vao", value: "vao" },
-                { text: "Fbo", value: "fbo" },
-                { text: "Texture", value: "texture" },
-                { text: "Stencil", value: "stencil" },
-                { text: "Scene", value: "scene" },
-                { text: "Node", value: "node" },
-                { text: "Container", value: "container" },
-                { text: "Timeline", value: "timeline" }
+            { text: "Shader", value: "shader" },
+            { text: "Vao", value: "vao" },
+            { text: "Fbo", value: "fbo" },
+            { text: "Texture", value: "texture" },
+            { text: "Stencil", value: "stencil" },
+            { text: "Scene", value: "scene" },
+            { text: "Container", value: "container" },
+            { text: "Timeline", value: "timeline" }
         ],
         Inspector_SceneType: [
-                { text: "Container", value: "container" },
-                { text: "Skeleton", value: "skeleton" },
-                { text: "Animation", value: "animation" },
-                { text: "Mesh", value: "mesh" },
-                { text: "Material", value: "material" }
+            { text: "Container", value: "container" },
+            { text: "Skeleton", value: "skeleton" },
+            { text: "Animation", value: "animation" },
+            { text: "MeshNode", value: "meshNode" },
+            { text: "Material", value: "material" }
         ],
         Inspector_ContainerType: [
-                { text: "Mesh", value: "mesh" },
-                { text: "Skeleton", value: "skeleton" },
-                { text: "Animation", value: "animation" },
-                { text: "Material", value: "material" }
+            { text: "MeshNode", value: "meshNode" },
+            { text: "Skeleton", value: "skeleton" },
+            { text: "Animation", value: "animation" },
+            { text: "Material", value: "material" }
         ],
         Inspector_ContainerArrayType: [
-                { text: "Mesh", value: "mesh" },
-                { text: "Skeleton", value: "skeleton" }
+            { text: "MeshNode", value: "meshNode" },
+            { text: "Skeleton", value: "skeleton" }
         ],
         canvasSize: ["width", "height"],
 };
