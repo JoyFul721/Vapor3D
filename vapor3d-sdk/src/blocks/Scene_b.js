@@ -202,7 +202,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_MeshNodeIsVisible",
         blockType: "reporter",
-        text: "MeshNode [INDEX] is visible",
+        text: "MeshNode [NODE_IDX] is visible",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 }
         }
@@ -220,7 +220,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_MeshNodeGetLightmapParam",
         blockType: "reporter",
-        text: "MeshNode [INDEX] .lightmap.parameter [PARAM]",
+        text: "MeshNode [NODE_IDX] .lightmap.parameter [PARAM]",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 },
             PARAM: {
@@ -233,7 +233,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_MeshNodeGetLightmapScaleOffsetComp",
         blockType: "reporter",
-        text: "MeshNode [INDEX] .lightmap.scaleOffset [COMP]",
+        text: "MeshNode [NODE_IDX] .lightmap.scaleOffset [COMP]",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 },
             COMP: {
