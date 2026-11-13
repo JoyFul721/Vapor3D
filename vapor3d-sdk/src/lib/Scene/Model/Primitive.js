@@ -1,8 +1,10 @@
 // /lib/Scene/Model/Primitive.js
 
-/*
-  The actual draw unit. 
-  One glTF mesh primitive -> one Primitive.
+/**
+* The actual draw unit
+* One glTF mesh primitive -> one Primitive
+*
+* Container -> Mesh -> Primitive
 */
 export class Primitive {
     constructor(vao, material) {
