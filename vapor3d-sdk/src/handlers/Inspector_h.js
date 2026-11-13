@@ -1,3 +1,5 @@
+// /handlers/Inspector_h.js
+
 export class InspectorHandlers {
     constructor(engineHandlers, sceneHandlers, timelineHandler, registry) {
         this.engine = engineHandlers;
@@ -15,6 +17,22 @@ export class InspectorHandlers {
             container: this.sceneHandler.containersMap,
             timeline: this.timelineHandler.timelinesMap
         };
+
+  
+        this._globalTypes = new Set([
+            'shader', 'vao', 'fbo', 'texture', 'stencil',
+            'scene', 'container', 'timeline'
+        ]);
+        this._sceneTypes = new Set([
+            'container', 'skeleton', 'animation', 'material', 'meshNode'
+        ]);
+        this._containerTypes = new Set([
+            'meshNode', 'skeleton', 'animation', 'material'
+        ]);
+        // fetche by index
+        this._containerIndexTypes = new Set([
+            'meshNode', 'skeleton', 'primitive'
+        ]);
     }
 
     _get(type, index) {
@@ -39,71 +57,90 @@ export class InspectorHandlers {
         return -1;
     }
 
-    _findGlobal(type, name) {
-        return this._find(this._typeMap[type], name);
-    }
-
+    /*
+    Global find
+    */
     Inspector_Find({ TYPE, NAME }) {
-        return this._findGlobal(TYPE, NAME);
+        if (!this._globalTypes.has(TYPE)) return -1;
+        return this._find(this._typeMap[TYPE], NAME);
     }
 
+    /*
+    Scene scope
+    */
     Inspector_SceneFind({ SCENE_INDEX, TYPE, NAME }) {
-        const scene = this._get("scenes", SCENE_INDEX);
+        const scene = this._get('scenes', SCENE_INDEX);
         if (!scene) return -2;
+        if (!this._sceneTypes.has(TYPE)) return -1;
 
         switch (TYPE) {
-            case "container":
+            case 'container':
                 return this._find(scene.containersMap, NAME);
-            case "skeleton":
+            case 'skeleton':
                 return this._find(scene.skeletonsMap, NAME);
-            case "animation":
+            case 'animation':
                 return this._find(scene.animationsMap, NAME);
-            case "material":
+            case 'material':
                 return this._find(scene.materialsMap, NAME);
-            case "mesh":
-                return this._findNodeInTree(scene.root, NAME);
+            case 'meshNode':
+                return this._findNodeInTree(scene.root, NAME, true);
             default:
                 return -1;
         }
     }
 
+    /*
+    Container scope by name
+    */
     Inspector_ContainerFind({ CONTAINER_INDEX, TYPE, NAME }) {
-        const container = this._get("containers", CONTAINER_INDEX);
+        const container = this._get('containers', CONTAINER_INDEX);
         if (!container) return -1;
+        if (!this._containerTypes.has(TYPE)) return -1;
 
         switch (TYPE) {
-            case "mesh":
+            case 'meshNode':
                 return this._findNodeInTree(container.rootNode, NAME, true);
-            case "skeleton":
+            case 'skeleton':
                 return this._findOwnedResource(container.skeletons, NAME);
-            case "animation":
+            case 'animation':
                 return this._findOwnedResource(container.animations, NAME);
-            case "material":
-                return this._findMeshMaterial(container.meshes, NAME);
+            case 'material':
+                return this._findPrimitiveMaterial(container.primitives, NAME);
             default:
                 return -1;
         }
     }
 
+    /*
+    Container scope by index
+    */
     Inspector_ContainerGet({ CONTAINER_INDEX, TYPE, RESOURCE_INDEX } = {}) {
-        const container = this._get("containers", CONTAINER_INDEX);
+        const container = this._get('containers', CONTAINER_INDEX);
         if (!container) return -1;
+        if (!this._containerIndexTypes.has(TYPE)) return -1;
 
         const i = Number(RESOURCE_INDEX);
         if (!Number.isInteger(i) || i < 0) return -1;
 
-        const obj = TYPE === "mesh"
-            ? container.meshes?.[i]
-            : TYPE === "skeleton"
-                ? container.skeletons?.[i]
-                : null;
+        let obj = null;
+        switch (TYPE) {
+            case 'meshNode':
+                obj = container.meshes?.[i];
+                break;
+            case 'skeleton':
+                obj = container.skeletons?.[i];
+                break;
+            case 'primitive':
+                obj = container.primitives?.[i];
+                break;
+        }
 
         return obj?.registryIndex >= 0 ? obj.registryIndex : -1;
     }
 
+
     Inspector_ConsolePrint() {
         console.log(this);
-        // console.log(this.engine.activeShader)
     }
 
     _findNodeInTree(root, name, meshOnly = false) {
@@ -115,9 +152,11 @@ export class InspectorHandlers {
         while (stack.length) {
             const node = stack.pop();
 
+            // A MeshNode is anything carrying a .mesh reference. The Mesh
+            // itself stays internal
             if (
                 node.name === target &&
-                (!meshOnly || (node.isSkinned !== undefined && node.vao !== undefined))
+                (!meshOnly || node.mesh !== undefined)
             ) {
                 return Number.isInteger(node.registryIndex)
                     ? node.registryIndex
@@ -135,8 +174,9 @@ export class InspectorHandlers {
     _findOwnedResource(resources, name) {
         if (!resources) return -1;
 
+        const target = String(name);
         for (const resource of resources) {
-            if (resource?.name === String(name)) {
+            if (resource?.name === target) {
                 return Number.isInteger(resource.registryIndex)
                     ? resource.registryIndex
                     : -1;
@@ -145,12 +185,14 @@ export class InspectorHandlers {
 
         return -1;
     }
-    _findMeshMaterial(meshes, name) {
-        if (!meshes) return -1;
+
+    // Flat scan over container.primitives
+    _findPrimitiveMaterial(primitives, name) {
+        if (!primitives) return -1;
 
         const target = String(name);
-        for (const mesh of meshes) {
-            const mat = mesh?.material;
+        for (const prim of primitives) {
+            const mat = prim?.material;
             if (mat?.name !== target) continue;
 
             const idx = mat.registryIndex;
