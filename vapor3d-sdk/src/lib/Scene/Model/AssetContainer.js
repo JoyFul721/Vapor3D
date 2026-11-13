@@ -4,10 +4,11 @@
 export class AssetContainer {
     constructor(name) {
         this.name = name;
-        this.id = name;           // 历史遗留 统一用 name
-        this.rootNode = null;     // glb 加载时所创建的节点
-        this.meshes = [];         // 扁平 MeshNode 引用，每个对应一个 glTF mesh（内含 N 个 Primitive）
-        this.skeletons = [];      // 扁平 Skeleton 引用
+        this.id = name; // legacy
+        this.rootNode = null;
+        this.meshes = [];        // gltf meshes array
+        this.primitives = [];     // gltf primitives array
+        this.skeletons = [];      // Skeletons array
         this.animations = new Map();
 
         this.registryIndex = -1;
