@@ -320,7 +320,7 @@ export class SceneHandlers {
         return skel?.registryIndex ?? -1;
     }
 
-    Scene_MeshNodeUploadModelMatrix({ NODE_IDX, UNIFORM } = {}) {
+    Scene_MeshNodeUploadMatrix({ NODE_IDX, UNIFORM } = {}) {
         if (!this.engine.core) return;
 
         const node = this._get("nodes", NODE_IDX);
