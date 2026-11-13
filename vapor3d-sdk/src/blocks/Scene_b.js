@@ -24,6 +24,11 @@ export const SceneBlocks = [
             INDEX: { type: "number", defaultValue: 0 }
         }
     },
+    {
+        opcode: "Scene_DestroyAll",
+        blockType: "command",
+        text: "destroy all scenes"
+    },
 
 
 
@@ -159,18 +164,43 @@ export const SceneBlocks = [
 
 
 
-    { blockType: "label", text: "Mesh" },
+    { blockType: "label", text: "MeshNode" },
     {
-        opcode: "Scene_MeshDraw",
-        blockType: "command",
-        text: "MeshNode [INDEX] .draw [MODE]",
+        opcode: "Scene_MeshNodeGetPrimitive",
+        blockType: "reporter",
+        text: "MeshNode [NODE_IDX] .getPrimitive [PRIM_IDX]",
         arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            MODE: { type: "string", menu: "drawMode" }
+            NODE_IDX: { type: "number", defaultValue: 0 },
+            PRIM_IDX: { type: "number", defaultValue: 0 }
         }
     },
     {
-        opcode: "Scene_MeshIsVisible",
+        opcode: "Scene_MeshNodeGetPrimitiveCount",
+        blockType: "reporter",
+        text: "MeshNode [NODE_IDX] .primitiveCount",
+        arguments: {
+            NODE_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Scene_MeshNodeGetSkeleton",
+        blockType: "reporter",
+        text: "MeshNode [NODE_IDX] .skeleton",
+        arguments: {
+            NODE_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Scene_MeshNodeUploadMatrix",
+        blockType: "command",
+        text: "MeshNode [NODE_IDX] .uploadMatrix [UNIFORM]",
+        arguments: {
+            NODE_IDX: { type: "number", defaultValue: 0 },
+            UNIFORM: { type: "string", defaultValue: "uModel" }
+        }
+    },
+    {
+        opcode: "Scene_MeshNodeIsVisible",
         blockType: "reporter",
         text: "MeshNode [INDEX] is visible",
         arguments: {
@@ -178,7 +208,7 @@ export const SceneBlocks = [
         }
     },
     {
-        opcode: "Scene_MeshSetVisible",
+        opcode: "Scene_MeshNodeSetVisible",
         blockType: "command",
         text: "MeshNode [NODE_IDX] .setVisible [VISIBLE] recursive [RECURSIVE]",
         arguments: {
@@ -188,50 +218,11 @@ export const SceneBlocks = [
         }
     },
     {
-        opcode: "Scene_MeshGetMaterial",
-        blockType: "reporter",
-        text: "MeshNode [INDEX] .material",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 }
-        }
-    },
-    {
-        opcode: "Scene_MeshSetMaterial",
-        blockType: "command",
-        text: "MeshNode [NODE_IDX] .setMaterial [MAT_IDX]",
-        arguments: {
-            NODE_IDX: { type: "number", defaultValue: 0 },
-            MAT_IDX: { type: "number", defaultValue: 0 }
-        }
-    },
-    {
-        opcode: "Scene_MeshGetTexture",
-        blockType: "reporter",
-        text: "MeshNode [INDEX] .getMaterialTexture [TEX_TYPE]",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            TEX_TYPE: { type: "string", menu: "pbrTexMenu" }
-        }
-    },
-    {
-        opcode: "Scene_MeshGetParam",
-        blockType: "reporter",
-        text: "MeshNode [INDEX] .getMaterialParam [PARAM]",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            PARAM: {
-                type: "string",
-                menu: "pbrParamMenu",
-                defaultValue: "baseColor"
-            }
-        }
-    },
-    {
-        opcode: "Scene_MeshGetLightmapParam",
+        opcode: "Scene_MeshNodeGetLightmapParam",
         blockType: "reporter",
         text: "MeshNode [INDEX] .lightmap.parameter [PARAM]",
         arguments: {
-            INDEX: { type: "string", defaultValue: "0" },
+            INDEX: { type: "number", defaultValue: 0 },
             PARAM: {
                 type: "string",
                 menu: "lightmapParamMenu",
@@ -240,7 +231,7 @@ export const SceneBlocks = [
         }
     },
     {
-        opcode: "Scene_MeshGetLightmapScaleOffsetComp",
+        opcode: "Scene_MeshNodeGetLightmapScaleOffsetComp",
         blockType: "reporter",
         text: "MeshNode [INDEX] .lightmap.scaleOffset [COMP]",
         arguments: {
@@ -250,6 +241,44 @@ export const SceneBlocks = [
                 menu: "v4CompMenu",
                 defaultValue: "X"
             }
+        }
+    },
+
+
+
+    { blockType: "label", text: "Primitive" },
+    {
+        opcode: "Primitive_Draw",
+        blockType: "command",
+        text: "Primitive [PRIM_IDX] .draw [MODE]",
+        arguments: {
+            PRIM_IDX: { type: "number", defaultValue: 0 },
+            MODE: { type: "string", menu: "drawMode" }
+        }
+    },
+    {
+        opcode: "Primitive_GetMaterial",
+        blockType: "reporter",
+        text: "Primitive [PRIM_IDX] .material",
+        arguments: {
+            PRIM_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Primitive_SetMaterial",
+        blockType: "command",
+        text: "Primitive [PRIM_IDX] .setMaterial [MAT_IDX]",
+        arguments: {
+            PRIM_IDX: { type: "number", defaultValue: 0 },
+            MAT_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Primitive_GetVAO",
+        blockType: "reporter",
+        text: "Primitive [PRIM_IDX] .vao",
+        arguments: {
+            PRIM_IDX: { type: "number", defaultValue: 0 }
         }
     },
 
