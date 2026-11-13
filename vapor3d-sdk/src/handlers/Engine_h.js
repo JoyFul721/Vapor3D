@@ -93,7 +93,7 @@ export class EngineHandlers {
             map.clear();
         }
         this.activeShader = null;
-        this.scene?.Scene_ClearAll();
+        this.scene?.Scene_DestroyAll();
         this.registry?.clear?.();
     }
 
