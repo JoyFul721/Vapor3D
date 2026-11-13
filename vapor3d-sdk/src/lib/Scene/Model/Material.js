@@ -1,3 +1,6 @@
+/**
+* Container -> Mesh -> Primitive -> Material
+*/
 export class Material {
     constructor() {
         this.name = null; // Material 是由 Loader 实例化、Loader 命名、Scene 存入 materialsMap
