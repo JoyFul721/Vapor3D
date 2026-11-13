@@ -6,8 +6,7 @@ export class AssetContainer {
         this.name = name;
         this.id = name; // legacy
         this.rootNode = null;
-        this.meshes = [];        // gltf meshes array
-        this.primitives = [];     // gltf primitives array
+        this.meshes = [];        // MeshNode array
         this.skeletons = [];      // Skeletons array
         this.animations = new Map();
 
