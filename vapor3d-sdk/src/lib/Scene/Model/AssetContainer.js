@@ -1,5 +1,5 @@
-/*
-本质是一个映射管理器，方便用户跳过层级遍历直接查询到特定节点，由 Loader 实例化
+/**
+* Scene -> Container
 */
 export class AssetContainer {
     constructor(name) {
