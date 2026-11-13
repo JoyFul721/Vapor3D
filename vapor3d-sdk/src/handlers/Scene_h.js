@@ -75,7 +75,16 @@ export class SceneHandlers {
     async Scene_Destroy({ INDEX }) {
         const idx = Number(INDEX);
         const scene = this._getScene(idx);
-        if (!scene) return;
+        if (!scene) {
+            // Stale entry: drop it so scenesMap stays in sync with the registry
+            for (const [name, value] of this.scenesMap) {
+                if (value === idx) {
+                    this.scenesMap.delete(name);
+                    break;
+                }
+            }
+            return;
+        }
 
         // Snapshot before destroy() clears these
         const containerIndices = [...scene.containerIndices];
@@ -90,7 +99,7 @@ export class SceneHandlers {
         for (const containerIndex of containerIndices) {
             this.registry.dispose("containers", containerIndex);
         }
-        // Node destroy is idempotent; containers may have already done some
+        // Node destroy is idempotent
         for (const nodeIndex of nodeIndices) {
             this.registry.dispose("nodes", nodeIndex);
         }
@@ -122,10 +131,17 @@ export class SceneHandlers {
      * Destroy all scenes and every resource they hold
      */
     async Scene_DestroyAll() {
-        const indices = [...this.scenesMap.values()];
-        for (const index of indices) {
-            await this.Scene_Destroy({ INDEX: index });
+        const scenes = this.registry?.scenes ?? [];
+
+        for (let i = 0; i < scenes.length; i++) {
+            if (scenes[i] == null) continue;
+            try {
+                await this.Scene_Destroy({ INDEX: i });
+            } catch (err) {
+                console.error(`Vapor3D: Scene_DestroyAll failed for scene ${i}`, err);
+            }
         }
+        this.scenesMap.clear();
     }
 
 
