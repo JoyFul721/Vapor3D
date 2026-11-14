@@ -10,7 +10,7 @@ export class Material {
         this.emissiveTex = null;
         this.baseColor = [1, 1, 1, 1];
         this.roughness = 1;
-        this.metalness = 1;
+        this.metallic = 1;
         this.alpha = 1;
 
         this.registryIndex = -1;
