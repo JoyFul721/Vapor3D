@@ -103,7 +103,7 @@ export class Loader {
 
                 mat.baseColor = baseColor;
                 mat.roughness = roughness;
-                mat.metalness = metallic;
+                mat.metallic = metallic;
                 mat.alpha = baseColor[3];
 
                 // Albedo Tex
