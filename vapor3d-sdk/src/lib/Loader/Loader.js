@@ -280,9 +280,7 @@ export class Loader {
                             vao.addBuffer(weightsFloat, 5, 4);
                         }
 
-                        /*
-                        Indices
-                        */
+                        // Indices
                         if (prim.indices !== undefined) {
                             const raw = await asset.accessorData(prim.indices);
                             const acc = asset.gltf.accessors[prim.indices];
@@ -297,19 +295,14 @@ export class Loader {
                             vao.defaultCount = raw.byteLength / 12;
                         }
 
-                        /*
-                        Material
-                        */
+                        // Material
                         const mat = (prim.material !== undefined && materials[prim.material])
                             ? materials[prim.material]
                             : getDefaultMaterial();
 
-                        // a shared material turns on UV2 if any of its primitives has TEXCOORD_1
-                        if (prim.attributes.TEXCOORD_1 !== undefined) {
-                            mat.hasUV2 = true;
-                        }
-
+                        // Primitive
                         const primitive = new Primitive(vao, mat);
+                        primitive.hasUV2 = prim.attributes.TEXCOORD_1 !== undefined;
                         reg('primitives', primitive);
                         mesh.primitives.push(primitive);
                     }
