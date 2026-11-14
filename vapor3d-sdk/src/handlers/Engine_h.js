@@ -103,7 +103,7 @@ export class EngineHandlers {
         this.core.resize(this.vm.renderer.canvas.width, this.vm.renderer.canvas.height);
     }
 
-    gl_GetCanvasSize(SIZE) {
+    gl_GetCanvasSize({ SIZE }) {
         const c = this.core && this.core.canvas;
         if (!c) return -1;
         return SIZE === "height" ? c.height : c.width;
