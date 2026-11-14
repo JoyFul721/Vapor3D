@@ -10,7 +10,7 @@ export class MeshNode extends TransformNode {
         super(name);
 
         this.mesh = mesh;      // shared Mesh template
-        this.visible = 1;
+        this.isVisible = true;
 
         this.isSkinned = false;
         this.skeleton = null;
