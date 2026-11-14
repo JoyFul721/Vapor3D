@@ -1,4 +1,5 @@
 // /lib/Scene/Scene.js
+
 import { TransformNode } from '../index.js';
 
 export class Scene {
@@ -19,11 +20,6 @@ export class Scene {
         this.animationsMap = new Map();
         this.materialsMap = new Map();
         this.containerIndices = new Set();
-
-        this.registryCache = {
-            vaos: new Map(),
-            textures: new Map()
-        };
 
         this.root = new TransformNode(`${name}_Root`);
         this.registerNode(this.root);
@@ -48,6 +44,18 @@ export class Scene {
         if (indices.size === 0) map.delete(name);
     }
 
+    // materials now live on primitives, so every walk goes through node.mesh.primitives
+    // nodes without a mesh are skipped.
+    _forEachNodeMaterial(node, fn) {
+        const prims = node?.mesh?.primitives;
+        if (!prims) return;
+
+        for (let i = 0; i < prims.length; i++) {
+            const mat = prims[i]?.material;
+            if (mat) fn(mat);
+        }
+    }
+
     // 递归赋值 Node.sceneIndex
     _setNodeSceneIndex(node) {
         if (!node) return;
@@ -66,10 +74,11 @@ export class Scene {
     _setNodeMaterialMap(node) {
         if (!node) return;
 
-        const mat = node.material;
-        if (mat?.registryIndex != null && mat.registryIndex >= 0) {
-            this._addToMap(this.materialsMap, mat.name, mat.registryIndex);
-        }
+        this._forEachNodeMaterial(node, (mat) => {
+            if (mat.registryIndex != null && mat.registryIndex >= 0) {
+                this._addToMap(this.materialsMap, mat.name, mat.registryIndex);
+            }
+        });
 
         for (const child of node.children ?? []) {
             this._setNodeMaterialMap(child);
@@ -80,8 +89,9 @@ export class Scene {
     _collectMaterials(node, out) {
         if (!node) return;
 
-        const idx = node.material?.registryIndex;
-        if (idx != null && idx >= 0) out.add(idx);
+        this._forEachNodeMaterial(node, (mat) => {
+            if (mat.registryIndex != null && mat.registryIndex >= 0) out.add(mat.registryIndex);
+        });
 
         for (const child of node.children ?? []) {
             this._collectMaterials(child, out);
@@ -89,13 +99,15 @@ export class Scene {
     }
 
     // 注销材质登记
+    // runs after unregisterNode
     _releaseMaterials(indices) {
         if (!indices.size) return;
 
         const stillUsed = new Set();
         for (const node of this.nodes) {
-            const idx = node?.material?.registryIndex;
-            if (idx != null && idx >= 0) stillUsed.add(idx);
+            this._forEachNodeMaterial(node, (mat) => {
+                if (mat.registryIndex != null && mat.registryIndex >= 0) stillUsed.add(mat.registryIndex);
+            });
         }
 
         for (const idx of indices) {
@@ -129,7 +141,7 @@ export class Scene {
         }
 
         this._setNodeSceneIndex(node);
-        this._setNodeMaterialMap(node);  
+        this._setNodeMaterialMap(node);
         this.registerNode(node);
         node.setDirty?.();
         return true;
@@ -148,12 +160,13 @@ export class Scene {
         node.parent?.removeChild(node);
         this.unregisterNode(node);
         this._clearNodeSceneIndex(node);
-        this._releaseMaterials(removedMaterials); // ← 新增
+        this._releaseMaterials(removedMaterials);
         return true;
     }
 
-    // ====================== MatrixBuffer ======================
-
+    /*
+    MatrixBuffer
+    */
     registerNode(node) {
         if (!node) return;
 
@@ -186,8 +199,10 @@ export class Scene {
         node.worldMatrixIndex = -1;
     }
 
-    // ====================== Container ======================
 
+    /*
+    Container
+    */
     addContainer(index) {
         const containerIndex = Number(index);
         const container = this._get('containers', containerIndex);
@@ -211,7 +226,7 @@ export class Scene {
                 }
             }
         }
-        
+
         for (const [animName, animation] of container.animations) {
             if (animation.registryIndex != null && animation.registryIndex >= 0) {
                 this._addToMap(this.animationsMap, animName, animation.registryIndex);
@@ -271,8 +286,14 @@ export class Scene {
         return this.animationsMap.get(name) ?? new Set();
     }
 
-    // ====================== 更新 ======================
+    findMaterials(name) {
+        return this.materialsMap.get(name) ?? new Set();
+    }
 
+
+    /*
+    Update
+    */
     update(dt) {
         if (this._destroyed) return;
 
@@ -299,30 +320,12 @@ export class Scene {
         }
     }
 
-    // ====================== 资源缓存 ======================
 
-    async getOrCreateTexture(id, creator) {
-        let promise = this.registryCache.textures.get(id);
-
-        if (!promise) {
-            promise = Promise.resolve().then(creator);
-            this.registryCache.textures.set(id, promise);
-        }
-
-        return promise;
-    }
-
-    async getOrCreateVAO(id, creator) {
-        let promise = this.registryCache.vaos.get(id);
-
-        if (!promise) {
-            promise = Promise.resolve().then(creator);
-            this.registryCache.vaos.set(id, promise);
-        }
-
-        return promise;
-    }
-
+    /*
+      Destroy
+      no registryCache to drain anymore
+      textures and VAOs are created once by the Loader and owned by the Registry
+    */
     async destroy() {
         if (this._destroyed) return;
         this._destroyed = true;
@@ -333,28 +336,10 @@ export class Scene {
 
         this.unregisterNode(this.root);
 
-        const cache = this.registryCache;
-        this.registryCache = {
-            vaos: new Map(),
-            textures: new Map()
-        };
-
-        for (const map of [cache.textures, cache.vaos]) {
-            const results = await Promise.allSettled(map.values());
-
-            for (const result of results) {
-                if (result.status === 'fulfilled') {
-                    result.value?.destroy?.();
-                }
-            }
-
-            map.clear();
-        }
-
         this.containersMap.clear();
         this.skeletonsMap.clear();
         this.animationsMap.clear();
-        this.materialsMap.clear();  
+        this.materialsMap.clear();
         this.containerIndices.clear();
 
         this.nodes.length = 0;

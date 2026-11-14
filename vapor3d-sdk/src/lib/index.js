@@ -3,21 +3,22 @@ export { Utils } from './Tools/Utils.js';
 export { Core } from './Engine/Core.js';
 export { Shader } from './Engine/Shader.js';
 export { Framebuffer } from './Engine/Framebuffer.js';
+export { Stencilbuffer } from './Engine/StenculBuffer.js'
 export { VAO } from './Engine/VAO.js';
 export { Texture, Texture2D, TextureCube } from './Engine/Textures.js';
 export { Math3D } from './Tools/Math3D.js';
-export { Mesh } from './Scene/Model/Mesh.js';
 
 export { Loader } from './Loader/Loader.js';
 export { CubeCamera } from './Tools/CubeCamera.js';
 
-
 export { Scene } from './Scene/Scene.js'
-
 
 export { AssetContainer } from './Scene/Model/AssetContainer.js'
 export { TransformNode } from './Scene/Node.js'
 export { MeshNode } from './Scene/Model/MeshNode.js'
+
+export { Mesh } from './Scene/Model/Mesh.js';
+export { Primitive } from './Scene/Model/Primitive.js';
 export { Material } from './Scene/Model/Material.js'
 export { Skeleton } from './Scene/Model/Skeleton.js'
 

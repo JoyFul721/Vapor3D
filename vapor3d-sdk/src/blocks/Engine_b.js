@@ -7,7 +7,7 @@ export const EngineMenus = {
 
         drawMode: ["TRIANGLES", "TRIANGLE_STRIP", "LINES", "POINTS"],
         pbrTexMenu: ["albedoTex", "normalTex", "ormTex", "emissiveTex"],
-        pbrParamMenu: ["roughness", "metalness", "baseColor"],
+        pbrParamMenu: ["roughness", "metallic", "baseColor"],
         
         faceMenu: ["FRONT", "BACK", "FRONT_AND_BACK"],
         clearMenu: ["COLOR_BUFFER_BIT", "DEPTH_BUFFER_BIT", "STENCIL_BUFFER_BIT", "ALL"],
@@ -39,6 +39,7 @@ export const EngineMenus = {
                 "GL_UNSIGNED_INT"
         ],
         fboSlotMenu: ["COLOR_ATTACHMENT0", "COLOR_ATTACHMENT1", "COLOR_ATTACHMENT2", "COLOR_ATTACHMENT3", "COLOR_ATTACHMENT4", "COLOR_ATTACHMENT5", "DEPTH_STENCIL_ATTACHMENT", "DEPTH_ATTACHMENT"],
+        depthStencilFormatMenu: ["STENCIL_INDEX8", "DEPTH24_STENCIL8", "DEPTH_COMPONENT24"],
         depthMenu: ["RBO", "TEXTURE", "NONE"],
         filterMode: ["NEAREST", "LINEAR", "NEAREST_MIPMAP_NEAREST", "LINEAR_MIPMAP_NEAREST", "NEAREST_MIPMAP_LINEAR", "LINEAR_MIPMAP_LINEAR"],
         // wrapAxis: ["S", "T"],
@@ -71,7 +72,6 @@ export const EngineMenus = {
                 { text: "Texture", value: "texture" },
                 { text: "Stencil", value: "stencil" },
                 { text: "Scene", value: "scene" },
-                { text: "Node", value: "node" },
                 { text: "Container", value: "container" },
                 { text: "Timeline", value: "timeline" }
         ],
@@ -79,18 +79,14 @@ export const EngineMenus = {
                 { text: "Container", value: "container" },
                 { text: "Skeleton", value: "skeleton" },
                 { text: "Animation", value: "animation" },
-                { text: "Mesh", value: "mesh" },
+                { text: "MeshNode", value: "meshNode" },
                 { text: "Material", value: "material" }
         ],
         Inspector_ContainerType: [
-                { text: "Mesh", value: "mesh" },
+                { text: "MeshNode", value: "meshNode" },
                 { text: "Skeleton", value: "skeleton" },
                 { text: "Animation", value: "animation" },
                 { text: "Material", value: "material" }
-        ],
-        Inspector_ContainerArrayType: [
-                { text: "Mesh", value: "mesh" },
-                { text: "Skeleton", value: "skeleton" }
         ],
         canvasSize: ["width", "height"],
 };
@@ -113,6 +109,7 @@ export const EngineBlocks = [
         { opcode: "Shader_SetFloat", blockType: "command", text: "Shader [INDEX] .setFloat [NAME] [V]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, V: { type: "number" } } },
         { opcode: "Shader_SetInt", blockType: "command", text: "Shader [INDEX] .setInt [NAME] [V]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, V: { type: "number" } } },
         { opcode: "Shader_SetBool", blockType: "command", text: "Shader [INDEX] .setBool [NAME] [V]", arguments: { INDEX: { type: "number" }, NAME: { type: "string" }, V: { type: "number", defaultValue: 0 } } },
+        { opcode: "Shader_Destroy", blockType: "command", text: "Shader [INDEX] .destroy", arguments: { INDEX: { type: "number" } } },
 
         { blockType: "label", text: "Framebuffer" },
         { opcode: "FBO_Create", blockType: "reporter", text: "new FBO [NAME]", arguments: { NAME: { type: "string" } } },
@@ -120,9 +117,11 @@ export const EngineBlocks = [
         { opcode: "FBO_AttachTexture", blockType: "command", text: "FBO [INDEX] .attachTexture [TEX] [SLOT]", arguments: { INDEX: { type: "number" }, TEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
         { opcode: "FBO_AttachCubeTexture", blockType: "command", text: "FBO [INDEX] .attachCubemap [TEX] Face [FACE_INDEX] [SLOT]", arguments: { INDEX: { type: "number" }, TEX: { type: "number" }, FACE_INDEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
         { opcode: "FBO_Detach", blockType: "command", text: "FBO [INDEX] .detach [SLOT]", arguments: { INDEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
-        { opcode: "Stencil_Create", blockType: "reporter", text: "new StencilBuffer [NAME] [W] [H]", arguments: { NAME: { type: "string" }, W: { type: "number" }, H: { type: "number" } } },
+        { opcode: "Stencil_Create", blockType: "reporter", text: "new StencilBuffer [NAME] [W] [H] [FORMAT]", arguments: { NAME: { type: "string" }, W: { type: "number" }, H: { type: "number" }, FORMAT: { type: "string", menu: "depthStencilFormatMenu", defaultValue: "STENCIL_INDEX8" } } },
         { opcode: "FBO_AttachStencil", blockType: "command", text: "FBO [INDEX] .attachStencil [STENCIL_INDEX]", arguments: { INDEX: { type: "number" }, STENCIL_INDEX: { type: "number" } } },
         { opcode: "FBO_DetachStencil", blockType: "command", text: "FBO [INDEX] .detachStencil", arguments: { INDEX: { type: "number" } } },
+        { opcode: "Stencil_Destroy", blockType: "command", text: "StencilBuffer [INDEX] .destroy", arguments: { INDEX: { type: "number" } } },
+        { opcode: "FBO_Destroy", blockType: "command", text: "FBO [INDEX] .destroy", arguments: { INDEX: { type: "number" } } },
 
         { blockType: "label", text: "Vertex Array Object" },
         { opcode: "VAO_CreateEmpty", blockType: "reporter", text: "new VAO [NAME]", arguments: { NAME: { type: "string" } } },
@@ -148,6 +147,7 @@ export const EngineBlocks = [
         { opcode: "Texture_SetFilter", blockType: "command", text: "Texture [INDEX] .setFilter [MIN_MODE] [MAG_MODE]", arguments: { INDEX: { type: "number" }, MIN_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" }, MAG_MODE: { type: "string", menu: "filterMode", defaultValue: "LINEAR" } } },
         { opcode: "Texture_SetWrap", blockType: "command", text: "Texture [INDEX] .setWrap [MODE]", arguments: { INDEX: { type: "number" }, MODE: { type: "string", menu: "wrapMode", defaultValue: "REPEAT" } } },
         { opcode: "Texture_GenerateMipmap", blockType: "command", text: "Texture [INDEX] .generateMipmap", arguments: { INDEX: { type: "number" } } },
+        { opcode: "Texture_Destroy", blockType: "command", text: "Texture [INDEX] .destroy", arguments: { INDEX: { type: "number" } } },
 
         { blockType: "label", text: "GL States" },
         { opcode: "gl_Clear", blockType: "command", text: "gl.clear [BIT]", arguments: { BIT: { type: "string", menu: "clearMenu" } } },

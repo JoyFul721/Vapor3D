@@ -180,7 +180,7 @@ import { SafeArray } from "./lib/Tools/SafeArray.js";
                     "Vapor3D: Project stopped. releasing all resources...",
                 );
 
-                this.sceneHandlers.Scene_ClearAll();
+                this.sceneHandlers.Scene_DestroyAll();
                 this.engineHandlers.gl_ResetResources();
 
                 /*

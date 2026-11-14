@@ -1,5 +1,4 @@
 import { Math3D } from '../index';
-import { Material } from '../index';
 
 class Node {
     constructor(name = "unnamed") {
