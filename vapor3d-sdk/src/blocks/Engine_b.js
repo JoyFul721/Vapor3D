@@ -7,7 +7,7 @@ export const EngineMenus = {
 
         drawMode: ["TRIANGLES", "TRIANGLE_STRIP", "LINES", "POINTS"],
         pbrTexMenu: ["albedoTex", "normalTex", "ormTex", "emissiveTex"],
-        pbrParamMenu: ["roughness", "metalness", "baseColor"],
+        pbrParamMenu: ["roughness", "metallic", "baseColor"],
         
         faceMenu: ["FRONT", "BACK", "FRONT_AND_BACK"],
         clearMenu: ["COLOR_BUFFER_BIT", "DEPTH_BUFFER_BIT", "STENCIL_BUFFER_BIT", "ALL"],
