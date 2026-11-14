@@ -1,8 +1,14 @@
-import { Material } from "./Material";
+// /lib/Scene//Model/Mesh.js
 
-export class Mesh { // 模板，glTF 的 mesh 定义，可被多个 node 引用
-    constructor(vao) {
-        this.vao = vao;
-        this.material = new Material();
+/**
+ * Mirror of a glTF mesh entry. A bag of primitives.
+ * Several MeshNodes can point at the same Mesh
+ */
+export class Mesh {
+    constructor(name = '') {
+        this.name = name;
+        this.primitives = [];
+
+        this.registryIndex = -1;
     }
 }

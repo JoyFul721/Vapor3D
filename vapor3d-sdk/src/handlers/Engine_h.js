@@ -1,4 +1,4 @@
-import { Core, Shader, VAO, Texture2D, TextureCube, Framebuffer, Utils } from '../lib/index.js';
+import { Core, Shader, VAO, Texture2D, TextureCube, Framebuffer, Stencilbuffer, Utils } from '../lib/index.js';
 
 export class EngineHandlers {
     constructor(Scratch, registry) {
@@ -93,7 +93,7 @@ export class EngineHandlers {
             map.clear();
         }
         this.activeShader = null;
-        this.scene?.Scene_ClearAll();
+        this.scene?.Scene_DestroyAll();
         this.registry?.clear?.();
     }
 
@@ -103,7 +103,7 @@ export class EngineHandlers {
         this.core.resize(this.vm.renderer.canvas.width, this.vm.renderer.canvas.height);
     }
 
-    gl_GetCanvasSize(SIZE) {
+    gl_GetCanvasSize({SIZE}) {
         const c = this.core && this.core.canvas;
         if (!c) return -1;
         return SIZE === "height" ? c.height : c.width;
@@ -168,6 +168,19 @@ export class EngineHandlers {
         if (!shader) return;
         shader.setInt(NAME, Boolean(Number(V)) ? 1 : 0);
     }
+    Shader_Destroy({ INDEX }) {
+        const idx = Number(INDEX);
+        const shader = this.registry.get('shaders', idx);
+        if (!shader) return;
+
+        if (this.activeShader === shader) {
+            this.core?.gl.useProgram(null);
+            this.activeShader = null;
+        }
+
+        this.registry.dispose('shaders', idx);
+        for (const [name, value] of this.shadersMap) if (value === idx) this.shadersMap.delete(name);
+    }
 
     // Framebuffer
     FBO_Create({ NAME }) {
@@ -195,23 +208,32 @@ export class EngineHandlers {
         fbo.detach(SLOT);
     }
 
-    Stencil_Create({ NAME, W, H }) {
+    Stencil_Create({ NAME, W, H, FORMAT = 'STENCIL_INDEX8' }) {
         if (!this.core) return -1;
-        const gl = this.core.gl;
-        const rb = gl.createRenderbuffer();
-        if (!rb) return -1;
-        gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
-        gl.renderbufferStorage(gl.RENDERBUFFER, gl.STENCIL_INDEX8, W, H);
-        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-        const index = this.registry.allocate('stencilBuffers', { id: rb, width: W, height: H });
+        const sb = new Stencilbuffer(this.core.gl);
+        if (!sb.id) return -1;
+        sb.allocate(W, H, FORMAT);
+        const index = this.registry.allocate('stencilBuffers', sb);
         this.stencilBuffersMap.set(NAME, index);
         return index;
+    }
+    Stencil_Destroy({ INDEX }) {
+        const idx = Number(INDEX);
+        if (!this.registry.get('stencilBuffers', idx)) return;
+        this.registry.dispose('stencilBuffers', idx);
+        for (const [name, value] of this.stencilBuffersMap) if (value === idx) this.stencilBuffersMap.delete(name);
     }
     FBO_AttachStencil({ INDEX, STENCIL_INDEX }) {
         const fbo = this.registry.get('fbos', INDEX);
         const stencil = this.registry.get('stencilBuffers', STENCIL_INDEX);
         if (!fbo || !stencil) return;
-        fbo.attachStencilBuffer(stencil);
+
+        const point = this.core.gl[stencil.attachmentPoint];
+        this.core.gl.bindFramebuffer(this.core.gl.FRAMEBUFFER, fbo.id);
+        this.core.gl.framebufferRenderbuffer(
+            this.core.gl.FRAMEBUFFER, point, this.core.gl.RENDERBUFFER, stencil.id
+        );
+        this.core.gl.bindFramebuffer(this.core.gl.FRAMEBUFFER, null);
     }
     FBO_DetachStencil({ INDEX }) {
         const fbo = this.registry.get('fbos', INDEX);
@@ -223,6 +245,13 @@ export class EngineHandlers {
         const fbo = this.registry.get('fbos', INDEX);
         if (fbo) fbo.bind(this.core.canvas.width, this.core.canvas.height);
         else Framebuffer.bindScreen(this.core.gl, this.core.canvas.width, this.core.canvas.height);
+    }
+    FBO_Destroy({ INDEX }) {
+        const idx = Number(INDEX);
+        const fbo = this.registry.get('fbos', idx);
+        if (!fbo) return;
+        this.registry.dispose('fbos', idx);
+        for (const [name, value] of this.fbosMap) if (value === idx) this.fbosMap.delete(name);
     }
 
     // VAO
@@ -369,11 +398,11 @@ export class EngineHandlers {
     }
 
     VAO_Destroy({ INDEX }) {
-        const vao = this.registry.get('vaos', INDEX);
+        const idx = Number(INDEX);
+        const vao = this.registry.get('vaos', idx);
         if (!vao) return;
-        vao.destroy?.();
-        this.registry.vaos[Number(INDEX)] = null;
-        for (const [name, value] of this.vaosMap) if (value === Number(INDEX)) this.vaosMap.delete(name);
+        this.registry.dispose('vaos', idx);
+        for (const [name, value] of this.vaosMap) if (value === idx) this.vaosMap.delete(name);
     }
 
     // Texture
@@ -461,6 +490,13 @@ export class EngineHandlers {
         const tex = this.registry.get('textures', INDEX);
         if (!tex) return;
         tex.generateMipmap();
+    }
+    Texture_Destroy({ INDEX }) {
+        const idx = Number(INDEX);
+        const tex = this.registry.get('textures', idx);
+        if (!tex) return;
+        this.registry.dispose('textures', idx);
+        for (const [name, value] of this.texturesMap) if (value === idx) this.texturesMap.delete(name);
     }
 
     // GL state

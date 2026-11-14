@@ -1,14 +1,19 @@
+// /lib/Scene//Model/Material.js
+
+/**
+ * Container -> Mesh -> Primitive -> Material
+ */
 export class Material {
     constructor() {
-        this.name = null; // Material 是由 Mesh 实例化、Loader 命名、Scene 存入 materialsMap
+        this.name = null; // Material 是由 Loader 实例化、Loader 命名、Scene 存入 materialsMap
         this.albedoTex = null;
         this.normalTex = null;
         this.ormTex = null;
         this.emissiveTex = null;
         this.baseColor = [1, 1, 1, 1];
         this.roughness = 1;
-        this.metalness = 1;
-        this.hasUV2 = false;
+        this.metallic = 1;
+        this.alpha = 1;
 
         this.registryIndex = -1;
     }
