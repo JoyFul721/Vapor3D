@@ -4,7 +4,7 @@ export const TimelineBlocks = [
         blockType: "reporter",
         text: "new Timeline [NAME] type [TYPE] target [TARGET_INDEX]",
         arguments: {
-            NAME: { type: "string", defaultValue: "Timeline1" },
+            NAME: { type: "string", defaultValue: "timeline" },
             TYPE: { type: "string", menu: "targetTypeMenu", defaultValue: "skeleton" },
             TARGET_INDEX: { type: "number", defaultValue: 0 }
         }

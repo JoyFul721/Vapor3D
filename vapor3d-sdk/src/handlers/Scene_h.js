@@ -1,6 +1,14 @@
 // /handlers/Scene_h.js
 
-import { Scene, TransformNode, Material, Utils } from "../lib/index.js";
+import {
+    Scene,
+    TransformNode,
+    MeshNode,
+    Mesh,
+    Primitive,
+    Material,
+    Utils,
+} from "../lib/index.js";
 import { Math3D } from "../lib/Tools/Math3D.js";
 
 export class SceneHandlers {
@@ -369,6 +377,40 @@ export class SceneHandlers {
      * per-node state (visible, skeleton, lightmap).
      * All geometry and material work happens on Primitive
      */
+    Scene_CreateMeshNode({ NAME, SCENE_IDX, PARENT_NODE_IDX }) {
+        const scene = this._getScene(Number(SCENE_IDX));
+        if (!scene || scene._destroyed) return -1;
+
+        const parentIndex = Number(PARENT_NODE_IDX);
+        const parent = parentIndex === -1 ? scene.root : this._get("nodes", parentIndex);
+        if (!parent) return -2;
+        if (parent !== scene.root && parent.sceneIndex !== scene.registryIndex) return -1;
+
+        const node = new MeshNode(NAME || `meshNode_${scene.registryIndex}`);
+        if (!scene.attachNode(node, parent)) return -3;
+
+        return this.registry.allocate("nodes", node);
+    }
+
+    Scene_MeshNodeAddPrimitive({ NODE_IDX, PRIM_IDX }) {
+        const node = this._get("nodes", NODE_IDX);
+        if (!node) return console.error(`Vapor3D: addPrimitive failed, node index ${NODE_IDX} not found`);
+
+        const prim = this._get("primitives", PRIM_IDX);
+        if (!prim) return console.error(`Vapor3D: addPrimitive failed, primitive index ${PRIM_IDX} not found`);
+
+        const scene = this._getScene(node.sceneIndex);
+        if (!scene || scene._destroyed) return;
+
+        if (!node.mesh) {
+            node.mesh = new Mesh(`mesh_${node.registryIndex}`);
+            this.registry.allocate("meshes", node.mesh);
+        }
+
+        node.mesh.primitives.push(prim);
+        scene._setNodeMaterialMap(node);
+    }
+
     Scene_MeshNodeGetPrimitive({ NODE_IDX, PRIM_IDX }) {
         const node = this._get("nodes", NODE_IDX);
         const prim = node?.mesh?.primitives?.[Number(PRIM_IDX)];
@@ -471,6 +513,26 @@ export class SceneHandlers {
      * The actual draw unit.
      * one Primitive = one VAO + one Material.
      */
+    Primitive_Create({ VAO_IDX, MAT_IDX }) {
+        const vao = this._get("vaos", VAO_IDX);
+        if (!vao) {
+            console.error(`Vapor3D: new Primitive failed, vao index ${VAO_IDX} not found`);
+            return -1;
+        }
+
+        let material = null;
+        const matIndex = Number(MAT_IDX);
+        if (matIndex >= 0) {
+            material = this._get("materials", matIndex);
+            if (!material) {
+                console.error(`Vapor3D: new Primitive failed, material index ${matIndex} not found`);
+                return -2;
+            }
+        }
+
+        return this.registry.allocate("primitives", new Primitive(vao, material));
+    }
+
     Primitive_Draw({ PRIM_IDX, MODE } = {}) {
         const prim = this._get("primitives", PRIM_IDX);
         if (!prim) return;

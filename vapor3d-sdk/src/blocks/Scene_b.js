@@ -187,9 +187,28 @@ export const SceneBlocks = [
 
     { blockType: "label", text: "MeshNode" },
     {
+        opcode: "Scene_CreateMeshNode",
+        blockType: "reporter",
+        text: "new MeshNode [NAME] [SCENE_IDX] [PARENT_NODE_IDX]",
+        arguments: {
+            SCENE_IDX: { type: "number", defaultValue: 0 },
+            NAME: { type: "string", defaultValue: "meshNode" },
+            PARENT_NODE_IDX: { type: "number", defaultValue: -1 }
+        }
+    },
+    {
+        opcode: "Scene_MeshNodeAddPrimitive",
+        blockType: "command",
+        text: "MeshNode [NODE_IDX] .addPrimitive [PRIM_IDX]",
+        arguments: {
+            NODE_IDX: { type: "number", defaultValue: 0 },
+            PRIM_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
         opcode: "Scene_MeshNodeGetPrimitive",
         blockType: "reporter",
-        text: "MeshNode [NODE_IDX] .getPrimitive [PRIM_IDX]",
+        text: "MeshNode [NODE_IDX] .getPrimitive index [PRIM_IDX]",
         arguments: {
             NODE_IDX: { type: "number", defaultValue: 0 },
             PRIM_IDX: { type: "number", defaultValue: 0 }
@@ -277,6 +296,15 @@ export const SceneBlocks = [
 
     { blockType: "label", text: "Primitive" },
     {
+        opcode: "Primitive_Create",
+        blockType: "reporter",
+        text: "new Primitive [VAO_IDX] [MAT_IDX]",
+        arguments: {
+            VAO_IDX: { type: "number", defaultValue: 0 },
+            MAT_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
         opcode: "Primitive_Draw",
         blockType: "command",
         text: "Primitive [PRIM_IDX] .draw [MODE]",
@@ -319,7 +347,7 @@ export const SceneBlocks = [
         blockType: "reporter",
         text: "new Material [NAME]",
         arguments: {
-            NAME: { type: "string", defaultValue: "Mat"}
+            NAME: { type: "string", defaultValue: "material"}
         }
     },
     {
