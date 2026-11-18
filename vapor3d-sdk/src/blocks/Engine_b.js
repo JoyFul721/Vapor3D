@@ -113,7 +113,7 @@ export const EngineBlocks = [
 
         { blockType: "label", text: "Framebuffer" },
         { opcode: "FBO_Create", blockType: "reporter", text: "new FBO [NAME]", arguments: { NAME: { type: "string" } } },
-        { opcode: "FBO_Bind", blockType: "command", text: "FBO [INDEX] .bind", arguments: { INDEX: { type: "number", defaultValue: -1 } } },
+        { opcode: "FBO_Bind", blockType: "command", text: "FBO [INDEX] .bind [W] [H]", arguments: { INDEX: { type: "number", defaultValue: -1 }, W: { type: "number", defaultValue: -1 }, H: { type: "number", defaultValue: -1 } } },
         { opcode: "FBO_AttachTexture", blockType: "command", text: "FBO [INDEX] .attachTexture [TEX] [SLOT]", arguments: { INDEX: { type: "number" }, TEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
         { opcode: "FBO_AttachCubeTexture", blockType: "command", text: "FBO [INDEX] .attachCubemap [TEX] Face [FACE_INDEX] [SLOT]", arguments: { INDEX: { type: "number" }, TEX: { type: "number" }, FACE_INDEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
         { opcode: "FBO_Detach", blockType: "command", text: "FBO [INDEX] .detach [SLOT]", arguments: { INDEX: { type: "number" }, SLOT: { type: "string", menu: "fboSlotMenu" } } },
