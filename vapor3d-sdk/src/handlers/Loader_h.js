@@ -37,7 +37,7 @@ export class LoaderHandlers {
         if (!loader || !targetScene) return -2;
         
         try {
-            const container = await loader.loadGLB(U, targetScene, NAME);
+            const container = await loader.loadGLB(U, NAME);
             const index = this._attachContainer(container, targetScene);
             if (index < 0) return -1;
 
@@ -59,7 +59,7 @@ export class LoaderHandlers {
         if (!loader || !targetScene) return -2;
 
         try {
-            const result = await loader.loadCast(U, targetScene, NAME);
+            const result = await loader.loadCast(U, NAME);
             if (!result) return -1;
 
             if (result.container) {

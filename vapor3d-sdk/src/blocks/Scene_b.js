@@ -121,24 +121,6 @@ export const SceneBlocks = [
         }
     },
     {
-        opcode: "Scene_AddContainer",
-        blockType: "command",
-        text: "Scene [INDEX] .addContainer [CONTAINER_IDX]",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            CONTAINER_IDX: { type: "number", defaultValue: 0 }
-        }
-    },
-    {
-        opcode: "Scene_RemoveContainer",
-        blockType: "command",
-        text: "Scene [INDEX] .removeContainer [CONTAINER_IDX]",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            CONTAINER_IDX: { type: "number", defaultValue: 0 }
-        }
-    },
-    {
         opcode: "Scene_GetContainerMeshNode", blockType: "reporter",
         text: "Container [INDEX] .getMeshNode index [ARR_INDEX]",
         arguments: {

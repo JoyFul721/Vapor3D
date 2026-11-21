@@ -141,7 +141,7 @@ export class CastLoader extends LoaderBase {
      *  - 只有 anim   -> 动画独立注册，返回动画索引列表
      * @returns {{container: AssetContainer|null, animations: number[]}|null}
      */
-    async loadCast(url, targetScene, modelID) {
+    async loadCast(url, modelID) {
         try {
             const workspace = await this._fetchWorkspace(url);
             const animNodes = workspace.ofType("anim");

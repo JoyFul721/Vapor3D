@@ -17,7 +17,7 @@ export class Loader extends LoaderBase {
         this.gltfLoader = new GltfLoader();
     }
 
-    async loadGLB(url, targetScene, modelID) {
+    async loadGLB(url, modelID) {
         try {
             const asset = await this.gltfLoader.load(url);
             await asset.preFetchAll();
