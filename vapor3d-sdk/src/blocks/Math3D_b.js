@@ -35,7 +35,7 @@ export const Math3DBlocks = [
             const opFnNames = {
                 "+": "vec3_add",
                 "-": "vec3_sub",
-                mul: "vec3_mul",
+                "x": "vec3_mul",
             };
 
             const lhs = `${LIB("Vec3")}(target,${this.descendInput(V).asUnknown()})`;
@@ -51,7 +51,7 @@ export const Math3DBlocks = [
     {
         opcode: "v3_Scale",
         blockType: "reporter",
-        text: "vec3 [V] mul_scalar [SCALAR]",
+        text: "vec3 [V] .mul [SCALAR]",
         arguments: {
             V: { type: "string", defaultValue: "[0,0,0]" },
             SCALAR: { type: "number", defaultValue: 1 },
@@ -69,7 +69,7 @@ export const Math3DBlocks = [
     {
         opcode: "v3_Dot",
         blockType: "reporter",
-        text: "vec3 [V] dot [OTHER]",
+        text: "vec3 [V] .dot [OTHER]",
         arguments: {
             V: { type: "string", defaultValue: "[0,0,0]" },
             OTHER: { type: "string", defaultValue: "[0,0,0]" },
@@ -84,7 +84,7 @@ export const Math3DBlocks = [
     {
         opcode: "v3_Cross",
         blockType: "reporter",
-        text: "vec3 [V] cross [OTHER]",
+        text: "vec3 [V] .cross [OTHER]",
         arguments: {
             V: { type: "string", defaultValue: "[0,0,0]" },
             OTHER: { type: "string", defaultValue: "[0,0,0]" },
@@ -102,7 +102,7 @@ export const Math3DBlocks = [
     {
         opcode: "v3_Lerp",
         blockType: "reporter",
-        text: "interpolate vec3 [A] [B] T [T]",
+        text: "vec3 [A] .interpolate [B] T [T]",
         arguments: {
             A: { type: "string", defaultValue: "[0,0,0]" },
             B: { type: "string", defaultValue: "[1,1,1]" },
@@ -122,7 +122,7 @@ export const Math3DBlocks = [
     {
         opcode: "v3_Clamp",
         blockType: "reporter",
-        text: "clamp vec3 [X] min [MIN] max [MAX]",
+        text: "vec3 [X] .clamp min [MIN] max [MAX]",
         arguments: {
             X: { type: "string", defaultValue: "[0.5,0.5,0.5]" },
             MIN: { type: "string", defaultValue: "[0,0,0]" },
@@ -400,7 +400,7 @@ export const Math3DBlocks = [
     {
         opcode: "TRS_Decompose",
         blockType: "reporter",
-        text: "decompose TRS [TRS] [TYPE] [AXIS]",
+        text: "TRS [TRS] .decompose [TYPE] [AXIS]",
         arguments: {
             TRS: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
             TYPE: { type: "string", menu: "TRSTypeMenu" }, // Pos, Rot, Scale
@@ -418,7 +418,7 @@ export const Math3DBlocks = [
     {
         opcode: "TRS_Add",
         blockType: "reporter",
-        text: "combine TRS [TRSA] [TRSB]",
+        text: "TRS [TRSA] .combine [TRSB]",
         arguments: {
             TRSA: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
             TRSB: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
@@ -436,7 +436,7 @@ export const Math3DBlocks = [
     {
         opcode: "TRS_Lerp",
         blockType: "reporter",
-        text: "interpolate TRS [A] [B] T [T]",
+        text: "TRS [A] .interpolate [B] T [T]",
         arguments: {
             A: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
             B: { type: "string", defaultValue: "[0,0,0, 0,0,0, 1,1,1]" },
