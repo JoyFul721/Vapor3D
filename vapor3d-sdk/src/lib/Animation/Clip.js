@@ -1,6 +1,7 @@
 // /lib/Animation/Clip.js
 
 const CLIP_MODES = new Set(["normal", "additive"]);
+const MARKER_TOLERANCE = 1e-4;
 const NUMERIC_CLIP_PROPS = new Set([
     "time",
     "trimStart",
@@ -21,8 +22,7 @@ function toFinite(value, fallback = 0) {
 }
 
 /**
- * 一条动画片段：把某个 Animation 映射到自己的播放区间上。
- * Clip 是独立对象，可以单独注册到 Registry，也可以被多个 Timeline 引用。
+ * 一条动画片段：把某个 Animation 映射到自己的播放区间上
  */
 export class Clip {
     constructor(name, animation, mode = "normal") {
@@ -102,6 +102,8 @@ export class Clip {
     }
 
     getProperty(prop) {
+        if (prop === "name") return this.name;
+        if (prop === "isActive") return this.isActive() ? 1 : 0;
         if (prop === "enabled") return this.enabled ? 1 : 0;
         if (prop === "mode") return this.mode;
         if (!NUMERIC_CLIP_PROPS.has(prop)) return 0;
@@ -145,6 +147,40 @@ export class Clip {
     isActive() {
         return this.alive && this.enabled && this.duration > 0 &&
             this.time >= 0 && this.time < this.duration;
+    }
+
+    /*
+    Marker：时间以 Clip 本地播放头为准
+    被裁剪掉的区间内的 marker 不可见
+    */
+
+    get markers() {
+        return this.animation?.markers ?? [];
+    }
+
+    getMarkerCount() {
+        return this._markersInTrim().length;
+    }
+
+    getMarkerNames() {
+        return this._markersInTrim().map(m => m.name);
+    }
+
+    getMarkerTime(name) {
+        const marker = this._markersInTrim().find(m => m.name === name);
+        return marker ? marker.time - this.trimStart : -1;
+    }
+
+    getMarkerNamesAt(localTime, tolerance = MARKER_TOLERANCE) {
+        const t = this.trimStart + toFinite(localTime);
+        return this._markersInTrim()
+            .filter(m => Math.abs(m.time - t) <= tolerance)
+            .map(m => m.name);
+    }
+
+    _markersInTrim() {
+        const { trimStart, trimEnd } = this;
+        return this.markers.filter(m => m.time >= trimStart && m.time <= trimEnd);
     }
 
     setJointWeight(jointName, weight, recursive = false) {

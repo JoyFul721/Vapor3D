@@ -8,7 +8,7 @@ import {
     Math3D, Utils, Skeleton, Animation,
     TransformNode, MeshNode, AssetContainer
 } from '../index.js';
-
+import { parseAnimationMarkers } from './Markers.js';
 
 export class Loader {
     constructor(gl, registry) {
@@ -414,7 +414,8 @@ export class Loader {
                         };
                     });
                     const animName = animDef.name || `anim_${animations.size}`;
-                    const animationInstance = new Animation(animName, channels, samplers);
+                    const markers = parseAnimationMarkers(animDef);
+                    const animationInstance = new Animation(animName, channels, samplers, markers);
                     reg('animations', animationInstance);
                     animations.set(animName, animationInstance);
                 }

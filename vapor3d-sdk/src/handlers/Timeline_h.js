@@ -74,6 +74,12 @@ export class TimelineHandlers {
         return clip ? clip.registryIndex : -1;
     }
 
+    Timeline_GetClip({ INDEX, NAME }) {
+        const timeline = this._getTimeline(INDEX);
+        const clip = timeline?.getClip(NAME);
+        return clip ? clip.registryIndex : -1;
+    }
+
     Timeline_GetDuration({ INDEX }) {
         const timeline = this._getTimeline(INDEX);
         return timeline ? timeline.getDuration() : 0;
@@ -168,29 +174,29 @@ export class TimelineHandlers {
         clip.advanceTime(DELTA);
     }
 
-    Clip_GetTime({ INDEX }) {
-        const clip = this._getClip(INDEX);
-        return clip ? clip.time : 0;
-    }
-
-    Clip_IsActive({ INDEX }) {
-        const clip = this._getClip(INDEX);
-        return clip ? clip.isActive() : false;
-    }
-
-    Clip_GetDuration({ INDEX }) {
-        const clip = this._getClip(INDEX);
-        return clip ? clip.duration : 0;
-    }
-
-    Clip_GetName({ INDEX }) {
-        const clip = this._getClip(INDEX);
-        return clip ? clip.name : "";
-    }
-
     Clip_SetJointWeight({ INDEX, JOINT_NAME, WEIGHT, RECURSIVE }) {
         const clip = this._getClip(INDEX);
         if (!clip) return;
         clip.setJointWeight(JOINT_NAME, Number(WEIGHT), RECURSIVE === "true");
+    }
+
+    Clip_GetMarkerTime({ INDEX, NAME }) {
+        const clip = this._getClip(INDEX);
+        return clip ? clip.getMarkerTime(NAME) : -1;
+    }
+
+    Clip_GetMarkerAt({ INDEX, TIME }) {
+        const clip = this._getClip(INDEX);
+        return clip ? clip.getMarkerNamesAt(TIME).join(",") : "";
+    }
+
+    Clip_GetMarkerNames({ INDEX }) {
+        const clip = this._getClip(INDEX);
+        return clip ? clip.getMarkerNames().join(",") : "";
+    }
+
+    Clip_GetMarkerCount({ INDEX }) {
+        const clip = this._getClip(INDEX);
+        return clip ? clip.getMarkerCount() : 0;
     }
 }

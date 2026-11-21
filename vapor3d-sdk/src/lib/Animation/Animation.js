@@ -2,12 +2,15 @@
 
 import { Math3D } from '../index';
 
+const MARKER_TOLERANCE = 1e-4;
+
 
 export class Animation {
-    constructor(name, channels, samplers) {
+    constructor(name, channels, samplers, markers = []) {
         this.name = name;
         this.channels = channels; // { sampler, targetNode, path }
         this.samplers = samplers; // { input, output, interpolation }
+        this.markers = markers; // { name, time }[] sorted by time
         this.duration = 0;
 
         this.registryIndex = -1;
@@ -21,6 +24,32 @@ export class Animation {
                 }
             }
         }
+    }
+
+    /**
+     * 源动画内所有 marker 名称（按时间升序）
+     */
+    getMarkerNames() {
+        return this.markers.map(m => m.name);
+    }
+
+    /**
+     * marker 在源动画中的时刻
+     */
+    getMarkerTime(name) {
+        const marker = this.markers.find(m => m.name === name);
+        return marker ? marker.time : -1;
+    }
+
+    /**
+     * 给定源动画时刻上存在的 marker 名称
+     */
+    getMarkerNamesAt(time, tolerance = MARKER_TOLERANCE) {
+        const t = Number(time);
+        if (!Number.isFinite(t)) return [];
+        return this.markers
+            .filter(m => Math.abs(m.time - t) <= tolerance)
+            .map(m => m.name);
     }
 
     _getFrameIndices(times, time) {

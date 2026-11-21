@@ -58,6 +58,7 @@ export const EngineMenus = {
         playModeMenu: ['loop', 'play once'],
         animInfoMenu: ['current animation name', 'current time', 'duration', 'is playing', 'animation names'],
         clipPropMenu: ["duration", "weight", "trimStart", "trimEnd", "fadeIn", "fadeOut"],
+        clipInfoMenu: ["name", "time", "duration", "weight", "trimStart", "trimEnd", "fadeIn", "fadeOut", "isActive"],
         clipMode: ["normal", "additive"],
         targetTypeMenu: [
                 { text: 'Skeleton', value: 'skeleton' },

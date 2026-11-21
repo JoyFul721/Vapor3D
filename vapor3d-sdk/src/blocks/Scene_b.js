@@ -27,7 +27,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_DestroyAll",
         blockType: "command",
-        text: "destroy all scenes"
+        text: "Scene.destroyAll"
     },
 
 
