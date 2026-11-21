@@ -601,6 +601,12 @@ export class SceneHandlers {
         mat[TEX_TYPE] = tex;
     }
 
+    Material_GetTextureURL({ INDEX, SLOT }) {
+        const mat = this._get("materials", INDEX);
+        const key = String(SLOT ?? "").replace(/Tex$/, "");
+        return mat?.textureURLs?.[key] ?? "";
+    }
+
     Material_GetParam({ INDEX, PARAM }) {
         const mat = this._get("materials", INDEX);
         const value = mat?.[PARAM] ?? "";

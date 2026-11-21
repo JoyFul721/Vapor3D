@@ -370,6 +370,15 @@ export const SceneBlocks = [
         }
     },
     {
+        opcode: "Material_GetTextureURL",
+        blockType: "reporter",
+        text: "Material [INDEX] .textureURL [SLOT]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            SLOT: { type: "string", menu: "pbrTexMenu" }
+        }
+    },
+    {
         opcode: "Material_GetParam",
         blockType: "reporter",
         text: "Material [INDEX] .getParam [PARAM]",

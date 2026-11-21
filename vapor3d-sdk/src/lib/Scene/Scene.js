@@ -20,6 +20,7 @@ export class Scene {
         this.animationsMap = new Map();
         this.materialsMap = new Map();
         this.containerIndices = new Set();
+        this.animationIndices = new Set(); // 独立注册的动画（纯动画 cast）
 
         this.root = new TransformNode(`${name}_Root`);
         this.registerNode(this.root);
@@ -286,6 +287,32 @@ export class Scene {
         return this.animationsMap.get(name) ?? new Set();
     }
 
+    /*
+    独立动画（不属于任何 Container，例如纯动画 cast）
+    */
+    addAnimation(index) {
+        const animationIndex = Number(index);
+        if (this._destroyed) return false;
+
+        const animation = this._get('animations', animationIndex);
+        if (!animation) return false;
+
+        this.animationIndices.add(animationIndex);
+        this._addToMap(this.animationsMap, animation.name, animationIndex);
+        return true;
+    }
+
+    removeAnimation(index) {
+        const animationIndex = Number(index);
+        if (!this.animationIndices.has(animationIndex)) return false;
+
+        this.animationIndices.delete(animationIndex);
+
+        const animation = this._get('animations', animationIndex);
+        this._removeFromMap(this.animationsMap, animation?.name, animationIndex);
+        return true;
+    }
+
     findMaterials(name) {
         return this.materialsMap.get(name) ?? new Set();
     }
@@ -341,6 +368,7 @@ export class Scene {
         this.animationsMap.clear();
         this.materialsMap.clear();
         this.containerIndices.clear();
+        this.animationIndices.clear();
 
         this.nodes.length = 0;
         this._freeIndices.length = 0;

@@ -53,7 +53,7 @@ const TimelineCoreBlocks = [
             POSITION: { type: "number", defaultValue: 1 }
         }
     },
-    { blockType: "label", text: "Timeline Playback" },
+    { blockType: "label", text: "Timeline Play" },
     {
         opcode: "Timeline_SetAllClipTimes",
         blockType: "command",

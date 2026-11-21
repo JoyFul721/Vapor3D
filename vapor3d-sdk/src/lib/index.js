@@ -8,7 +8,8 @@ export { VAO } from './Engine/VAO.js';
 export { Texture, Texture2D, TextureCube } from './Engine/Textures.js';
 export { Math3D } from './Tools/Math3D.js';
 
-export { Loader } from './Loader/Loader.js';
+export { LoaderBase } from './Loader/LoaderBase.js';
+export { Loader } from './Loader/gltf/Loader.js';
 export { CubeCamera } from './Tools/CubeCamera.js';
 
 export { Scene } from './Scene/Scene.js'

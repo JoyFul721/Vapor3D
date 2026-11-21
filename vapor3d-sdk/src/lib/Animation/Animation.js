@@ -1,6 +1,6 @@
 // /lib/Animation/Animation.js
 
-import { Math3D } from '../index';
+import { Math3D } from '../Tools/Math3D.js';
 
 const MARKER_TOLERANCE = 1e-4;
 

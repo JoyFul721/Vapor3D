@@ -1,5 +1,5 @@
 export const LoaderBlocks = [
-    { blockType: "label", text: "GLB Loader" },
+    { blockType: "label", text: "GLB" },
     {
         opcode: "Loader_load_glb",
         blockType: "reporter",
@@ -10,17 +10,20 @@ export const LoaderBlocks = [
             NAME: { type: "string", defaultValue: "sample" }
         }
     },
+
+    { blockType: "label", text: "CAST" },
     {
-        opcode: "Loader_apply_lightmap_metadata",
-        blockType: "command",
-        text: "Loader.applyLightmapMeta [JSON] to Container [CONTAINER_INDEX]",
+        opcode: "Loader_load_cast",
+        blockType: "reporter",
+        text: "Loader.loadCAST [U] to Scene [SCENE_INDEX] as [NAME]",
         arguments: {
-            JSON: { type: "string", defaultValue: '{"items":[]}' },
-            CONTAINER_INDEX: { type: "number", defaultValue: 0 }
+            U: { type: "string", defaultValue: "https://example.com/model.cast" },
+            SCENE_INDEX: { type: "number", defaultValue: 0 },
+            NAME: { type: "string", defaultValue: "sample" }
         }
     },
 
-    { blockType: "label", text: "Texture Loader" },
+    { blockType: "label", text: "Texture" },
     {
         opcode: "Loader_load_texture_url",
         blockType: "reporter",
@@ -55,6 +58,17 @@ export const LoaderBlocks = [
         arguments: {
             U: { type: "string", defaultValue: "https://example.com/env.hdr" },
             NAME: { type: "string", defaultValue: "lightmap1" }
+        }
+    },
+
+    { blockType: "label", text: "Lightmap Data" },
+    {
+        opcode: "Loader_apply_lightmap_metadata",
+        blockType: "command",
+        text: "Loader.applyLightmapMeta [JSON] to Container [CONTAINER_INDEX]",
+        arguments: {
+            JSON: { type: "string", defaultValue: '{"items":[]}' },
+            CONTAINER_INDEX: { type: "number", defaultValue: 0 }
         }
     },
     "---", "---"
