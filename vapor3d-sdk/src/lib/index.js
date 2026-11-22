@@ -3,7 +3,7 @@ export { Utils } from './Tools/Utils.js';
 export { Core } from './Engine/Core.js';
 export { Shader } from './Engine/Shader.js';
 export { Framebuffer } from './Engine/Framebuffer.js';
-export { Stencilbuffer } from './Engine/Stenculbuffer.js'
+export { Stencilbuffer } from './Engine/Stencilbuffer.js'
 export { VAO } from './Engine/VAO.js';
 export { Texture, Texture2D, TextureCube } from './Engine/Textures.js';
 export { Math3D } from './Tools/Math3D.js';
