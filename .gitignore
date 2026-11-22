@@ -11,6 +11,7 @@ node_modules/
 
 /example/pbr/pbr_ccw.sb3
 /example/pbr/Vapor3D.sb3
+/example/pbr/pbr_test.sb3
 /example/pbr/ignore/
 /example/pbr/Exported_ReflectionProbe
 /test/
