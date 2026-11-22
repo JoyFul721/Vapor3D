@@ -474,12 +474,20 @@ export class EngineHandlers {
     Texture_Bind({ INDEX, UNIT }) {
         const tex = this.registry.get('textures', INDEX);
         if (!tex) return;
-        tex.bind(UNIT);
+
+        const unit = Number(UNIT);
+        if (!Number.isInteger(unit) || unit < 0) return;
+
+        tex.bind(unit);
     }
     Texture_BindCube({ INDEX, UNIT }) {
         const tex = this.registry.get('textures', INDEX);
         if (!tex) return;
-        tex.bind(UNIT);
+
+        const unit = Number(UNIT);
+        if (!Number.isInteger(unit) || unit < 0) return;
+
+        tex.bind(unit);
     }
     Texture_SetFilter({ INDEX, MIN_MODE, MAG_MODE }) {
         const tex = this.registry.get('textures', INDEX);
