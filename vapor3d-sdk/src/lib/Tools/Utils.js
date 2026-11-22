@@ -168,6 +168,107 @@ export class Utils {
         return map[key] || null;
     }
 
+    // 解析 DDS 头部与 mipmap 数据，返回块的格式描述
+    static parseDDS(buffer) {
+        const bytes =
+            buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+        if (bytes.byteLength < 128)
+            throw new Error("Vapor3D: Not a valid DDS file");
+
+        const dv = new DataView(
+            bytes.buffer,
+            bytes.byteOffset,
+            bytes.byteLength,
+        );
+        const magic = String.fromCharCode(
+            bytes[0],
+            bytes[1],
+            bytes[2],
+            bytes[3],
+        );
+        if (magic !== "DDS ")
+            throw new Error("Vapor3D: Not a valid DDS file");
+        if (dv.getUint32(4, true) !== 124)
+            throw new Error("Vapor3D: Invalid DDS header size");
+
+        const height = dv.getUint32(12, true);
+        const width = dv.getUint32(16, true);
+        const mipCount = Math.max(1, dv.getUint32(28, true));
+        const fourCC = dv.getUint32(84, true);
+
+        let format = null;
+        let blockSize = 0;
+        let srgb = false;
+        let signed = false;
+        let offset = 128;
+
+        if (fourCC === 0x30315844) {
+            // DX10 扩展头
+            if (bytes.byteLength < 148)
+                throw new Error("Vapor3D: Truncated DDS DX10 header");
+
+            const dxgi = dv.getUint32(128, true);
+            const resourceDimension = dv.getUint32(132, true);
+            const miscFlag = dv.getUint32(136, true);
+            const arraySize = dv.getUint32(140, true);
+
+            if (resourceDimension === 4)
+                throw new Error("Vapor3D: DDS 3D textures are not supported");
+            if (miscFlag & 0x4 || arraySize > 1)
+                throw new Error("Vapor3D: DDS cube/array textures are not supported");
+
+            const desc = Utils.DDS_DXGI_FORMATS[dxgi];
+            if (!desc)
+                throw new Error(`Vapor3D: Unsupported DDS DXGI format ${dxgi}`);
+
+            ({ format, blockSize } = desc);
+            srgb = !!desc.srgb;
+            signed = !!desc.signed;
+            offset = 148;
+        } else {
+            const desc = Utils.DDS_FOURCC_FORMATS[fourCC];
+            if (!desc)
+                throw new Error(
+                    `Vapor3D: Unsupported DDS FOURCC 0x${fourCC.toString(16)}`,
+                );
+
+            ({ format, blockSize } = desc);
+            signed = !!desc.signed;
+        }
+
+        const mipmaps = [];
+        let pos = offset;
+        let mipWidth = width;
+        let mipHeight = height;
+
+        for (let level = 0; level < mipCount; level++) {
+            const blocksWide = Math.max(1, Math.ceil(mipWidth / 4));
+            const blocksHigh = Math.max(1, Math.ceil(mipHeight / 4));
+            const byteLength = blocksWide * blocksHigh * blockSize;
+
+            if (pos + byteLength > bytes.byteLength)
+                throw new Error(
+                    `Vapor3D: Truncated DDS data at mip level ${level}`,
+                );
+
+            mipmaps.push({
+                level,
+                width: mipWidth,
+                height: mipHeight,
+                data: new Uint8Array(
+                    bytes.buffer,
+                    bytes.byteOffset + pos,
+                    byteLength,
+                ),
+            });
+            pos += byteLength;
+            mipWidth = Math.max(1, mipWidth >> 1);
+            mipHeight = Math.max(1, mipHeight >> 1);
+        }
+
+        return { width, height, format, blockSize, srgb, signed, mipmaps };
+    }
+
     static parseKTX(buffer) {
         const bytes = new Uint8Array(buffer);
         const identifier = [
@@ -336,3 +437,34 @@ export class Utils {
         return { width, height, data: floatData };
     }
 }
+
+// DDS FOURCC
+Utils.DDS_FOURCC_FORMATS = {
+    0x31545844: { format: "bc1", blockSize: 8 }, // DXT1
+    0x33545844: { format: "bc2", blockSize: 16 }, // DXT3
+    0x35545844: { format: "bc3", blockSize: 16 }, // DXT5
+    0x31495441: { format: "bc4", blockSize: 8 }, // ATI1
+    0x32495441: { format: "bc5", blockSize: 16 }, // ATI2
+    0x55344342: { format: "bc4", blockSize: 8 }, // BC4U
+    0x53344342: { format: "bc4", blockSize: 8, signed: true }, // BC4S
+    0x55354342: { format: "bc5", blockSize: 16 }, // BC5U
+    0x53354342: { format: "bc5", blockSize: 16, signed: true }, // BC5S
+};
+
+// DDS DX10  DXGI_FORMAT
+Utils.DDS_DXGI_FORMATS = {
+    71: { format: "bc1", blockSize: 8 },
+    72: { format: "bc1", blockSize: 8, srgb: true },
+    74: { format: "bc2", blockSize: 16 },
+    75: { format: "bc2", blockSize: 16, srgb: true },
+    77: { format: "bc3", blockSize: 16 },
+    78: { format: "bc3", blockSize: 16, srgb: true },
+    80: { format: "bc4", blockSize: 8 },
+    81: { format: "bc4", blockSize: 8, signed: true },
+    83: { format: "bc5", blockSize: 16 },
+    84: { format: "bc5", blockSize: 16, signed: true },
+    95: { format: "bc6h", blockSize: 16 },
+    96: { format: "bc6h", blockSize: 16, signed: true },
+    98: { format: "bc7", blockSize: 16 },
+    99: { format: "bc7", blockSize: 16, srgb: true },
+};

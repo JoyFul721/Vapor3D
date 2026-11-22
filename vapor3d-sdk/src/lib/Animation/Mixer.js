@@ -34,6 +34,9 @@ export class Mixer {
             const fade = fadeFactor(clip, localTime);
             if (fade <= 0) continue;
 
+            // 位移相对静止姿态存储的动画（如 CAST），普通混合时叠加参考姿态
+            const restRelative = clip.animation.restRelative === true;
+
             const pose = clip.animation.sample((clip.trimStart ?? 0) + localTime);
             for (const [name, trs] of pose) {
                 const bw = clip.boneWeights?.has(name) ? clip.boneWeights.get(name) : 1;
@@ -47,12 +50,16 @@ export class Mixer {
                 }
 
                 if (trs.position) {
+                    const position = restRelative
+                        ? Math3D.vec3_add(restPose?.get(name)?.position ?? [0, 0, 0], trs.position)
+                        : trs.position;
+
                     if (!p.pos) {
-                        p.pos = [...trs.position];
+                        p.pos = [...position];
                         p.posW = w;
                     } else {
                         const a = w / (p.posW + w);
-                        p.pos = Math3D.vec3_lerp(p.pos, trs.position, a);
+                        p.pos = Math3D.vec3_lerp(p.pos, position, a);
                         p.posW += w;
                     }
                 }

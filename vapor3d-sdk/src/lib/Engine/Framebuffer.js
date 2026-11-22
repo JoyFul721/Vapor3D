@@ -95,9 +95,9 @@ export class Framebuffer {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     }
 
-    bind(fallbackW, fallbackH) {
+    bind(w = -1, h = -1) {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.id);
-        this.gl.viewport(0, 0, this.width || fallbackW, this.height || fallbackH);
+        this.gl.viewport(0, 0, w < 0 ? this.width : w, h < 0 ? this.height : h);
     }
 
     static bindScreen(gl, canvasW, canvasH) {

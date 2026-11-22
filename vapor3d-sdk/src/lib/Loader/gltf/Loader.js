@@ -1,23 +1,26 @@
-// /lib/Loader/Loader.js
+// /lib/Loader/gltf/Loader.js
 
 import { GltfLoader } from 'gltf-loader-ts';
 
 import {
     Primitive, Material, Mesh,
-    VAO, Texture2D, TextureCube,
-    Math3D, Utils, Skeleton, Animation,
-    TransformNode, MeshNode, AssetContainer
-} from '../index.js';
+    VAO,
+    Math3D, Skeleton, Animation,
+    TransformNode, MeshNode
+} from '../../index.js';
+import { LoaderBase } from '../LoaderBase.js';
+import { TextureLoader } from '../TextureLoader.js';
+import { parseAnimationMarkers } from './Markers.js';
 
-
-export class Loader {
+export class Loader extends LoaderBase {
     constructor(gl, registry) {
-        this.gl = gl;
+        super(gl, registry);
         this.gltfLoader = new GltfLoader();
-        this.registry = registry;
+        this.textureLoader = new TextureLoader(gl);
     }
 
-    async loadGLB(url, targetScene, modelID) {
+    async loadGLB(url, modelID) {
+        this.beginLoad();
         try {
             const asset = await this.gltfLoader.load(url);
             await asset.preFetchAll();
@@ -31,27 +34,10 @@ export class Loader {
             const sourceID = `MODEL_${modelID}`;
             const meshNodesList = [];
 
-            // 1x1 占位贴图
-            const valueTextureCache = new Map();
-            const getOrCreateValueTexture = (key, r, g, b, a = 255) => {
-                if (valueTextureCache.has(key)) {
-                    return valueTextureCache.get(key);
-                }
-                const tex = new Texture2D(this.gl);
-                tex.uploadData(1, 1, new Uint8Array([r, g, b, a]));
-
-                reg('textures', tex);
-
-                valueTextureCache.set(key, tex);
-                return tex;
-            };
-
-            // 注册到 Registry 并标记索引
-            const reg = (type, obj) => {
-                const idx = this.registry.allocate(type, obj);
-                obj.registryIndex = idx;
-                return idx;
-            };
+            // 1x1 占位贴图（LoaderBase 缓存）
+            const reg = (type, obj) => this.reg(type, obj);
+            const getOrCreateValueTexture = (key, r, g, b, a = 255) =>
+                this.getValueTexture(key, r, g, b, a);
 
             /*
             Texture
@@ -78,11 +64,8 @@ export class Loader {
                     const img = (rawImg && rawImg.image) ? rawImg.image : rawImg;
                     if (!img || img.width === 0) { textures[i] = null; continue; }
 
-                    const t = new Texture2D(this.gl);
+                    const t = this.textureLoader.createFromImageSource(img, { mipmaps: true });
                     reg('textures', t);
-                    t.uploadImageBitmap(img);
-                    t.generateMipmap();
-                    t.setFilter("LINEAR_MIPMAP_LINEAR", "LINEAR");
                     textures[i] = t;
                 }
             }
@@ -146,22 +129,7 @@ export class Loader {
             };
 
             // shared fallback for primitives without a gltf material, built lazily
-            let defaultMaterial = null;
-            const getDefaultMaterial = () => {
-                if (defaultMaterial) return defaultMaterial;
-
-                defaultMaterial = new Material();
-                defaultMaterial.name = `${sourceID}:MAT:default`;
-                defaultMaterial.baseColor = [1.0, 1.0, 1.0, 1.0];
-                defaultMaterial.alpha = 1;
-                defaultMaterial.albedoTex = getOrCreateValueTexture('default_white', 255, 255, 255);
-                defaultMaterial.ormTex    = getOrCreateValueTexture('default_orm', 255, 255, 0);
-                defaultMaterial.normalTex = getOrCreateValueTexture('default_normal', 128, 128, 255);
-                defaultMaterial.emissiveTex = getOrCreateValueTexture('default_emissive', 0, 0, 0);
-
-                reg('materials', defaultMaterial);
-                return defaultMaterial;
-            };
+            const getDefaultMaterial = () => this.getDefaultMaterial(`${sourceID}:MAT:default`);
 
             if (asset.gltf.materials) {
                 for (let i = 0; i < asset.gltf.materials.length; i++) {
@@ -414,7 +382,8 @@ export class Loader {
                         };
                     });
                     const animName = animDef.name || `anim_${animations.size}`;
-                    const animationInstance = new Animation(animName, channels, samplers);
+                    const markers = parseAnimationMarkers(animDef);
+                    const animationInstance = new Animation(animName, channels, samplers, markers);
                     reg('animations', animationInstance);
                     animations.set(animName, animationInstance);
                 }
@@ -432,13 +401,13 @@ export class Loader {
                 defaultScene.nodes.forEach(idx => modelRoot.addChild(vNodes[idx]));
             }
 
-            const container = new AssetContainer(modelID);
-            container.rootNode = modelRoot;
-            container.meshes = meshNodesList;   // MeshNodes Array, convenient to getMesh by index
-            container.skeletons = skeletons;    // Skeletons Array
-            container.animations = animations;  // Animations Map
-            reg('containers', container);       // register to Registry
-            return container;
+            return this.buildContainer({
+                name: modelID,
+                rootNode: modelRoot,
+                meshes: meshNodesList,   // MeshNodes Array, convenient to getMesh by index
+                skeletons,               // Skeletons Array
+                animations,              // Animations Map
+            });
 
         } catch (error) {
             console.error(`\n[Vapor3D: Failed to load GLB : "${modelID}"`);
@@ -511,43 +480,5 @@ export class Loader {
         }
 
         return appliedCount;
-    }
-
-
-
-    // 加载 Texture2D
-    async loadTexture(url) {
-        const data = await Utils.fetchBinary(url);
-        const blob = new Blob([data]);
-        const bitmap = await createImageBitmap(blob);
-        const tex = new Texture2D(this.gl);
-        tex.uploadImageBitmap(bitmap);
-        return tex;
-    }
-
-    // 从 ImageBitmap/Canvas/Blob 加载
-    async loadTextureFromSource(source) {
-        const bitmap = await createImageBitmap(source);
-        const tex = new Texture2D(this.gl);
-        tex.uploadImageBitmap(bitmap);
-        return tex;
-    }
-
-    // 加载 KTX 1.0
-    async loadTextureKTX(url) {
-        const data = await Utils.fetchBinary(url);
-        const ktxData = Utils.parseKTX(data.buffer);
-        const tex = new TextureCube(this.gl);
-        tex.uploadKTX(ktxData);
-        return tex;
-    }
-
-    // 加载 HDR
-    async loadHDRTexture(url) {
-        const data = await Utils.fetchBinary(url);
-        const hdrData = Utils.parseHDR(data.buffer);
-        const tex = new Texture2D(this.gl);
-        tex.uploadHDR(hdrData);
-        return tex;
     }
 }

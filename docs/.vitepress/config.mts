@@ -32,6 +32,7 @@ export default defineConfig({
       ]},
        { text: 'Loader', items: [
         { text: 'GLB Loader', link: '/loader/glbLoader' },
+        { text: 'CAST Loader', link: '/loader/castLoader' },
         { text: 'Texture Loader', link: '/loader/texLoader' },
         { text: 'Other Loader', link: '/loader/otherLoader' },
        ]},

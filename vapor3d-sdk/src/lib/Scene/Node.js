@@ -1,4 +1,4 @@
-import { Math3D } from '../index';
+import { Math3D } from '../Tools/Math3D.js';
 
 class Node {
     constructor(name = "unnamed") {

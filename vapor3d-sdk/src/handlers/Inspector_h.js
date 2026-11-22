@@ -147,7 +147,9 @@ export class InspectorHandlers {
         if (!resources) return -1;
 
         const target = String(name);
-        for (const resource of resources) {
+        // container.animations 是 name -> Animation 的 Map
+        const list = resources instanceof Map ? resources.values() : resources;
+        for (const resource of list) {
             if (resource?.name === target) {
                 return Number.isInteger(resource.registryIndex)
                     ? resource.registryIndex

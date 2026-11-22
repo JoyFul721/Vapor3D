@@ -3,12 +3,14 @@ export { Utils } from './Tools/Utils.js';
 export { Core } from './Engine/Core.js';
 export { Shader } from './Engine/Shader.js';
 export { Framebuffer } from './Engine/Framebuffer.js';
-export { Stencilbuffer } from './Engine/StenculBuffer.js'
+export { Stencilbuffer } from './Engine/Stenculbuffer.js'
 export { VAO } from './Engine/VAO.js';
 export { Texture, Texture2D, TextureCube } from './Engine/Textures.js';
 export { Math3D } from './Tools/Math3D.js';
 
-export { Loader } from './Loader/Loader.js';
+export { LoaderBase } from './Loader/LoaderBase.js';
+export { TextureLoader } from './Loader/TextureLoader.js';
+export { Loader } from './Loader/gltf/Loader.js';
 export { CubeCamera } from './Tools/CubeCamera.js';
 
 export { Scene } from './Scene/Scene.js'

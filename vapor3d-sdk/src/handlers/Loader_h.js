@@ -5,15 +5,42 @@ export class LoaderHandlers {
         this.engine = engineHandlers;
         this.sceneHandlers = sceneHandlers;
         this.registry = engineHandlers.registry;
-        this._loader = null;
+        this._gltfLoader = null;
+        this._castLoader = null;
+        this._textureLoader = null;
+    }
+
+    _getTextureLoader() {
+        const gl = this.engine.core.gl;
+        if (!this._textureLoader || this._textureLoader.gl !== gl) {
+            const { TextureLoader } = require('../lib/Loader/TextureLoader.js');
+            this._textureLoader = new TextureLoader(gl);
+        }
+        return this._textureLoader;
     }
 
     _getLoader() {
-        if (!this._loader) {
-            const { Loader } = require('../lib/Loader/Loader.js');
-            this._loader = new Loader(this.engine.core.gl, this.registry);
+        const gl = this.engine.core.gl;
+        if (!this._gltfLoader || this._gltfLoader.gl !== gl) {
+            const { Loader } = require('../lib/Loader/gltf/Loader.js');
+            this._gltfLoader = new Loader(gl, this.registry);
         }
-        return this._loader;
+        return this._gltfLoader;
+    }
+
+    _getCastLoader() {
+        const gl = this.engine.core.gl;
+        if (!this._castLoader || this._castLoader.gl !== gl) {
+            const { CastLoader } = require('../lib/Loader/cast/CastLoader.js');
+            this._castLoader = new CastLoader(gl, this.registry);
+        }
+        return this._castLoader;
+    }
+
+    _attachContainer(container, targetScene) {
+        if (!container?.rootNode) return -1;
+        targetScene.addContainer(container.registryIndex);
+        return container.registryIndex;
     }
 
     async Loader_load_glb({ SCENE_INDEX, NAME, U }) {
@@ -22,14 +49,46 @@ export class LoaderHandlers {
         if (!loader || !targetScene) return -2;
         
         try {
-            const container = await loader.loadGLB(U, targetScene, NAME);
-            if (!container?.rootNode) return -1;
+            const container = await loader.loadGLB(U, NAME);
+            const index = this._attachContainer(container, targetScene);
+            if (index < 0) return -1;
 
-            targetScene.addContainer(container.registryIndex);
             console.log(`Vapor3D: AssetContainer "${NAME}" plugged into Scene ${SCENE_INDEX}:`, container);
-            return container.registryIndex;
+            return index;
         } catch (e) {
             console.error("Vapor3D: GLB Load Error:", e);
+            return -1;
+        }
+    }
+
+    /**
+     * 含 modl 的 cast -> 构建 Container 并挂到 Scene，返回 Container Index
+     * 只有 anim 的 cast -> 动画独立注册到 Scene，返回第一个动画的 Registry Index
+     */
+    async Loader_load_cast({ SCENE_INDEX, NAME, U }) {
+        const loader = this._getCastLoader();
+        const targetScene = this.registry.get('scenes', SCENE_INDEX);
+        if (!loader || !targetScene) return -2;
+
+        try {
+            const result = await loader.loadCast(U, NAME);
+            if (!result) return -1;
+
+            if (result.container) {
+                const index = this._attachContainer(result.container, targetScene);
+                if (index >= 0) {
+                    console.log(`Vapor3D: AssetContainer "${NAME}" plugged into Scene ${SCENE_INDEX}:`, result.container);
+                }
+                return index;
+            }
+
+            for (const index of result.animations) targetScene.addAnimation(index);
+            console.log(
+                `Vapor3D: ${result.animations.length} animation(s) from "${U}" registered to Scene ${SCENE_INDEX}.`,
+            );
+            return result.animations[0] ?? -1;
+        } catch (e) {
+            console.error("Vapor3D: CAST Load Error:", e);
             return -1;
         }
     }
@@ -46,7 +105,7 @@ export class LoaderHandlers {
     }
 
     async Loader_load_texture_url({ NAME, U }) {
-        const loader = this._getLoader();
+        const loader = this._getTextureLoader();
         if (!loader) return -1;
         try {
             const tex = await loader.loadTexture(U);
@@ -60,7 +119,7 @@ export class LoaderHandlers {
     }
 
     async Loader_load_texture_costume({ NAME, C }, util) {
-        const loader = this._getLoader();
+        const loader = this._getTextureLoader();
         if (!loader) return -1;
         const costume = util.target.sprite.costumes.find(c => c.name === C);
         if (!costume) return -1;
@@ -76,7 +135,7 @@ export class LoaderHandlers {
     }
 
     async Loader_load_ktx_url({ NAME, U }) {
-        const loader = this._getLoader();
+        const loader = this._getTextureLoader();
         if (!loader) return -1;
         try {
             const tex = await loader.loadTextureKTX(U);
@@ -90,7 +149,7 @@ export class LoaderHandlers {
     }
 
     async Loader_load_hdr_url({ NAME, U }) {
-        const loader = this._getLoader();
+        const loader = this._getTextureLoader();
         if (!loader) return -1;
         try {
             const tex = await loader.loadHDRTexture(U);
@@ -103,7 +162,24 @@ export class LoaderHandlers {
         }
     }
 
+    async Loader_load_dds_url({ NAME, U }) {
+        const loader = this._getTextureLoader();
+        if (!loader) return -1;
+        try {
+            const tex = await loader.loadTextureDDS(U);
+            const index = this.registry.allocate('textures', tex);
+            this.engine.texturesMap.set(NAME, index);
+            return index;
+        } catch (e) {
+            console.error("Vapor3D: DDS Load Error:", e);
+            return -1;
+        }
+    }
+
     Loader_get_status() {
-        return this._loader ? "ready" : "idle";
+        const active = [];
+        if (this._gltfLoader) active.push("glb");
+        if (this._castLoader) active.push("cast");
+        return active.length > 0 ? active.join("+") : "idle";
     }
 }

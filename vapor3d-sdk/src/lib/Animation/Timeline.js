@@ -11,7 +11,7 @@ export class Timeline {
     constructor(type, target) {
         this.type = type; // 'container' | 'skeleton'
         this.target = target;
-        this.clips = new Set();
+        this.clips = new Map(); // clip name -> Clip
         this.registryIndex = -1;
         this.restPose = this._captureRestPose();
     }
@@ -42,44 +42,36 @@ export class Timeline {
 
     addClip(clip) {
         if (!clip || typeof clip.isActive !== "function") return false;
-        if (this.clips.has(clip)) return true;
 
-        this.clips.add(clip);
+        const existing = this.clips.get(clip.name);
+        if (existing === clip) return true;
+        if (existing) existing.timelines?.delete(this);
+
+        this.clips.set(clip.name, clip);
         clip.timelines?.add(this);
         return true;
     }
 
-    removeClip(clipOrIndex) {
-        const clip = typeof clipOrIndex === "number"
-            ? this.getClip(clipOrIndex)
-            : clipOrIndex;
+    removeClip(clipOrName) {
+        const clip = typeof clipOrName === "string"
+            ? this.clips.get(clipOrName)
+            : clipOrName;
 
-        if (!clip || !this.clips.has(clip)) return false;
+        if (!clip || this.clips.get(clip.name) !== clip) return false;
 
-        this.clips.delete(clip);
+        this.clips.delete(clip.name);
         clip.timelines?.delete(this);
         return true;
     }
 
-    getClip(index) {
-        const i = Number(index);
-        for (const clip of this.clips) {
-            if (clip.registryIndex === i) return clip;
-        }
-        return null;
-    }
-
-    getClipByName(name) {
-        for (const clip of this.clips) {
-            if (clip.name === name) return clip;
-        }
-        return null;
+    getClip(name) {
+        return this.clips.get(name) ?? null;
     }
 
     getClipAt(position) {
         const i = Number(position);
         if (!Number.isInteger(i) || i < 0) return null;
-        return Array.from(this.clips)[i] ?? null;
+        return Array.from(this.clips.values())[i] ?? null;
     }
 
     getClipCount() {
@@ -87,22 +79,22 @@ export class Timeline {
     }
 
     getClipNames() {
-        return Array.from(this.clips, clip => clip.name);
+        return Array.from(this.clips.keys());
     }
 
     setAllClipTimes(time) {
         const t = toFinite(time);
-        for (const clip of this.clips) clip.setTime(t);
+        for (const clip of this.clips.values()) clip.setTime(t);
     }
 
     advanceAllClipTimes(delta) {
         const dt = toFinite(delta);
-        for (const clip of this.clips) clip.advanceTime(dt);
+        for (const clip of this.clips.values()) clip.advanceTime(dt);
     }
 
     getDuration() {
         let duration = 0;
-        for (const clip of this.clips) {
+        for (const clip of this.clips.values()) {
             if (!clip.alive) continue;
             duration = Math.max(duration, clip.duration);
         }
@@ -111,7 +103,7 @@ export class Timeline {
 
     getActiveClips() {
         const active = [];
-        for (const clip of this.clips) {
+        for (const clip of this.clips.values()) {
             if (clip.isActive()) active.push(clip);
         }
         return active;
@@ -154,7 +146,7 @@ export class Timeline {
     }
 
     destroy() {
-        for (const clip of this.clips) clip.timelines?.delete(this);
+        for (const clip of this.clips.values()) clip.timelines?.delete(this);
         this.clips.clear();
         this.restPose.clear();
     }

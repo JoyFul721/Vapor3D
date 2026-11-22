@@ -137,6 +137,16 @@ export class Math3DHandlers {
         return SafeArray.createWithArray(mat);
     }
 
+    m4_ToTRS({ M }, util) {
+        const mat = Math3DHandlers.parseInputOrIdentity(M, util);
+        return SafeArray.createWithArray(Math3D.mat4_toTRS(mat));
+    }
+
+    TRS_ToM4({ TRS }, util) {
+        const trs = Math3DHandlers.parseInputOrTRSDefault(TRS, util);
+        return SafeArray.createWithArray(Math3D.TRS_toMat4(trs));
+    }
+
     TRS_Create(args) {
         return SafeArray.createWithArray(
             Math3D.TRS_create(

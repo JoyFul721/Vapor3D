@@ -46,3 +46,19 @@
 |---|---|
 | U | HDR URL，支持 httpURL、dataURL 和 blobURL |
 | NAME | 纹理名称 |
+
+
+## 加载 DDS
+
+![加载 DDS](/blocks/vapor3D_Loader_load_dds_url.svg)
+
+从 URL 加载 DDS 压缩纹理，支持 BC1 / BC2 / BC3 / BC4 / BC5 / BC6H / BC7 / Mipmap
+
+| 参数 | 说明 |
+|---|---|
+| U | DDS URL，支持 httpURL、dataURL 和 blobURL |
+| NAME | 纹理名称 |
+
+::: tip 提示
+DDS 使用 GPU 压缩格式，需要浏览器支持对应的 WebGL 扩展（如 `WEBGL_compressed_texture_s3tc`、`EXT_texture_compression_bptc`）。
+:::
