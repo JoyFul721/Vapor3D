@@ -72,20 +72,15 @@ export class EngineHandlers {
         this.core.resize(mainCanvas.width, mainCanvas.height);
     }
     
-    ensureCore() {
+    ensureAttached() {
+        if (!this.core) return false;
         const mainCanvas = this.vm.renderer && this.vm.renderer.canvas;
-        if (!mainCanvas || !mainCanvas.parentElement) return;
-        
-        // Core 存在且 Vapor3D canvas 还在 DOM 里，不操作
-        if (this.core && this.core.canvas.isConnected) return;
+        if (!mainCanvas || !mainCanvas.parentElement) return false;
 
-        if (this.core) {
-            this.gl_ResetResources();
-            // 销毁旧的 WebGL 上下文并移除旧 canvas
-            this.core.destroy();
-            this.core = null;
+        if (!this.core.canvas.isConnected) {
+            mainCanvas.parentElement.insertBefore(this.core.canvas, mainCanvas.nextSibling);
         }
-        this.gl_Init();
+        return true;
     }
 
     gl_ResetResources() {
@@ -98,8 +93,7 @@ export class EngineHandlers {
     }
 
     gl_Present() {
-        this.ensureCore();
-        if (!this.core) return;
+        if (!this.ensureAttached()) return;
         this.core.resize(this.vm.renderer.canvas.width, this.vm.renderer.canvas.height);
     }
 
