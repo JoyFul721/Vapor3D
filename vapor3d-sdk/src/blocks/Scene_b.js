@@ -27,7 +27,7 @@ export const SceneBlocks = [
     {
         opcode: "Scene_DestroyAll",
         blockType: "command",
-        text: "destroy all scenes"
+        text: "Scene.destroyAll"
     },
 
 
@@ -118,24 +118,6 @@ export const SceneBlocks = [
         text: "Container [INDEX] .skeletonCount",
         arguments: {
             INDEX: { type: "number" }
-        }
-    },
-    {
-        opcode: "Scene_AddContainer",
-        blockType: "command",
-        text: "Scene [INDEX] .addContainer [CONTAINER_IDX]",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            CONTAINER_IDX: { type: "number", defaultValue: 0 }
-        }
-    },
-    {
-        opcode: "Scene_RemoveContainer",
-        blockType: "command",
-        text: "Scene [INDEX] .removeContainer [CONTAINER_IDX]",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            CONTAINER_IDX: { type: "number", defaultValue: 0 }
         }
     },
     {
@@ -367,6 +349,15 @@ export const SceneBlocks = [
             INDEX: { type: "number", defaultValue: 0 },
             TEX_TYPE: { type: "string", menu: "pbrTexMenu" },
             TEX_IDX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Material_GetTextureURL",
+        blockType: "reporter",
+        text: "Material [INDEX] .textureURL [SLOT]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            SLOT: { type: "string", menu: "pbrTexMenu" }
         }
     },
     {

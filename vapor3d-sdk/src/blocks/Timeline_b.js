@@ -53,7 +53,7 @@ const TimelineCoreBlocks = [
             POSITION: { type: "number", defaultValue: 1 }
         }
     },
-    { blockType: "label", text: "Timeline Playback" },
+    { blockType: "label", text: "Timeline Play" },
     {
         opcode: "Timeline_SetAllClipTimes",
         blockType: "command",
@@ -70,6 +70,15 @@ const TimelineCoreBlocks = [
         arguments: {
             INDEX: { type: "number", defaultValue: 0 },
             DELTA: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Timeline_GetClip",
+        blockType: "reporter",
+        text: "Timeline [INDEX] .getClip [NAME]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            NAME: { type: "string", defaultValue: "clip" }
         }
     },
     {
@@ -184,37 +193,40 @@ export const ClipBlocks = [
         text: "Clip [INDEX] .get [PROP]",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 },
-            PROP: { type: "string", menu: "clipPropMenu" }
+            PROP: { type: "string", menu: "clipInfoMenu" }
+        }
+    },
+    { blockType: "label", text: "Clip Marker" },
+    {
+        opcode: "Clip_GetMarkerTime",
+        blockType: "reporter",
+        text: "Clip [INDEX] .markerTime [NAME]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            NAME: { type: "string", defaultValue: "marker" }
         }
     },
     {
-        opcode: "Clip_GetTime",
+        opcode: "Clip_GetMarkerAt",
         blockType: "reporter",
-        text: "Clip [INDEX] .time",
+        text: "Clip [INDEX] .markerAt [TIME]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            TIME: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Clip_GetMarkerNames",
+        blockType: "reporter",
+        text: "Clip [INDEX] .markerNames",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 }
         }
     },
     {
-        opcode: "Clip_GetDuration",
+        opcode: "Clip_GetMarkerCount",
         blockType: "reporter",
-        text: "Clip [INDEX] .duration",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 }
-        }
-    },
-    {
-        opcode: "Clip_GetName",
-        blockType: "reporter",
-        text: "Clip [INDEX] .name",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 }
-        }
-    },
-    {
-        opcode: "Clip_IsActive",
-        blockType: "reporter",
-        text: "Clip [INDEX] .isActive",
+        text: "Clip [INDEX] .markerCount",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 }
         }

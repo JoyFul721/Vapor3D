@@ -289,25 +289,6 @@ export class SceneHandlers {
         return (ri == null || ri < 0) ? -2 : ri;
     }
 
-    Scene_AddContainer({ INDEX, CONTAINER_IDX }) {
-        const scene = this._getScene(Number(INDEX));
-        const containerIndex = Number(CONTAINER_IDX);
-        const container = this._get("containers", containerIndex);
-
-        if (!scene) return;
-        if (!container?.rootNode) return;
-
-        scene.addContainer(containerIndex);
-    }
-
-    Scene_RemoveContainer({ INDEX, CONTAINER_IDX }) {
-        const scene = this._getScene(Number(INDEX));
-        if (!scene) return;
-
-        // Detach only
-        scene.removeContainer(Number(CONTAINER_IDX));
-    }
-
     Scene_GetContainerMeshCount({ INDEX }) {
         const container = this._get("containers", INDEX);
         if (!container) return -2;
@@ -599,6 +580,12 @@ export class SceneHandlers {
             return;
         }
         mat[TEX_TYPE] = tex;
+    }
+
+    Material_GetTextureURL({ INDEX, SLOT }) {
+        const mat = this._get("materials", INDEX);
+        const key = String(SLOT ?? "").replace(/Tex$/, "");
+        return mat?.textureURLs?.[key] ?? "";
     }
 
     Material_GetParam({ INDEX, PARAM }) {

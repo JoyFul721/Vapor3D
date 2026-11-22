@@ -1,3 +1,70 @@
+const BC_FORMATS = {
+    bc1: {
+        unorm: 0x83f1, // COMPRESSED_RGBA_S3TC_DXT1_EXT
+        srgb: 0x8c4d, // COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT
+        ext: "WEBGL_compressed_texture_s3tc",
+        srgbExt: "WEBGL_compressed_texture_s3tc_srgb",
+    },
+    bc2: {
+        unorm: 0x83f2,
+        srgb: 0x8c4e,
+        ext: "WEBGL_compressed_texture_s3tc",
+        srgbExt: "WEBGL_compressed_texture_s3tc_srgb",
+    },
+    bc3: {
+        unorm: 0x83f3,
+        srgb: 0x8c4f,
+        ext: "WEBGL_compressed_texture_s3tc",
+        srgbExt: "WEBGL_compressed_texture_s3tc_srgb",
+    },
+    bc4: {
+        unorm: 0x8dbb, // COMPRESSED_RED_RGTC1_EXT
+        signed: 0x8dbc, // COMPRESSED_SIGNED_RED_RGTC1_EXT
+        ext: ["WEBGL_compressed_texture_rgtc", "EXT_texture_compression_rgtc"],
+    },
+    bc5: {
+        unorm: 0x8dbd, // COMPRESSED_RG_RGTC2_EXT
+        signed: 0x8dbe, // COMPRESSED_SIGNED_RG_RGTC2_EXT
+        ext: ["WEBGL_compressed_texture_rgtc", "EXT_texture_compression_rgtc"],
+    },
+    bc6h: {
+        unorm: 0x8e8f, // COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT
+        signed: 0x8e8e, // COMPRESSED_RGB_BPTC_SIGNED_FLOAT_EXT
+        ext: ["EXT_texture_compression_bptc", "WEBGL_compressed_texture_bptc"],
+    },
+    bc7: {
+        unorm: 0x8e8c, // COMPRESSED_RGBA_BPTC_UNORM_EXT
+        srgb: 0x8e8d, // COMPRESSED_SRGB_ALPHA_BPTC_UNORM_EXT
+        ext: ["EXT_texture_compression_bptc", "WEBGL_compressed_texture_bptc"],
+        srgbExt: ["EXT_texture_compression_bptc", "WEBGL_compressed_texture_bptc"],
+    },
+};
+
+function hasExtension(gl, ext) {
+    if (!ext) return false;
+    if (Array.isArray(ext)) return ext.some((name) => !!gl.getExtension(name));
+    return !!gl.getExtension(ext);
+}
+
+function resolveBCFormat(gl, { format, srgb, signed }) {
+    const desc = BC_FORMATS[format];
+    if (!desc) throw new Error(`Vapor3D: Unsupported compressed texture format "${format}"`);
+    if (!hasExtension(gl, desc.ext)) {
+        throw new Error(
+            `Vapor3D: Compressed texture format "${format}" is not supported by this device`,
+        );
+    }
+
+    if (signed && desc.signed) return desc.signed;
+    if (srgb && desc.srgb) {
+        if (hasExtension(gl, desc.srgbExt)) return desc.srgb;
+        console.warn(
+            `Vapor3D: sRGB ${format} textures are not supported, falling back to linear.`,
+        );
+    }
+    return desc.unorm;
+}
+
 export class Texture {
     constructor(gl) {
         this.name = null;
@@ -120,6 +187,38 @@ export class Texture2D extends Texture {
         this.setFilter("LINEAR", "LINEAR");
         this.setWrap("S", "CLAMP_TO_EDGE");
         this.setWrap("T", "CLAMP_TO_EDGE");
+    }
+
+    uploadDDS(dds) {
+        const gl = this.gl;
+        const internalFormat = resolveBCFormat(gl, dds);
+        this.bind();
+
+        for (const mip of dds.mipmaps) {
+            gl.compressedTexImage2D(
+                this.target,
+                mip.level,
+                internalFormat,
+                mip.width,
+                mip.height,
+                0,
+                mip.data,
+            );
+        }
+
+        this.width = dds.width;
+        this.height = dds.height;
+        this.internalFormat = internalFormat;
+
+        gl.texParameteri(this.target, gl.TEXTURE_MAX_LEVEL, dds.mipmaps.length - 1);
+        gl.texParameteri(
+            this.target,
+            gl.TEXTURE_MIN_FILTER,
+            dds.mipmaps.length > 1 ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR,
+        );
+        gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        this.setWrap("S", "REPEAT");
+        this.setWrap("T", "REPEAT");
     }
 }
 

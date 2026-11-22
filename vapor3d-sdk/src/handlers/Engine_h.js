@@ -240,11 +240,17 @@ export class EngineHandlers {
         if (!fbo) return;
         fbo.detachStencilBuffer();
     }
-    FBO_Bind({ INDEX }) {
+    FBO_Bind({ INDEX, W = -1, H = -1 }) {
         if (!this.core) return;
+        const { gl, canvas } = this.core;
         const fbo = this.registry.get('fbos', INDEX);
-        if (fbo) fbo.bind(this.core.canvas.width, this.core.canvas.height);
-        else Framebuffer.bindScreen(this.core.gl, this.core.canvas.width, this.core.canvas.height);
+        if (fbo) {
+            fbo.bind(W, H);
+        } else {
+        Framebuffer.bindScreen(gl,
+            W < 0 ? canvas.width  : W,
+            H < 0 ? canvas.height : H);
+        }
     }
     FBO_Destroy({ INDEX }) {
         const idx = Number(INDEX);

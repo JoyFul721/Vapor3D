@@ -314,6 +314,49 @@ export class Math3D {
         return { t: [m[12], m[13], m[14]], q, s: [sx, sy, sz] };
     }
 
+    /**
+     * 矩阵 -> TRS。旋转以角度存储，和 TRS_create / TRS_parse 保持一致。
+     * 某轴缩放为 0 时该轴用单位基向量参与分解，避免除零产生 NaN。
+     */
+    static mat4_toTRS(m) {
+        if (!m || m.length < 16) return this.TRS_create(0, 0, 0, 0, 0, 0, 1, 1, 1);
+
+        const scale = [
+            Math.hypot(m[0], m[1], m[2]),
+            Math.hypot(m[4], m[5], m[6]),
+            Math.hypot(m[8], m[9], m[10]),
+        ];
+
+        const eps = 1e-8;
+        let safe = m;
+        if (scale[0] < eps || scale[1] < eps || scale[2] < eps) {
+            safe = Array.from(m);
+            if (scale[0] < eps) { safe[0] = 1; safe[1] = 0; safe[2] = 0; }
+            if (scale[1] < eps) { safe[4] = 0; safe[5] = 1; safe[6] = 0; }
+            if (scale[2] < eps) { safe[8] = 0; safe[9] = 0; safe[10] = 1; }
+        }
+
+        const { t, q } = this.mat4_decompose(safe);
+        const euler = this.quat_toEuler(q);
+
+        return this.TRS_create(
+            t[0], t[1], t[2],
+            euler[0], euler[1], euler[2],
+            scale[0], scale[1], scale[2],
+        );
+    }
+
+    /**
+     * TRS -> 矩阵。旋转按角度解释，与 mat4_toTRS 互为逆运算。
+     */
+    static TRS_toMat4(trs) {
+        const d = this.TRS_parse(trs);
+        if (!d) return [...this.mat4_identity];
+
+        const q = this.quat_fromEuler(d.euler[0], d.euler[1], d.euler[2]);
+        return this.mat4_fromRTS(q, d.position, d.scale);
+    }
+
     static mat4_multiply(a, b) {
         const out = new Array(16);
 
