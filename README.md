@@ -15,6 +15,7 @@ High-performance, programmable WebGL2 3D engine
 ## 待办事项：
 - [X] 延迟渲染
 - [X] GLB Loader
+- [X] CAST Loader
 - [X] Physically Based Rendering
 - [X] AABB Parallax-Corrected IBL
 - [X] Ping-Pong 双缓冲后处理
