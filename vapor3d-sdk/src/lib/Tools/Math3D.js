@@ -88,6 +88,30 @@ export class Math3D {
         ];
     }
 
+    static mat4_ortho(left, right, bottom, top, near, far) {
+        const lr = 1.0 / (left - right);
+        const bt = 1.0 / (bottom - top);
+        const nf = 1.0 / (near - far);
+        return [
+            -2 * lr,
+            0,
+            0,
+            0,
+            0,
+            -2 * bt,
+            0,
+            0,
+            0,
+            0,
+            2 * nf,
+            0,
+            (left + right) * lr,
+            (top + bottom) * bt,
+            (far + near) * nf,
+            1,
+        ];
+    }
+
     static mat4_translate(m, tx, ty, tz) {
         const out = [...m];
         out[12] = m[0] * tx + m[4] * ty + m[8] * tz + m[12];

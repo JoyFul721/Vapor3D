@@ -97,6 +97,12 @@ export class Math3DHandlers {
         );
     }
 
+    m4_Ortho({ L, R, B, T, N, F2 }) {
+        return SafeArray.createWithArray(
+            Math3D.mat4_ortho(L, R, B, T, N, F2),
+        );
+    }
+
     m4_LookAt({ EX, EY, EZ, TX, TY, TZ, UX, UY, UZ }) {
         return SafeArray.createWithArray(
             Math3D.mat4_lookAt([EX, EY, EZ], [TX, TY, TZ], [UX, UY, UZ]),

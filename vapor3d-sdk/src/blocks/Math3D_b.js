@@ -233,6 +233,32 @@ export const Math3DBlocks = [
         },
     },
     {
+        opcode: "m4_Ortho",
+        blockType: "reporter",
+        text: "mat4 ortho [L] [R] [B] [T] [N] [F2]",
+        arguments: {
+            L: { type: "number", defaultValue: -1 },
+            R: { type: "number", defaultValue: 1 },
+            B: { type: "number", defaultValue: -1 },
+            T: { type: "number", defaultValue: 1 },
+            N: { type: "number", defaultValue: 0.1 },
+            F2: { type: "number", defaultValue: 100 },
+        },
+        compile({ L, R, B, T, N, F2 }, { TYPE_STRING }) {
+            const l = `Number(${this.descendInput(L).asUnknown()})`;
+            const r = `Number(${this.descendInput(R).asUnknown()})`;
+            const b = `Number(${this.descendInput(B).asUnknown()})`;
+            const t = `Number(${this.descendInput(T).asUnknown()})`;
+            const n = `Number(${this.descendInput(N).asUnknown()})`;
+            const f2 = `Number(${this.descendInput(F2).asUnknown()})`;
+
+            return [
+                `(${LIB("SafeArray")}.createWithArray(${LIB("Math3D")}.mat4_ortho(${l},${r},${b},${t},${n},${f2})))`,
+                TYPE_STRING,
+            ];
+        },
+    },
+    {
         opcode: "m4_LookAt",
         blockType: "reporter",
         text: "mat4 lookAt eye [EX] [EY] [EZ] target [TX] [TY] [TZ] up [UX] [UY] [UZ]",
