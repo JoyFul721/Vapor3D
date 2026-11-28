@@ -53,6 +53,15 @@ const TimelineCoreBlocks = [
             POSITION: { type: "number", defaultValue: 1 }
         }
     },
+    {
+        opcode: "Timeline_GetClip",
+        blockType: "reporter",
+        text: "Timeline [INDEX] .getClip [NAME]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            NAME: { type: "string", defaultValue: "clip" }
+        }
+    },
     { blockType: "label", text: "Timeline Play" },
     {
         opcode: "Timeline_SetAllClipTimes",
@@ -73,15 +82,6 @@ const TimelineCoreBlocks = [
         }
     },
     {
-        opcode: "Timeline_GetClip",
-        blockType: "reporter",
-        text: "Timeline [INDEX] .getClip [NAME]",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            NAME: { type: "string", defaultValue: "clip" }
-        }
-    },
-    {
         opcode: "Timeline_GetDuration",
         blockType: "reporter",
         text: "Timeline [INDEX] .duration",
@@ -93,6 +93,31 @@ const TimelineCoreBlocks = [
         opcode: "Timeline_Apply",
         blockType: "command",
         text: "Timeline [INDEX] .apply",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 }
+        }
+    },
+    { blockType: "label", text: "Timeline Pose" },
+    {
+        opcode: "Timeline_ApplyRestPose",
+        blockType: "command",
+        text: "Timeline [INDEX] .applyRestPose",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Timeline_SetRestPoseFromCurrent",
+        blockType: "command",
+        text: "Timeline [INDEX] .setRestPoseFromCurrent",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Timeline_SetRestPoseFromBind",
+        blockType: "command",
+        text: "Timeline [INDEX] .setRestPoseFromBind",
         arguments: {
             INDEX: { type: "number", defaultValue: 0 }
         }
@@ -119,6 +144,15 @@ export const ClipBlocks = [
             INDEX: { type: "number", defaultValue: 0 }
         }
     },
+    {
+        opcode: "Clip_SetEnabled",
+        blockType: "command",
+        text: "Clip [INDEX] .setEnabled [ENABLED]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            ENABLED: { type: "string", menu: "boolMenu", defaultValue: "true" }
+        }
+    },
     { blockType: "label", text: "Clip Timing" },
     {
         opcode: "Clip_SetTrim",
@@ -141,24 +175,6 @@ export const ClipBlocks = [
         }
     },
     {
-        opcode: "Clip_SetEnabled",
-        blockType: "command",
-        text: "Clip [INDEX] .setEnabled [ENABLED]",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            ENABLED: { type: "string", menu: "boolMenu", defaultValue: "true" }
-        }
-    },
-    {
-        opcode: "Clip_SetMode",
-        blockType: "command",
-        text: "Clip [INDEX] .setMode [MODE]",
-        arguments: {
-            INDEX: { type: "number", defaultValue: 0 },
-            MODE: { type: "string", menu: "clipMode", defaultValue: "normal" }
-        }
-    },
-    {
         opcode: "Clip_SetTime",
         blockType: "command",
         text: "Clip [INDEX] .setTime [TIME]",
@@ -174,6 +190,33 @@ export const ClipBlocks = [
         arguments: {
             INDEX: { type: "number", defaultValue: 0 },
             DELTA: { type: "number", defaultValue: 0 }
+        }
+    },
+    { blockType: "label", text: "Clip Blend" },
+    {
+        opcode: "Clip_SetMode",
+        blockType: "command",
+        text: "Clip [INDEX] .setMode [MODE]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            MODE: { type: "string", menu: "clipMode", defaultValue: "normal" }
+        }
+    },
+    {
+        opcode: "Clip_SetBlendOrder",
+        blockType: "command",
+        text: "Clip [INDEX] .setBlendOrder [ORDER]",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 },
+            ORDER: { type: "number", defaultValue: 0 }
+        }
+    },
+    {
+        opcode: "Clip_GetBlendOrder",
+        blockType: "reporter",
+        text: "Clip [INDEX] .blendOrder",
+        arguments: {
+            INDEX: { type: "number", defaultValue: 0 }
         }
     },
     { blockType: "label", text: "Clip Properties" },

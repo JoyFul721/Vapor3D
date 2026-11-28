@@ -21,6 +21,9 @@ export class Skeleton {
         this.inverseBindMatrices = ibms; // Float32Array
         this.numJoints = joints.length;
 
+        // IBM 是否包含骨骼链外的祖先变换。glTF 规范包含，CAST 由骨骼链本地矩阵生成不包含
+        this.bindSpaceIncludesAncestors = true;
+
         this.registryIndex = -1;
 
         this.sceneIndex = -1;

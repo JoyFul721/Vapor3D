@@ -103,6 +103,24 @@ export class TimelineHandlers {
         timeline.apply();
     }
 
+    Timeline_ApplyRestPose({ INDEX }) {
+        const timeline = this._getTimeline(INDEX);
+        if (!timeline) return;
+        timeline.applyRestPose();
+    }
+
+    Timeline_SetRestPoseFromCurrent({ INDEX }) {
+        const timeline = this._getTimeline(INDEX);
+        if (!timeline) return;
+        timeline.setRestPoseFromCurrent();
+    }
+
+    Timeline_SetRestPoseFromBind({ INDEX }) {
+        const timeline = this._getTimeline(INDEX);
+        if (!timeline) return;
+        timeline.setRestPoseFromBind();
+    }
+
     Clip_Create({ NAME, ANIMATION_INDEX, MODE }) {
         if (!this.registry) return -1;
         const animation = this.registry.get("animations", Number(ANIMATION_INDEX));
@@ -166,6 +184,17 @@ export class TimelineHandlers {
         const clip = this._getClip(INDEX);
         if (!clip) return;
         clip.setTime(TIME);
+    }
+
+    Clip_SetBlendOrder({ INDEX, ORDER }) {
+        const clip = this._getClip(INDEX);
+        if (!clip) return;
+        clip.setProperty("blendOrder", ORDER);
+    }
+
+    Clip_GetBlendOrder({ INDEX }) {
+        const clip = this._getClip(INDEX);
+        return clip ? clip.getProperty("blendOrder") : 0;
     }
 
     Clip_AdvanceTime({ INDEX, DELTA }) {

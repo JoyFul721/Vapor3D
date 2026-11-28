@@ -57,8 +57,8 @@ export const EngineMenus = {
         TRSTypeMenu: ["Pos", "Rot", "Scale"],
         playModeMenu: ['loop', 'play once'],
         animInfoMenu: ['current animation name', 'current time', 'duration', 'is playing', 'animation names'],
-        clipPropMenu: ["duration", "weight", "trimStart", "trimEnd", "fadeIn", "fadeOut"],
-        clipInfoMenu: ["name", "time", "duration", "weight", "trimStart", "trimEnd", "fadeIn", "fadeOut", "isActive"],
+        clipPropMenu: ["duration", "weight", "trimStart", "trimEnd", "fadeIn", "fadeOut", "blendOrder"],
+        clipInfoMenu: ["name", "time", "duration", "weight", "trimStart", "trimEnd", "fadeIn", "fadeOut", "blendOrder", "isActive"],
         clipMode: ["normal", "additive"],
         targetTypeMenu: [
                 { text: 'Skeleton', value: 'skeleton' },

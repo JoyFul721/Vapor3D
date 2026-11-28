@@ -262,9 +262,19 @@ export class Math3D {
     }
 
     static mat4_decompose(m) {
-        const sx = Math.hypot(m[0], m[1], m[2]);
+        const sxAbs = Math.hypot(m[0], m[1], m[2]);
         const sy = Math.hypot(m[4], m[5], m[6]);
         const sz = Math.hypot(m[8], m[9], m[10]);
+
+        // A mirrored basis (negative determinant, common on Blender X-mirrored
+        // bones) cannot be a rotation. Absorb the flip into the X scale so the
+        // rotation part stays orthonormal.
+        const det =
+            m[0] * (m[5] * m[10] - m[6] * m[9]) -
+            m[4] * (m[1] * m[10] - m[2] * m[9]) +
+            m[8] * (m[1] * m[6] - m[2] * m[5]);
+        const sx = det < 0 ? -sxAbs : sxAbs;
+
         const r = [
             m[0] / sx,
             m[1] / sx,
@@ -336,8 +346,11 @@ export class Math3D {
             if (scale[2] < eps) { safe[8] = 0; safe[9] = 0; safe[10] = 1; }
         }
 
-        const { t, q } = this.mat4_decompose(safe);
+        const { t, q, s } = this.mat4_decompose(safe);
         const euler = this.quat_toEuler(q);
+
+        // mat4_decompose absorbs a mirrored basis into a negative X scale
+        if (s[0] < 0 && scale[0] >= eps) scale[0] = -scale[0];
 
         return this.TRS_create(
             t[0], t[1], t[2],

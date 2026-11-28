@@ -256,6 +256,8 @@ export class CastLoader extends LoaderBase {
                     ? `${modelID}_skel${skelIndex}`
                     : `${modelID}_skel`;
                 const skeleton = new Skeleton(this.gl, skeletonName, joints, ibms);
+                // IBM 由骨骼链本地矩阵生成
+                skeleton.bindSpaceIncludesAncestors = false;
                 this.reg("skeletons", skeleton);
                 skeletons.push({ skeleton, joints, boneByName, boneCount, boneParents });
             }

@@ -8,10 +8,15 @@ function clipLocalTime(clip) {
 }
 
 function fadeFactor(clip, localTime) {
+    const duration = Number(clip.duration);
+
+    // A zero-length clip is a constant pose: fade in/out has no range to run over
+    if (!(duration > 0)) return 1;
+
     let factor = 1;
     if (clip.fadeIn > 0) factor = Math.min(factor, localTime / clip.fadeIn);
     if (clip.fadeOut > 0) {
-        factor = Math.min(factor, (clip.duration - localTime) / clip.fadeOut);
+        factor = Math.min(factor, (duration - localTime) / clip.fadeOut);
     }
     return Math.min(1, Math.max(0, factor));
 }
@@ -25,9 +30,14 @@ function isIdentity(trs) {
 
 export class Mixer {
     static blendMultiple(activeClips, restPose = null) {
+        // Ascending blendOrder; stable sort keeps timeline insertion order for ties
+        const ordered = [...activeClips].sort(
+            (a, b) => (Number(a.blendOrder) || 0) - (Number(b.blendOrder) || 0),
+        );
+
         const finalPose = new Map();
-        const normalClips = activeClips.filter(c => c.mode !== 'additive');
-        const additiveClips = activeClips.filter(c => c.mode === 'additive');
+        const normalClips = ordered.filter(c => c.mode !== 'additive');
+        const additiveClips = ordered.filter(c => c.mode === 'additive');
 
         for (const clip of normalClips) {
             const localTime = clipLocalTime(clip);
@@ -126,17 +136,30 @@ export class Mixer {
                     finalPose.set(name, p);
                 }
 
+                /*
+                pos/quat/scale 是三个独立通道，null 表示没有任何 clip 决定过这个通道
+                一个坑：以前 additive 把 null 当成原点，导致丢掉骨骼的静止位置，最终写回的
+                就成了纯增量，整条骨骼链会被平移出去
+
+                现在缺通道会回落到参考姿态，与叠加到当前值语义一致，
+                只有连参考姿态都没有时才退化为原点
+                */
+                const rest = restPose?.get(name);
+
                 if (trs.position) {
-                    p.pos = Math3D.vec3_add(p.pos ?? [0, 0, 0], Math3D.vec3_scale(trs.position, w));
+                    p.pos = Math3D.vec3_add(
+                        p.pos ?? rest?.position ?? [0, 0, 0],
+                        Math3D.vec3_scale(trs.position, w),
+                    );
                 }
                 if (trs.quaternion) {
                     p.quat = Math3D.quat_multiply(
-                        p.quat ?? [0, 0, 0, 1],
+                        p.quat ?? rest?.quaternion ?? [0, 0, 0, 1],
                         Math3D.quat_slerp([0, 0, 0, 1], trs.quaternion, Math.min(w, 1)),
                     );
                 }
                 if (trs.scale) {
-                    p.scale = Math3D.vec3_mul(p.scale ?? [1, 1, 1], [
+                    p.scale = Math3D.vec3_mul(p.scale ?? rest?.scale ?? [1, 1, 1], [
                         1 + (trs.scale[0] - 1) * w,
                         1 + (trs.scale[1] - 1) * w,
                         1 + (trs.scale[2] - 1) * w,

@@ -10,6 +10,7 @@ const NUMERIC_CLIP_PROPS = new Set([
     "weight",
     "fadeIn",
     "fadeOut",
+    "blendOrder",
 ]);
 
 function clamp(value, min, max) {
@@ -38,6 +39,12 @@ export class Clip {
         this.fadeIn = 0;
         this.fadeOut = 0;
         this.enabled = true;
+
+        /*
+        clip 按 blendOrder 升序参与混合，相同值保持 Timeline 的插入顺序
+        additive 的四元数叠加顺序不可交换
+        */
+        this.blendOrder = 0;
 
         this.boneWeights = new Map();
         this.timelines = new Set();
@@ -81,6 +88,9 @@ export class Clip {
             case "fadeOut":
                 this.fadeOut = Math.max(0, n);
                 break;
+            case "blendOrder":
+                this.blendOrder = n;
+                break;
             case "trimStart":
                 this.trimStart = clamp(n, 0, this.trimEnd);
                 break;
@@ -112,7 +122,14 @@ export class Clip {
 
     setTrim(start, end) {
         const max = this._maxTime();
-        if (!(max > 0)) return false;
+
+        // Zero-length sources (single keyframe, e.g. a static additive offset)
+        // can only be trimmed to a point; keep them as the constant pose they are.
+        if (!(max > 0)) {
+            this.trimStart = 0;
+            this.trimEnd = 0;
+            return true;
+        }
 
         let trimStart = clamp(toFinite(start), 0, max);
         let trimEnd = toFinite(end, max);
@@ -145,8 +162,13 @@ export class Clip {
     }
 
     isActive() {
-        return this.alive && this.enabled && this.duration > 0 &&
-            this.time >= 0 && this.time < this.duration;
+        if (!this.alive || !this.enabled) return false;
+
+        const duration = this.duration;
+        // Zero-length clip: a constant pose that stays applied once time reaches 0
+        if (!(duration > 0)) return this.time >= 0 && this.trimEnd >= 0;
+
+        return this.time >= 0 && this.time < duration;
     }
 
     /*
